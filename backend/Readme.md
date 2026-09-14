@@ -1,3 +1,10 @@
 # Backend
 
-This directory contains the backend API.
+Node.js + Express REST API for the Food Supply Chain Traceability & Provenance Portal.
+
+## Development
+
+```bash
+npm install
+npm run dev
+```
