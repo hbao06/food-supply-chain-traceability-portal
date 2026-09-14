@@ -1,0 +1,400 @@
+openapi: 3.1.0
+
+info:
+  title: Food Supply Chain Traceability & Provenance API
+  description: |
+    REST API for the Food Supply Chain Traceability & Provenance Portal.
+
+    The system allows authorized supply chain participants to create
+    and update batches, record supply chain events, generate QR codes,
+    and allows consumers to view product provenance information.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development server
+
+tags:
+  - name: Authentication
+    description: Authentication and authorization
+  - name: Batches
+    description: Batch management
+  - name: Supply Chain Events
+    description: Supply chain event management
+  - name: QR Codes
+    description: QR code management
+  - name: Provenance
+    description: Consumer provenance information
+
+paths:
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login to the system
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          description: Invalid email or password
+
+  /batches:
+    post:
+      tags:
+        - Batches
+      summary: Create a new batch
+      operationId: createBatch
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBatchRequest"
+      responses:
+        "201":
+          description: Batch created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Batch"
+        "400":
+          description: Invalid request
+        "401":
+          description: Authentication required
+        "403":
+          description: Insufficient permissions
+
+  /batches/{batchId}:
+    get:
+      tags:
+        - Batches
+      summary: Get batch information
+      operationId: getBatch
+      parameters:
+        - $ref: "#/components/parameters/BatchId"
+      responses:
+        "200":
+          description: Batch information
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Batch"
+        "404":
+          description: Batch not found
+
+  /batches/{batchId}/events:
+    post:
+      tags:
+        - Supply Chain Events
+      summary: Record a supply chain event
+      operationId: createSupplyChainEvent
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/BatchId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEventRequest"
+      responses:
+        "201":
+          description: Supply chain event recorded successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SupplyChainEvent"
+        "400":
+          description: Invalid event data
+        "401":
+          description: Authentication required
+        "403":
+          description: Insufficient permissions
+        "404":
+          description: Batch not found
+
+    get:
+      tags:
+        - Supply Chain Events
+      summary: Get supply chain events of a batch
+      operationId: getSupplyChainEvents
+      parameters:
+        - $ref: "#/components/parameters/BatchId"
+      responses:
+        "200":
+          description: List of supply chain events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SupplyChainEvent"
+        "404":
+          description: Batch not found
+
+  /batches/{batchId}/timeline:
+    get:
+      tags:
+        - Provenance
+      summary: Get provenance timeline of a batch
+      operationId: getProvenanceTimeline
+      parameters:
+        - $ref: "#/components/parameters/BatchId"
+      responses:
+        "200":
+          description: Provenance timeline
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProvenanceTimeline"
+        "404":
+          description: Batch not found
+
+  /batches/{batchId}/qr:
+    post:
+      tags:
+        - QR Codes
+      summary: Generate QR code for a batch
+      operationId: generateQRCode
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/BatchId"
+      responses:
+        "201":
+          description: QR code generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QRCode"
+        "401":
+          description: Authentication required
+        "403":
+          description: Insufficient permissions
+        "404":
+          description: Batch not found
+
+    get:
+      tags:
+        - QR Codes
+      summary: Get QR code information
+      operationId: getQRCode
+      parameters:
+        - $ref: "#/components/parameters/BatchId"
+      responses:
+        "200":
+          description: QR code information
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QRCode"
+        "404":
+          description: QR code not found
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    BatchId:
+      name: batchId
+      in: path
+      required: true
+      description: Unique identifier of the batch
+      schema:
+        type: integer
+        example: 1001
+
+  schemas:
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: farmer@example.com
+        password:
+          type: string
+          format: password
+          example: password123
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT access token
+          example: eyJhbGciOiJIUzI1NiIs...
+        user:
+          $ref: "#/components/schemas/User"
+
+    User:
+      type: object
+      properties:
+        user_id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Nguyen Van A
+        email:
+          type: string
+          format: email
+          example: farmer@example.com
+        role:
+          type: string
+          enum:
+            - FARMER
+            - DISTRIBUTOR
+            - PROCESSOR
+            - ADMIN
+          example: FARMER
+
+    CreateBatchRequest:
+      type: object
+      required:
+        - product_name
+        - origin
+        - quantity
+      properties:
+        product_name:
+          type: string
+          example: Organic Coffee
+        origin:
+          type: string
+          example: Dak Lak, Vietnam
+        quantity:
+          type: number
+          example: 500
+        creation_date:
+          type: string
+          format: date
+          example: 2026-09-14
+
+    Batch:
+      type: object
+      properties:
+        batch_id:
+          type: integer
+          example: 1001
+        product_name:
+          type: string
+          example: Organic Coffee
+        origin:
+          type: string
+          example: Dak Lak, Vietnam
+        quantity:
+          type: number
+          example: 500
+        creation_date:
+          type: string
+          format: date
+          example: 2026-09-14
+        current_status:
+          type: string
+          enum:
+            - CREATED
+            - IN_TRANSIT
+            - PROCESSING
+            - PACKAGED
+            - DISTRIBUTED
+            - COMPLETED
+          example: CREATED
+        created_by:
+          type: integer
+          example: 1
+
+    CreateEventRequest:
+      type: object
+      required:
+        - event_type
+        - location
+      properties:
+        event_type:
+          type: string
+          enum:
+            - PRODUCTION
+            - TRANSPORTATION
+            - PROCESSING
+            - PACKAGING
+            - DISTRIBUTION
+          example: TRANSPORTATION
+        location:
+          type: string
+          example: Ho Chi Minh City
+        description:
+          type: string
+          example: Batch transported to distribution center.
+
+    SupplyChainEvent:
+      type: object
+      properties:
+        event_id:
+          type: integer
+          example: 5001
+        batch_id:
+          type: integer
+          example: 1001
+        actor_id:
+          type: integer
+          example: 2
+        event_type:
+          type: string
+          example: TRANSPORTATION
+        timestamp:
+          type: string
+          format: date-time
+          example: 2026-09-14T10:30:00Z
+        location:
+          type: string
+          example: Ho Chi Minh City
+        description:
+          type: string
+          example: Batch transported to distribution center.
+
+    QRCode:
+      type: object
+      properties:
+        qr_id:
+          type: integer
+          example: 9001
+        batch_id:
+          type: integer
+          example: 1001
+        qr_data:
+          type: string
+          example: https://example.com/trace/1001
+        created_at:
+          type: string
+          format: date-time
+          example: 2026-09-14T10:30:00Z
+
+    ProvenanceTimeline:
+      type: object
+      properties:
+        batch:
+          $ref: "#/components/schemas/Batch"
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/SupplyChainEvent"
