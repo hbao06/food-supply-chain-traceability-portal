@@ -30,12 +30,12 @@ erDiagram
 
     USER {
         bigint user_id PK
-        bigint organization_id FK "NULL với ADMIN"
+        bigint organization_id FK "NULL với ADMIN hoặc khi PENDING"
         varchar name
         varchar email UK
         varchar password_hash "bcrypt, không lưu mật khẩu thô"
         varchar role "FARMER | PROCESSOR | DISTRIBUTOR | ADMIN"
-        varchar status "ACTIVE | LOCKED"
+        varchar status "PENDING | ACTIVE | LOCKED"
         timestamptz created_at
         timestamptz updated_at
     }
@@ -98,7 +98,7 @@ erDiagram
 | Bảng | Vai trò | Khóa và ràng buộc chính |
 | --- | --- | --- |
 | `organization` | Đơn vị tham gia chuỗi: nông trại, cơ sở chế biến, nhà phân phối | `type` thuộc tập cho phép (CHECK) |
-| `user` | Tài khoản đăng nhập. Consumer không có tài khoản | `email` unique; `password_hash` NOT NULL; `role`, `status` có CHECK; `organization_id` bắt buộc trừ ADMIN |
+| `user` | Tài khoản đăng nhập. Consumer không có tài khoản | `email` unique; `password_hash` NOT NULL; `role`, `status` có CHECK; `organization_id` bắt buộc khi `ACTIVE` (trừ ADMIN). Đăng ký mới ở `PENDING`, chờ Admin duyệt (xem `permission-matrix.md`) |
 | `product` | Danh mục sản phẩm của đơn vị, để nhiều lô dùng chung thông tin | FK `organization_id` |
 | `batch` | Lô thực phẩm cần truy xuất | `batch_code` unique và có chỉ mục; `quantity > 0`; FK tới `product`, `organization`, `user` |
 | `supply_chain_event` | Từng bước của lô trong chuỗi cung ứng | FK `batch_id`, `actor_id`; chỉ mục `(batch_id, event_time)` để lấy timeline; **chỉ INSERT** |
@@ -145,7 +145,7 @@ Ngoài ra, so với OpenAPI hiện tại:
 | Thay đổi | Lý do |
 | --- | --- |
 | Thêm `organization`, `product`, `audit_log` | Kế hoạch tuần 4–6 và FR-07, FR-08, FR-09 |
-| `user.password` → `password_hash`; thêm `status`, `organization_id` | Bảo mật (bcrypt); khóa tài khoản; phạm vi theo đơn vị |
+| `user.password` → `password_hash`; thêm `status`, `organization_id` | Bảo mật (bcrypt); duyệt và khóa tài khoản; phạm vi theo đơn vị |
 | `batch` thêm `batch_code` (unique), `product_id`, `organization_id`; bỏ `product_name` | Mốc tuần 5 yêu cầu mã lô không trùng; chuẩn hóa dữ liệu |
 | `creation_date` → `production_date` + `created_at` | Tách ngày sản xuất thực tế với thời điểm ghi vào hệ thống |
 | `supply_chain_event.timestamp` → `event_time` + `created_at` | Như trên; tránh trùng tên kiểu SQL |
