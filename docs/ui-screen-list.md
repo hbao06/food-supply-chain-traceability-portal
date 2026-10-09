@@ -72,3 +72,38 @@ Các mục này được tích hợp vào màn hình liên quan, không tính th
 - **Truy xuất:** bố trí phần nhập mã, kết quả và trạng thái không tìm thấy; có bản bố trí trên điện thoại.
 
 Danh sách màn hình được cập nhật khi nhóm thống nhất User Story, ma trận quyền và API. Wireframe được hoàn thiện trong tuần 3.
+
+# Ghi chú triển khai wireframe — W1-Hoài Bảo
+
+Người phụ trách: Hoài Bảo — Frontend/UI-UX.
+Người review: Lê Bá Khánh Bình.
+
+## Phạm vi
+
+Bốn trang: đăng nhập, dashboard của Farmer, nhập mã truy xuất và kết quả truy xuất. Dữ liệu trong wireframe là minh họa. Các vòng tròn đánh số là chú thích thiết kế, không phải thành phần giao diện sản phẩm.
+
+## Đối chiếu API dự kiến của Chung Nguyễn Minh Trí
+
+- Đăng nhập: POST /auth/login.
+- Dashboard: GET /batches, giới hạn lô theo quyền người dùng.
+- Nhập mã lô: GET /trace/code/{batchCode}.
+- Quét QR: GET /trace/{qrToken}.
+- Truy xuất công khai chỉ dùng các trường được phép công khai.
+
+## Các điểm cần thống nhất
+
+- Trường đăng nhập là email hay tên đăng nhập.
+- Tên trạng thái và loại sự kiện thống nhất với UML, ERD và API.
+- Phạm vi dữ liệu theo vai trò, cùng Đặng Vĩnh Quang và Chung Nguyễn Minh Trí.
+- Sinh/tải QR phối hợp với Lê Bá Khánh Bình. Bản này dùng camera điện thoại mở QR; quét bằng camera ngay trong website chưa được chốt.
+
+## Quy tắc bố trí và trạng thái
+
+- Trên điện thoại: thông tin lô nằm trước timeline, không cuộn ngang.
+- Khi gửi form: có trạng thái đang xử lý, tránh gửi lặp.
+- Mất kết nối hoặc tải dữ liệu thất bại: thông báo rõ và có thao tác thử lại.
+- Thông báo lỗi chỉ hiện khi có lỗi, không xuất hiện trong màn hình mặc định.
+
+## Bàn giao
+
+Lưu file draw.io và ảnh vào docs/wireframes trên nhánh frontend. Nội dung này có thể đưa vào tài liệu ui-screen-list.md. Gửi PR W1-Hoài Bảo cho Lê Bá Khánh Bình review.
