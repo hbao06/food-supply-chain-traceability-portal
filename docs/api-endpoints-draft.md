@@ -1,9 +1,9 @@
 # Danh sách endpoint dự kiến (W1-TV2)
 
 **Dự án:** Food Supply Chain Traceability & Provenance Portal – Nhóm 13
-**Người phụ trách:** TV2 (Backend / API)
-**Người review:** TV1
-**Trạng thái:** Bản nháp tuần 1, đã đối chiếu với `docs/openapi.yaml` (v1.0.0) có sẵn trong repo.
+**Người phụ trách:** Chung Nguyễn Minh Trí (TV2 - Backend / API)
+**Người review:** Trương Huỳnh Hoài Bảo (TV1 - Lead UI/UX)
+**Trạng thái:** Bản nháp tuần 1, đã đối chiếu với `docs/openapi-spec.yaml` (v1.0.0) có sẵn trong repo.
 
 ## 1. Tài nguyên (resources)
 
@@ -13,15 +13,15 @@
 | Organization | Đơn vị/tổ chức của người dùng | Kế hoạch tuần 2 và tuần 4 |
 | Batch | Lô thực phẩm, có mã duy nhất và trạng thái | UR-01, SR-FR-01 |
 | Event | Sự kiện chuỗi cung ứng gắn với lô (SupplyChainEvent) | UR-02/03, SR-FR-04/06 |
-| Trace | Timeline truy xuất, gồm bản nội bộ và bản công khai qua QR | UR-04, SR-FR-05 |
+| Trace | Timeline truy xuất, gồm bản nội bộ và bản công khai qua QR / Mã nhập tay | UR-04, SR-FR-05 |
 
 Ngoài ra có hai nhóm hỗ trợ: **QR** (QRCode gắn với lô) và **Audit log** (FR-08, FR-09).
 Consumer không có tài khoản, chỉ dùng endpoint công khai.
 
 ## 2. Danh sách endpoint
 
-Cột "Quyền": `Public` là không cần đăng nhập, `Auth` là mọi người dùng đã đăng nhập.
-Cột "OpenAPI": **Có** là đã có trong `openapi.yaml`; **Thêm** là đề xuất bổ sung.
+Cột "Quyền": `Public` là không cần đăng nhập, `Auth` là người dùng đã đăng nhập (cần kiểm tra phạm vi sở hữu lô/quyền tương ứng).
+Cột "OpenAPI": **Có** là đã có trong `docs/openapi-spec.yaml`; **Thêm** là đề xuất bổ sung.
 
 ### 2.1. Auth và hồ sơ (làm ở tuần 4)
 
@@ -48,9 +48,9 @@ Cột "OpenAPI": **Có** là đã có trong `openapi.yaml`; **Thêm** là đề 
 | Method | Đường dẫn | Quyền | OpenAPI | Mô tả |
 | --- | --- | --- | --- | --- |
 | POST | `/batches` | Farmer | Có | Tạo lô với mã duy nhất. Lưu Batch, QRCode và sự kiện CREATED trong một giao dịch. |
-| GET | `/batches/{batchId}` | Auth | Có | Chi tiết một lô. |
-| GET | `/batches` | Auth | Thêm | Danh sách lô, lọc theo trạng thái (`?status=`). Farmer chỉ thấy lô của mình. |
-| PATCH | `/batches/{batchId}` | Farmer (chủ lô) | Thêm | Cập nhật thông tin nguồn gốc của lô. |
+| GET | `/batches/{batchId}` | Auth (Chủ lô / Quyền tương ứng) | Có | Chi tiết một lô. Farmer chỉ xem lô do mình tạo; Distributor/Processor xem lô trong phạm vi xử lý. |
+| GET | `/batches` | Auth | Thêm | Danh sách lô, lọc theo trạng thái (`?status=`), mã lô (`?code=`) hoặc từ khóa. Farmer chỉ thấy lô của mình. |
+| PATCH | `/batches/{batchId}` | Farmer (Chủ lô) | Thêm | Cập nhật thông tin nguồn gốc của lô do mình tạo. |
 
 Không có `DELETE /batches/{batchId}`, vì lịch sử chỉ ghi thêm (FR-08, NFR-02).
 
@@ -59,7 +59,7 @@ Không có `DELETE /batches/{batchId}`, vì lịch sử chỉ ghi thêm (FR-08, 
 | Method | Đường dẫn | Quyền | OpenAPI | Mô tả |
 | --- | --- | --- | --- | --- |
 | POST | `/batches/{batchId}/events` | Distributor, Processor | Có | Ghi sự kiện. Kiểm tra role theo loại sự kiện và thứ tự trạng thái; ghi sự kiện và đổi trạng thái trong cùng giao dịch. |
-| GET | `/batches/{batchId}/events` | Auth | Có | Danh sách sự kiện của lô. |
+| GET | `/batches/{batchId}/events` | Auth (Chủ lô / Quyền tương ứng) | Có | Danh sách sự kiện của lô. Giới hạn phạm vi đọc theo role tương tự chi tiết lô. |
 
 Không có endpoint sửa hoặc xóa sự kiện.
 
@@ -67,10 +67,11 @@ Không có endpoint sửa hoặc xóa sự kiện.
 
 | Method | Đường dẫn | Quyền | OpenAPI | Mô tả |
 | --- | --- | --- | --- | --- |
-| GET | `/batches/{batchId}/timeline` | Auth | Có (hiện chưa yêu cầu đăng nhập) | Timeline đầy đủ của lô, dành cho người dùng trong hệ thống. |
-| GET | `/trace/{qrToken}` | Public | Thêm | Consumer quét QR. Xác minh chữ ký HMAC, tìm lô, chỉ trả timeline công khai. |
-| GET | `/batches/{batchId}/qr` | Auth | Có (hiện chưa yêu cầu đăng nhập) | Lấy thông tin mã QR của lô. |
-| POST | `/batches/{batchId}/qr` | Farmer | Có | Sinh QR cho lô (xem điểm cần thống nhất số 3). |
+| GET | `/batches/{batchId}/timeline` | Auth (Chủ lô / Quyền tương ứng) | Có | Timeline đầy đủ của lô, dành cho người dùng trong hệ thống có thẩm quyền. |
+| GET | `/trace/{qrToken}` | Public | Thêm | Consumer quét mã QR. Xác minh chữ ký HMAC, tìm lô, chỉ trả timeline công khai. |
+| GET | `/trace/code/{batchCode}` | Public | Thêm | Consumer truy xuất công khai bằng cách nhập tay mã lô (batchCode) trên web. |
+| GET | `/batches/{batchId}/qr` | Auth (Chủ lô / Quyền tương ứng) | Có | Lấy thông tin mã QR của lô. |
+| POST | `/batches/{batchId}/qr` | Farmer (Chủ lô) | Có | Sinh lại mã QR cho lô do mình sở hữu. |
 
 ### 2.6. Audit log (UR-05, FR-09)
 
@@ -86,22 +87,22 @@ Audit log do hệ thống tự ghi khi dữ liệu thay đổi (UC08), nên khô
 | --- | --- |
 | 400 | Dữ liệu đầu vào thiếu hoặc không hợp lệ. |
 | 401 | Thiếu token hoặc token sai/hết hạn. |
-| 403 | Đúng người dùng nhưng sai quyền (ví dụ Distributor gửi PACKAGED). |
-| 404 | Không tìm thấy lô; QR sai chữ ký hoặc không tồn tại (không lộ dữ liệu nội bộ). |
-| 409 | Trùng mã lô, hoặc sự kiện sai thứ tự trạng thái. `openapi.yaml` hiện chưa có mã 409. |
+| 403 | Đúng người dùng nhưng sai quyền hoặc xem ngoài phạm vi (ví dụ Distributor gửi PACKAGED, hoặc Farmer xem lô của người khác). |
+| 404 | Không tìm thấy lô; QR/Mã lô không tồn tại hoặc sai chữ ký (không lộ dữ liệu nội bộ). |
+| 409 | Trùng mã lô, hoặc sự kiện sai thứ tự trạng thái. `docs/openapi-spec.yaml` hiện chưa có mã 409. |
 
 ## 4. Điểm cần thống nhất với nhóm
 
-Sau khi đối chiếu với `openapi.yaml` v1.0.0 và báo cáo tiến độ, có các chỗ lệch sau:
+Sau khi đối chiếu với `docs/openapi-spec.yaml` v1.0.0 và báo cáo tiến độ, có các chỗ lệch sau:
 
 1. **Tên trạng thái và loại sự kiện không khớp báo cáo.**
    - Báo cáo (State Machine): CREATED → TRANSPORTED → RECEIVED → PROCESSED → PACKAGED → SHIPPED.
-   - `openapi.yaml`, trạng thái lô: CREATED, IN_TRANSIT, PROCESSING, PACKAGED, DISTRIBUTED, COMPLETED.
-   - `openapi.yaml`, loại sự kiện: PRODUCTION, TRANSPORTATION, PROCESSING, PACKAGING, DISTRIBUTION. Không có bước nhận hàng (RECEIVED).
-   - Cần chốt một bộ tên dùng chung cho UML, ERD, API và code (mốc tuần 3).
-2. **Truy xuất công khai và HMAC.** Báo cáo yêu cầu QR có chữ ký HMAC (NFR-01, SR-FR-05). `openapi.yaml` hiện cho xem timeline theo `batchId` kiểu số nguyên không cần đăng nhập, và `qr_data` là `.../trace/1001`, dễ đoán. Đề xuất thêm `GET /trace/{qrToken}` làm endpoint công khai, còn `/timeline` yêu cầu đăng nhập.
-3. **Sinh QR.** Báo cáo (UC04) sinh QR trong cùng giao dịch tạo lô. `openapi.yaml` có thêm `POST /batches/{batchId}/qr` riêng. Cần chốt giữ để tạo lại QR hay bỏ.
-4. **Mã lô duy nhất.** Kế hoạch tuần 5 yêu cầu `batch_code` unique, nhưng `Batch` trong `openapi.yaml` chỉ có `batch_id` kiểu số nguyên. Cần thống nhất với TV3 (ERD).
-5. **Organization** chưa có trong Class Diagram của báo cáo. Cần TV3 xác nhận khi làm ERD.
-6. **Đăng ký tài khoản:** ai được chọn role Farmer/Distributor/Processor khi đăng ký, hay chỉ Admin gán role? Cần chốt với TV3 (ma trận quyền).
-7. **Một số endpoint đọc chưa có `security`** (`GET /batches/{batchId}`, `/events`, `/qr`), có thể lộ dữ liệu nội bộ. Cần rà lại cùng TV3.
+   - `docs/openapi-spec.yaml`, trạng thái lô: CREATED, IN_TRANSIT, PROCESSING, PACKAGED, DISTRIBUTED, COMPLETED.
+   - `docs/openapi-spec.yaml`, loại sự kiện: PRODUCTION, TRANSPORTATION, PROCESSING, PACKAGING, DISTRIBUTION. Không có bước nhận hàng (RECEIVED).
+   - Cần Trương Huỳnh Hoài Bảo (TV1), Chung Nguyễn Minh Trí (TV2), Đặng Vĩnh Quang (TV3) và Lê Bá Khánh Bình (TV4) chốt một bộ tên dùng chung cho UML, ERD, API và code (mốc tuần 3).
+2. **Truy xuất công khai và HMAC.** Báo cáo yêu cầu QR có chữ ký HMAC (NFR-01, SR-FR-05). `docs/openapi-spec.yaml` hiện cho xem timeline theo `batchId` kiểu số nguyên không cần đăng nhập, và `qr_data` là `.../trace/1001`, dễ đoán. Đề xuất thêm `GET /trace/{qrToken}` và `GET /trace/code/{batchCode}` làm endpoint công khai, còn `/timeline` yêu cầu đăng nhập.
+3. **Sinh QR.** Báo cáo (UC04) sinh QR trong cùng giao dịch tạo lô. `docs/openapi-spec.yaml` có thêm `POST /batches/{batchId}/qr` riêng. Cần chốt giữ để tạo lại QR hay bỏ.
+4. **Mã lô duy nhất.** Kế hoạch tuần 5 yêu cầu `batch_code` unique, nhưng `Batch` trong `docs/openapi-spec.yaml` chỉ có `batch_id` kiểu số nguyên. Cần thống nhất với Đặng Vĩnh Quang (TV3 - ERD).
+5. **Organization** chưa có trong Class Diagram của báo cáo. Cần Đặng Vĩnh Quang (TV3) xác nhận khi làm ERD.
+6. **Đăng ký tài khoản:** ai được chọn role Farmer/Distributor/Processor khi đăng ký, hay chỉ Admin gán role? Cần chốt với Đặng Vĩnh Quang (TV3 - ma trận quyền).
+7. **Một số endpoint đọc chưa có `security`** (`GET /batches/{batchId}`, `/events`, `/qr`), có thể lộ dữ liệu nội bộ. Cần rà lại cùng Đặng Vĩnh Quang (TV3).
