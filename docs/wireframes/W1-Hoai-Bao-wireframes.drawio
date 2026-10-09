@@ -1,0 +1,233 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net">
+  <diagram name="01 - Đăng nhập" id="login">
+    <mxGraphModel grid="1" gridSize="8" page="1" pageWidth="1440" pageHeight="900">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" value="" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=#a0a0a0;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="16" y="8" width="1008" height="780" as="geometry" />
+        </mxCell>
+        <mxCell id="3" value="FOOD TRACE" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=26;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=none;fontColor=#222222;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="24" width="400" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="4" value="Tra cứu nguồn gốc" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=center;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=none;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="720" y="28" width="260" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="5" value="Đăng nhập" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=26;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=none;fontColor=#222222;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="300" y="140" width="440" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="6" value="Truy cập các chức năng quản lý của bạn." style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=none;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="300" y="207" width="440" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="7" value="Email" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=none;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="300" y="275" width="440" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="8" value="ten@example.com" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=#a0a0a0;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="300" y="315" width="440" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="9" value="Mật khẩu" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=none;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="300" y="391" width="440" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="10" value="Nhập mật khẩu" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=#a0a0a0;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="300" y="431" width="440" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="11" value="Đăng nhập" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=center;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#333333;strokeColor=#333333;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="300" y="523" width="440" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="12" value="Chưa có tài khoản? Đăng ký" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=center;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=none;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="300" y="596" width="440" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="13" value="1" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=center;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=#333333;fontColor=#222222;shape=ellipse;spacingLeft=0;spacingRight=0;" vertex="1" parent="1">
+          <mxGeometry x="755" y="535" width="28" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="14" value="2" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=center;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=#333333;fontColor=#222222;shape=ellipse;spacingLeft=0;spacingRight=0;" vertex="1" parent="1">
+          <mxGeometry x="755" y="150" width="28" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="15" value="3" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=center;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=#333333;fontColor=#222222;shape=ellipse;spacingLeft=0;spacingRight=0;" vertex="1" parent="1">
+          <mxGeometry x="755" y="485" width="28" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="16" value="Ghi chú hành vi&#10;&#10;1. Bấm Đăng nhập: kiểm tra dữ liệu bắt buộc.&#10;&#10;2. Thành công: chuyển đến Dashboard.&#10;&#10;3. Thất bại: hiển thị thông báo lỗi dưới form và giữ email đã nhập." style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#f3f3f3;strokeColor=#cccccc;fontColor=#222222;verticalAlign=top;spacingTop=16;" vertex="1" parent="1">
+          <mxGeometry x="1050" y="112" width="340" height="410" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="02 - Dashboard (Farmer)" id="dashboard">
+    <mxGraphModel grid="1" gridSize="8" page="1" pageWidth="1440" pageHeight="900">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" value="" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=#a0a0a0;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="16" y="8" width="1008" height="780" as="geometry" />
+        </mxCell>
+        <mxCell id="3" value="FOOD TRACE" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=26;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=none;fontColor=#222222;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="24" width="400" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="4" value="Người dùng mẫu · Farmer" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=none;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="660" y="28" width="340" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="5" value="Dashboard&#10;&#10;Danh sách lô&#10;&#10;Hồ sơ cá nhân&#10;&#10;Đăng xuất" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=#a0a0a0;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="40" y="120" width="210" height="620" as="geometry" />
+        </mxCell>
+        <mxCell id="6" value="Tổng quan" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=26;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=none;fontColor=#222222;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="280" y="120" width="480" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="7" value="Tạo lô mới" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=center;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#333333;strokeColor=#333333;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="800" y="128" width="200" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="8" value="Các lô của bạn" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=none;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="280" y="213" width="720" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="9" value="Mã lô" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#eeeeee;strokeColor=#a0a0a0;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="280" y="280" width="145" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="10" value="Sản phẩm" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#eeeeee;strokeColor=#a0a0a0;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="425" y="280" width="190" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="11" value="Trạng thái" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#eeeeee;strokeColor=#a0a0a0;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="615" y="280" width="210" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="12" value="Thao tác" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#eeeeee;strokeColor=#a0a0a0;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="825" y="280" width="175" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="13" value="LO-001" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=#a0a0a0;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="280" y="328" width="145" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="14" value="Rau cải" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=#a0a0a0;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="425" y="328" width="190" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="15" value="Đã tạo" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=#a0a0a0;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="615" y="328" width="210" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="16" value="Xem chi tiết" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=#a0a0a0;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="825" y="328" width="175" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="17" value="LO-002" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=#a0a0a0;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="280" y="392" width="145" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="18" value="Cà chua" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=#a0a0a0;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="425" y="392" width="190" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="19" value="Đang vận chuyển" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=#a0a0a0;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="615" y="392" width="210" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="20" value="Xem chi tiết" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=#a0a0a0;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="825" y="392" width="175" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="21" value="Xem tất cả lô" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=center;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=none;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="780" y="480" width="220" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="22" value="1" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=center;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=#333333;fontColor=#222222;shape=ellipse;spacingLeft=0;spacingRight=0;" vertex="1" parent="1">
+          <mxGeometry x="970" y="185" width="28" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="23" value="2" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=center;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=#333333;fontColor=#222222;shape=ellipse;spacingLeft=0;spacingRight=0;" vertex="1" parent="1">
+          <mxGeometry x="970" y="465" width="28" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="24" value="3" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=center;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=#333333;fontColor=#222222;shape=ellipse;spacingLeft=0;spacingRight=0;" vertex="1" parent="1">
+          <mxGeometry x="740" y="490" width="28" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="25" value="Ghi chú hành vi&#10;&#10;1. Tạo lô mới: mở form tạo lô.&#10;&#10;2. Xem chi tiết: mở lô được chọn.&#10;&#10;3. Xem tất cả lô: mở danh sách lô. Khi chưa có dữ liệu, hiển thị “Bạn chưa có lô nào” và nút Tạo lô mới." style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#f3f3f3;strokeColor=#cccccc;fontColor=#222222;verticalAlign=top;spacingTop=16;" vertex="1" parent="1">
+          <mxGeometry x="1050" y="112" width="340" height="410" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="03 - Tra cứu công khai" id="trace-search">
+    <mxGraphModel grid="1" gridSize="8" page="1" pageWidth="1440" pageHeight="900">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" value="" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=#a0a0a0;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="16" y="8" width="1008" height="780" as="geometry" />
+        </mxCell>
+        <mxCell id="3" value="FOOD TRACE" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=26;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=none;fontColor=#222222;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="24" width="400" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="4" value="Đăng nhập" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=center;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=none;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="800" y="28" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="5" value="Tra cứu nguồn gốc" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=26;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=none;fontColor=#222222;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="200" y="180" width="700" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="6" value="Xem thông tin lô và hành trình thực phẩm." style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=none;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="200" y="251" width="700" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="7" value="Mã lô trên nhãn sản phẩm" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=none;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="200" y="344" width="700" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="8" value="Ví dụ: LO-001" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=#a0a0a0;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="200" y="392" width="470" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="9" value="Tra cứu" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=center;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#333333;strokeColor=#333333;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="690" y="392" width="210" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="10" value="Hoặc dùng camera điện thoại quét QR trên nhãn.&#10;QR sẽ mở trực tiếp kết quả truy xuất." style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=none;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="200" y="493" width="700" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="11" value="1" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=center;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=#333333;fontColor=#222222;shape=ellipse;spacingLeft=0;spacingRight=0;" vertex="1" parent="1">
+          <mxGeometry x="920" y="405" width="28" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="12" value="2" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=center;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=#333333;fontColor=#222222;shape=ellipse;spacingLeft=0;spacingRight=0;" vertex="1" parent="1">
+          <mxGeometry x="675" y="458" width="28" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="13" value="3" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=center;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=#333333;fontColor=#222222;shape=ellipse;spacingLeft=0;spacingRight=0;" vertex="1" parent="1">
+          <mxGeometry x="920" y="515" width="28" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="14" value="Ghi chú hành vi&#10;&#10;1. Bấm Tra cứu: yêu cầu nhập mã nếu ô đang trống; có mã thì tìm kết quả.&#10;&#10;2. Không tìm thấy: báo lỗi dưới ô nhập và giữ mã để sửa.&#10;&#10;3. Quét QR trên nhãn bằng camera điện thoại: mở trực tiếp kết quả." style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#f3f3f3;strokeColor=#cccccc;fontColor=#222222;verticalAlign=top;spacingTop=16;" vertex="1" parent="1">
+          <mxGeometry x="1050" y="112" width="340" height="410" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="04 - Kết quả truy xuất" id="trace-result">
+    <mxGraphModel grid="1" gridSize="8" page="1" pageWidth="1440" pageHeight="900">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" value="" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=#a0a0a0;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="16" y="8" width="1008" height="780" as="geometry" />
+        </mxCell>
+        <mxCell id="3" value="FOOD TRACE" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=26;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=none;fontColor=#222222;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="24" width="400" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="4" value="Tra cứu mã khác" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=center;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=none;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="780" y="28" width="220" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="5" value="Nguồn gốc lô LO-002" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=26;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=none;fontColor=#222222;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="120" width="950" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="6" value="Thông tin lô" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#eeeeee;strokeColor=#a0a0a0;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="40" y="227" width="330" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="7" value="Sản phẩm: Cà chua&#10;&#10;Mã lô: LO-002&#10;&#10;Nguồn gốc: Nông trại A&#10;&#10;Trạng thái: Đang vận chuyển" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=#a0a0a0;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="40" y="275" width="330" height="310" as="geometry" />
+        </mxCell>
+        <mxCell id="8" value="Hành trình thực phẩm" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=26;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=none;fontColor=#222222;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="410" y="227" width="590" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="9" value="01  Đã tạo lô&#10;09/10/2026 · 08:00&#10;Nông trại A · Địa điểm mẫu" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=#a0a0a0;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="450" y="300" width="550" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="10" value="" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#eeeeee;strokeColor=#a0a0a0;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="425" y="350" width="2" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="11" value="02  Đang vận chuyển&#10;09/10/2026 · 10:00&#10;Đơn vị B · Địa điểm mẫu" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=#a0a0a0;fontColor=#222222;" vertex="1" parent="1">
+          <mxGeometry x="450" y="450" width="550" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="12" value="1" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=center;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=#333333;fontColor=#222222;shape=ellipse;spacingLeft=0;spacingRight=0;" vertex="1" parent="1">
+          <mxGeometry x="970" y="78" width="28" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="13" value="2" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=center;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=#333333;fontColor=#222222;shape=ellipse;spacingLeft=0;spacingRight=0;" vertex="1" parent="1">
+          <mxGeometry x="375" y="300" width="28" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="14" value="3" style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=center;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#ffffff;strokeColor=#333333;fontColor=#222222;shape=ellipse;spacingLeft=0;spacingRight=0;" vertex="1" parent="1">
+          <mxGeometry x="410" y="300" width="28" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="15" value="Ghi chú hành vi&#10;&#10;1. Tra cứu mã khác: quay lại màn hình nhập mã.&#10;&#10;2. Thông tin lô: chỉ hiển thị dữ liệu công khai.&#10;&#10;3. Timeline: sắp xếp sự kiện theo thời gian. Khi chưa có sự kiện, hiển thị thông báo dữ liệu rỗng." style="rounded=0;whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=16;fillColor=#f3f3f3;strokeColor=#cccccc;fontColor=#222222;verticalAlign=top;spacingTop=16;" vertex="1" parent="1">
+          <mxGeometry x="1050" y="112" width="340" height="410" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
