@@ -1,0 +1,41 @@
+# CI cơ bản cho repo Node (backend + frontend). Tạo status check tên "CI".
+# Các bước dùng --if-present nên không lỗi khi chưa có script lint/test; tuần 4 bổ sung test thật + coverage.
+name: CI
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  ci:
+    name: CI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Backend - install
+        working-directory: backend
+        run: npm ci
+      - name: Backend - lint
+        working-directory: backend
+        run: npm run lint --if-present
+      - name: Backend - test
+        working-directory: backend
+        run: npm test --if-present
+
+      - name: Frontend - install
+        working-directory: frontend
+        run: npm ci
+      - name: Frontend - lint
+        working-directory: frontend
+        run: npm run lint --if-present
+      - name: Frontend - test
+        working-directory: frontend
+        run: npm test --if-present
+      - name: Frontend - build
+        working-directory: frontend
+        run: npm run build --if-present
