@@ -5,9 +5,11 @@ info:
   description: |
     REST API for the Food Supply Chain Traceability & Provenance Portal.
 
-    The system allows authorized supply chain participants to create
-    and update batches, record supply chain events, generate QR codes,
-    and allows consumers to view product provenance information.
+    Authorized supply chain participants create batches and record supply chain
+    events. Consumers view public provenance information by scanning a QR code.
+
+    Naming follows the Class Diagram (docs/class-diagram): camelCase fields,
+    auto-increment integer identifiers (as in SRS/ERD), and the shared enums Role and EventType.
   version: 1.0.0
 
 servers:
@@ -15,23 +17,48 @@ servers:
     description: Local development server
 
 tags:
-  - name: Authentication
-    description: Authentication and authorization
+  - name: Auth
+    description: Registration, login and current user
   - name: Batches
     description: Batch management
-  - name: Supply Chain Events
-    description: Supply chain event management
-  - name: QR Codes
-    description: QR code management
-  - name: Provenance
-    description: Consumer provenance information
+  - name: Events
+    description: Supply chain events of a batch
+  - name: Trace
+    description: Internal timeline, QR code and public provenance
 
 paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new account
+      description: |
+        The role ADMIN cannot be chosen at registration and the organization is
+        assigned later by an Admin. The new account has status PENDING until an
+        Admin activates it.
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: Account created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
   /auth/login:
     post:
-      tags:
-        - Authentication
+      tags: [Auth]
       summary: Login to the system
+      description: Only accounts with status ACTIVE can log in. PENDING and LOCKED accounts get 403.
       operationId: login
       requestBody:
         required: true
@@ -46,14 +73,37 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/LoginResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "401":
-          description: Invalid email or password
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /users/me:
+    get:
+      tags: [Auth]
+      summary: Get the current user
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
   /batches:
     post:
-      tags:
-        - Batches
+      tags: [Batches]
       summary: Create a new batch
+      description: |
+        Creates the batch, its QR code and the CREATED event in one transaction.
+        Only FARMER can create batches.
       operationId: createBatch
       security:
         - bearerAuth: []
@@ -65,41 +115,125 @@ paths:
               $ref: "#/components/schemas/CreateBatchRequest"
       responses:
         "201":
-          description: Batch created successfully
+          description: Batch created
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Batch"
         "400":
-          description: Invalid request
+          $ref: "#/components/responses/BadRequest"
         "401":
-          description: Authentication required
+          $ref: "#/components/responses/Unauthorized"
         "403":
-          description: Insufficient permissions
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+    get:
+      tags: [Batches]
+      summary: List and search batches
+      description: FARMER sees only own batches; ADMIN sees all.
+      operationId: listBatches
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          description: Filter by current status
+          schema:
+            $ref: "#/components/schemas/EventType"
+        - name: q
+          in: query
+          description: Search by product name or batch code
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        "200":
+          description: Page of batches (empty items if nothing matches)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
   /batches/{batchId}:
     get:
-      tags:
-        - Batches
-      summary: Get batch information
+      tags: [Batches]
+      summary: Get batch details
       operationId: getBatch
+      security:
+        - bearerAuth: []
       parameters:
         - $ref: "#/components/parameters/BatchId"
       responses:
         "200":
-          description: Batch information
+          description: Batch details
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Batch"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
         "404":
-          description: Batch not found
+          $ref: "#/components/responses/NotFound"
+
+    patch:
+      tags: [Batches]
+      summary: Update batch information
+      description: Only the FARMER who owns the batch can update it. Changes are written to the audit log.
+      operationId: updateBatch
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/BatchId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateBatchRequest"
+      responses:
+        "200":
+          description: Batch updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Batch"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   /batches/{batchId}/events:
     post:
-      tags:
-        - Supply Chain Events
+      tags: [Events]
       summary: Record a supply chain event
+      description: |
+        DISTRIBUTOR records TRANSPORTED, RECEIVED and SHIPPED.
+        PROCESSOR records PROCESSED and PACKAGED.
+        The event must follow the valid sequence
+        CREATED, TRANSPORTED, RECEIVED, PROCESSED, PACKAGED, SHIPPED.
+        The event and the new batch status are saved in one transaction.
       operationId: createSupplyChainEvent
       security:
         - bearerAuth: []
@@ -113,86 +247,74 @@ paths:
               $ref: "#/components/schemas/CreateEventRequest"
       responses:
         "201":
-          description: Supply chain event recorded successfully
+          description: Event recorded
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/SupplyChainEvent"
         "400":
-          description: Invalid event data
+          $ref: "#/components/responses/BadRequest"
         "401":
-          description: Authentication required
+          $ref: "#/components/responses/Unauthorized"
         "403":
-          description: Insufficient permissions
+          $ref: "#/components/responses/Forbidden"
         "404":
-          description: Batch not found
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
 
     get:
-      tags:
-        - Supply Chain Events
-      summary: Get supply chain events of a batch
-      operationId: getSupplyChainEvents
+      tags: [Events]
+      summary: List events of a batch
+      operationId: listSupplyChainEvents
+      security:
+        - bearerAuth: []
       parameters:
         - $ref: "#/components/parameters/BatchId"
       responses:
         "200":
-          description: List of supply chain events
+          description: Events ordered by timestamp ascending
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: "#/components/schemas/SupplyChainEvent"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
         "404":
-          description: Batch not found
+          $ref: "#/components/responses/NotFound"
 
   /batches/{batchId}/timeline:
     get:
-      tags:
-        - Provenance
-      summary: Get provenance timeline of a batch
-      operationId: getProvenanceTimeline
-      parameters:
-        - $ref: "#/components/parameters/BatchId"
-      responses:
-        "200":
-          description: Provenance timeline
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ProvenanceTimeline"
-        "404":
-          description: Batch not found
-
-  /batches/{batchId}/qr:
-    post:
-      tags:
-        - QR Codes
-      summary: Generate QR code for a batch
-      operationId: generateQRCode
+      tags: [Trace]
+      summary: Get the internal timeline of a batch
+      description: Batch information and all events ordered from oldest to newest.
+      operationId: getTimeline
       security:
         - bearerAuth: []
       parameters:
         - $ref: "#/components/parameters/BatchId"
       responses:
-        "201":
-          description: QR code generated successfully
+        "200":
+          description: Timeline
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/QRCode"
+                $ref: "#/components/schemas/Timeline"
         "401":
-          description: Authentication required
-        "403":
-          description: Insufficient permissions
+          $ref: "#/components/responses/Unauthorized"
         "404":
-          description: Batch not found
+          $ref: "#/components/responses/NotFound"
 
+  /batches/{batchId}/qr:
     get:
-      tags:
-        - QR Codes
-      summary: Get QR code information
+      tags: [Trace]
+      summary: Get the QR code of a batch
+      description: The QR code is created together with the batch.
       operationId: getQRCode
+      security:
+        - bearerAuth: []
       parameters:
         - $ref: "#/components/parameters/BatchId"
       responses:
@@ -202,8 +324,64 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/QRCode"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
         "404":
-          description: QR code not found
+          $ref: "#/components/responses/NotFound"
+
+  /trace/{qrToken}:
+    get:
+      tags: [Trace]
+      summary: Public provenance by QR token
+      description: |
+        No login required. The server verifies the HMAC signature of the token
+        and returns only public data. An invalid or unknown token returns 404.
+      operationId: getPublicTrace
+      security: []
+      parameters:
+        - name: qrToken
+          in: path
+          required: true
+          description: Signed token carried by the QR code
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Public provenance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicTrace"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /trace/code/{batchCode}:
+    get:
+      tags: [Trace]
+      summary: Public provenance by batch code
+      description: |
+        No login required. Consumer types the batch code printed on the product
+        instead of scanning the QR code. Returns the same public data as
+        GET /trace/{qrToken}. An unknown code returns 404.
+      operationId: getPublicTraceByCode
+      security: []
+      parameters:
+        - name: batchCode
+          in: path
+          required: true
+          description: Human-readable unique batch code
+          schema:
+            type: string
+            example: BATCH-2026-0001
+      responses:
+        "200":
+          description: Public provenance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicTrace"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
 components:
   securitySchemes:
@@ -220,14 +398,117 @@ components:
       description: Unique identifier of the batch
       schema:
         type: integer
-        example: 1001
+        format: int64
+
+  responses:
+    BadRequest:
+      description: Invalid or missing input data
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            code: VALIDATION_ERROR
+            message: Invalid request data
+            details:
+              - field: quantity
+                message: quantity must be greater than 0
+    Unauthorized:
+      description: Missing, invalid or expired token
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            code: UNAUTHORIZED
+            message: Authentication required
+    Forbidden:
+      description: Authenticated but not allowed to perform this action
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            code: FORBIDDEN
+            message: Insufficient permissions
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            code: NOT_FOUND
+            message: Resource not found
+    Conflict:
+      description: Duplicate value or invalid status sequence
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            code: INVALID_SEQUENCE
+            message: Event PACKAGED is not allowed after status CREATED
 
   schemas:
+    Role:
+      type: string
+      enum: [FARMER, DISTRIBUTOR, PROCESSOR, CONSUMER, ADMIN]
+
+    AccountStatus:
+      type: string
+      description: |
+        PENDING: registered, waiting for an Admin to activate.
+        ACTIVE: can log in. LOCKED: locked by an Admin.
+      enum: [PENDING, ACTIVE, LOCKED]
+
+    EventType:
+      type: string
+      description: Used for both the event type and the current status of a batch.
+      enum: [CREATED, TRANSPORTED, RECEIVED, PROCESSED, PACKAGED, SHIPPED]
+
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          example: VALIDATION_ERROR
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+
+    RegisterRequest:
+      type: object
+      required: [name, email, password, role]
+      properties:
+        name:
+          type: string
+          example: Nguyen Van A
+        email:
+          type: string
+          format: email
+          example: farmer@example.com
+        password:
+          type: string
+          format: password
+          minLength: 8
+        role:
+          type: string
+          description: ADMIN and CONSUMER cannot be chosen at registration.
+          enum: [FARMER, DISTRIBUTOR, PROCESSOR]
+
     LoginRequest:
       type: object
-      required:
-        - email
-        - password
+      required: [email, password]
       properties:
         email:
           type: string
@@ -236,48 +517,42 @@ components:
         password:
           type: string
           format: password
-          example: password123
 
     LoginResponse:
       type: object
+      required: [token, user]
       properties:
         token:
           type: string
           description: JWT access token
-          example: eyJhbGciOiJIUzI1NiIs...
         user:
           $ref: "#/components/schemas/User"
 
     User:
       type: object
       properties:
-        user_id:
+        userId:
           type: integer
-          example: 1
+          format: int64
         name:
           type: string
           example: Nguyen Van A
         email:
           type: string
           format: email
-          example: farmer@example.com
         role:
-          type: string
-          enum:
-            - FARMER
-            - DISTRIBUTOR
-            - PROCESSOR
-            - ADMIN
-          example: FARMER
+          $ref: "#/components/schemas/Role"
+        organizationId:
+          type: integer
+          format: int64
+        status:
+          $ref: "#/components/schemas/AccountStatus"
 
     CreateBatchRequest:
       type: object
-      required:
-        - product_name
-        - origin
-        - quantity
+      required: [productName, origin, quantity]
       properties:
-        product_name:
+        productName:
           type: string
           example: Organic Coffee
         origin:
@@ -285,19 +560,32 @@ components:
           example: Dak Lak, Vietnam
         quantity:
           type: number
+          exclusiveMinimum: 0
           example: 500
-        creation_date:
+
+    UpdateBatchRequest:
+      type: object
+      minProperties: 1
+      properties:
+        productName:
           type: string
-          format: date
-          example: 2026-09-14
+        origin:
+          type: string
+        quantity:
+          type: number
+          exclusiveMinimum: 0
 
     Batch:
       type: object
       properties:
-        batch_id:
+        batchId:
           type: integer
-          example: 1001
-        product_name:
+          format: int64
+        batchCode:
+          type: string
+          description: Human-readable unique code
+          example: BATCH-2026-0001
+        productName:
           type: string
           example: Organic Coffee
         origin:
@@ -306,90 +594,84 @@ components:
         quantity:
           type: number
           example: 500
-        creation_date:
+        creationDate:
           type: string
-          format: date
-          example: 2026-09-14
-        current_status:
-          type: string
-          enum:
-            - CREATED
-            - IN_TRANSIT
-            - PROCESSING
-            - PACKAGED
-            - DISTRIBUTED
-            - COMPLETED
-          example: CREATED
-        created_by:
+          format: date-time
+        currentStatus:
+          $ref: "#/components/schemas/EventType"
+        createdBy:
           type: integer
-          example: 1
+          format: int64
+
+    BatchPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Batch"
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
 
     CreateEventRequest:
       type: object
-      required:
-        - event_type
-        - location
+      required: [eventType, location]
       properties:
-        event_type:
+        eventType:
           type: string
-          enum:
-            - PRODUCTION
-            - TRANSPORTATION
-            - PROCESSING
-            - PACKAGING
-            - DISTRIBUTION
-          example: TRANSPORTATION
+          description: CREATED is written by the system and cannot be sent.
+          enum: [TRANSPORTED, RECEIVED, PROCESSED, PACKAGED, SHIPPED]
         location:
           type: string
           example: Ho Chi Minh City
         description:
           type: string
-          example: Batch transported to distribution center.
+          example: Batch transported to the distribution center.
 
     SupplyChainEvent:
       type: object
       properties:
-        event_id:
+        eventId:
           type: integer
-          example: 5001
-        batch_id:
+          format: int64
+        batchId:
           type: integer
-          example: 1001
-        actor_id:
+          format: int64
+        actorId:
           type: integer
-          example: 2
-        event_type:
-          type: string
-          example: TRANSPORTATION
+          format: int64
+        eventType:
+          $ref: "#/components/schemas/EventType"
         timestamp:
           type: string
           format: date-time
-          example: 2026-09-14T10:30:00Z
         location:
           type: string
-          example: Ho Chi Minh City
         description:
           type: string
-          example: Batch transported to distribution center.
 
     QRCode:
       type: object
       properties:
-        qr_id:
+        qrId:
           type: integer
-          example: 9001
-        batch_id:
+          format: int64
+        batchId:
           type: integer
-          example: 1001
-        qr_data:
+          format: int64
+        qrData:
           type: string
-          example: https://example.com/trace/1001
-        created_at:
+          description: URL encoded in the QR image, contains the signed token
+          example: https://example.com/trace/<qrToken>
+        createdAt:
           type: string
           format: date-time
-          example: 2026-09-14T10:30:00Z
 
-    ProvenanceTimeline:
+    Timeline:
       type: object
       properties:
         batch:
@@ -398,3 +680,35 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/SupplyChainEvent"
+
+    PublicTrace:
+      type: object
+      description: Public data only. No user ids, emails or internal fields.
+      properties:
+        batchCode:
+          type: string
+          example: BATCH-2026-0001
+        productName:
+          type: string
+        origin:
+          type: string
+        organizationName:
+          type: string
+          description: Name of the organization that created the batch
+        currentStatus:
+          $ref: "#/components/schemas/EventType"
+        events:
+          type: array
+          items:
+            type: object
+            properties:
+              eventType:
+                $ref: "#/components/schemas/EventType"
+              location:
+                type: string
+              organizationName:
+                type: string
+                description: Name of the organization of the actor
+              timestamp:
+                type: string
+                format: date-time
