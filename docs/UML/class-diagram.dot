@@ -7,20 +7,20 @@ digraph G {
   Organization [label=<
     <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="5">
     <TR><TD BGCOLOR="#E8EEF7"><B>Organization</B></TD></TR><HR/>
-    <TR><TD ALIGN="LEFT">- organizationId: UUID</TD></TR>
+    <TR><TD ALIGN="LEFT">- organizationId: Integer</TD></TR>
     <TR><TD ALIGN="LEFT">- name: String</TD></TR>
     </TABLE>>];
 
   User [label=<
     <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="5">
     <TR><TD BGCOLOR="#E8EEF7"><B>User</B></TD></TR><HR/>
-    <TR><TD ALIGN="LEFT">- userId: UUID</TD></TR>
+    <TR><TD ALIGN="LEFT">- userId: Integer</TD></TR>
     <TR><TD ALIGN="LEFT">- name: String</TD></TR>
     <TR><TD ALIGN="LEFT">- email: String</TD></TR>
     <TR><TD ALIGN="LEFT">- passwordHash: String</TD></TR>
     <TR><TD ALIGN="LEFT">- role: Role</TD></TR>
-    <TR><TD ALIGN="LEFT">- organizationId: UUID</TD></TR>
-    <TR><TD ALIGN="LEFT">- isActive: Boolean</TD></TR><HR/>
+    <TR><TD ALIGN="LEFT">- organizationId: Integer</TD></TR>
+    <TR><TD ALIGN="LEFT">- status: AccountStatus</TD></TR><HR/>
     <TR><TD ALIGN="LEFT">+ login(): Token</TD></TR>
     <TR><TD ALIGN="LEFT">+ hasPermission(action: String): Boolean</TD></TR>
     </TABLE>>];
@@ -28,14 +28,14 @@ digraph G {
   Batch [label=<
     <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="5">
     <TR><TD BGCOLOR="#E8EEF7"><B>Batch</B></TD></TR><HR/>
-    <TR><TD ALIGN="LEFT">- batchId: UUID</TD></TR>
+    <TR><TD ALIGN="LEFT">- batchId: Integer</TD></TR>
     <TR><TD ALIGN="LEFT">- batchCode: String {unique}</TD></TR>
     <TR><TD ALIGN="LEFT">- productName: String</TD></TR>
     <TR><TD ALIGN="LEFT">- origin: String</TD></TR>
     <TR><TD ALIGN="LEFT">- quantity: Decimal</TD></TR>
     <TR><TD ALIGN="LEFT">- creationDate: DateTime</TD></TR>
     <TR><TD ALIGN="LEFT">- currentStatus: EventType</TD></TR>
-    <TR><TD ALIGN="LEFT">- createdBy: UUID</TD></TR><HR/>
+    <TR><TD ALIGN="LEFT">- createdBy: Integer</TD></TR><HR/>
     <TR><TD ALIGN="LEFT">+ createBatch(): Batch</TD></TR>
     <TR><TD ALIGN="LEFT">+ updateStatus(event: EventType): void</TD></TR>
     <TR><TD ALIGN="LEFT">+ validateTransition(next: EventType): Boolean</TD></TR>
@@ -44,21 +44,21 @@ digraph G {
   QRCode [label=<
     <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="5">
     <TR><TD BGCOLOR="#E8EEF7"><B>QRCode</B></TD></TR><HR/>
-    <TR><TD ALIGN="LEFT">- qrId: UUID</TD></TR>
-    <TR><TD ALIGN="LEFT">- batchId: UUID</TD></TR>
+    <TR><TD ALIGN="LEFT">- qrId: Integer</TD></TR>
+    <TR><TD ALIGN="LEFT">- batchId: Integer</TD></TR>
     <TR><TD ALIGN="LEFT">- qrData: String</TD></TR>
     <TR><TD ALIGN="LEFT">- signatureHMAC: String</TD></TR>
     <TR><TD ALIGN="LEFT">- createdAt: DateTime</TD></TR><HR/>
-    <TR><TD ALIGN="LEFT">+ generate(batchId: UUID): QRCode</TD></TR>
+    <TR><TD ALIGN="LEFT">+ generate(batchId: Integer): QRCode</TD></TR>
     <TR><TD ALIGN="LEFT">+ verifySignature(): Boolean</TD></TR>
     </TABLE>>];
 
   SupplyChainEvent [label=<
     <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="5">
     <TR><TD BGCOLOR="#E8EEF7"><B>SupplyChainEvent</B></TD></TR><HR/>
-    <TR><TD ALIGN="LEFT">- eventId: UUID</TD></TR>
-    <TR><TD ALIGN="LEFT">- batchId: UUID</TD></TR>
-    <TR><TD ALIGN="LEFT">- actorId: UUID</TD></TR>
+    <TR><TD ALIGN="LEFT">- eventId: Integer</TD></TR>
+    <TR><TD ALIGN="LEFT">- batchId: Integer</TD></TR>
+    <TR><TD ALIGN="LEFT">- actorId: Integer</TD></TR>
     <TR><TD ALIGN="LEFT">- eventType: EventType</TD></TR>
     <TR><TD ALIGN="LEFT">- timestamp: DateTime</TD></TR>
     <TR><TD ALIGN="LEFT">- location: String</TD></TR>
@@ -70,11 +70,11 @@ digraph G {
   AuditLog [label=<
     <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="5">
     <TR><TD BGCOLOR="#E8EEF7"><B>AuditLog</B></TD></TR><HR/>
-    <TR><TD ALIGN="LEFT">- auditId: UUID</TD></TR>
-    <TR><TD ALIGN="LEFT">- actorId: UUID</TD></TR>
+    <TR><TD ALIGN="LEFT">- auditId: Integer</TD></TR>
+    <TR><TD ALIGN="LEFT">- actorId: Integer</TD></TR>
     <TR><TD ALIGN="LEFT">- action: String</TD></TR>
     <TR><TD ALIGN="LEFT">- entityType: String</TD></TR>
-    <TR><TD ALIGN="LEFT">- entityId: UUID</TD></TR>
+    <TR><TD ALIGN="LEFT">- entityId: Integer</TD></TR>
     <TR><TD ALIGN="LEFT">- oldValue: JSON</TD></TR>
     <TR><TD ALIGN="LEFT">- newValue: JSON</TD></TR>
     <TR><TD ALIGN="LEFT">- createdAt: DateTime</TD></TR><HR/>
@@ -102,9 +102,17 @@ digraph G {
     <TR><TD ALIGN="LEFT">SHIPPED</TD></TR>
     </TABLE>>];
 
+  AccountStatus [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="5">
+    <TR><TD BGCOLOR="#F3EBD9">«enumeration» <B>AccountStatus</B></TD></TR><HR/>
+    <TR><TD ALIGN="LEFT">PENDING</TD></TR>
+    <TR><TD ALIGN="LEFT">ACTIVE</TD></TR>
+    <TR><TD ALIGN="LEFT">LOCKED</TD></TR>
+    </TABLE>>];
+
   {rank=same; Organization; User; AuditLog}
   {rank=same; Batch; QRCode}
-  {rank=same; SupplyChainEvent; EventType; Role}
+  {rank=same; SupplyChainEvent; EventType; Role; AccountStatus}
 
   Organization -> User [taillabel="1", headlabel="0..*", labeldistance=2.2];
   User -> AuditLog [taillabel="1", headlabel="0..*", labeldistance=2.2];
@@ -112,6 +120,7 @@ digraph G {
   Batch -> QRCode [taillabel="1", headlabel="1", labeldistance=2.2];
   Batch -> SupplyChainEvent [taillabel="1", headlabel="1..*", labeldistance=2.2];
   User -> SupplyChainEvent [taillabel="1", headlabel="0..*", labeldistance=2.2, xlabel="records "];
+  User -> AccountStatus [style=dashed, arrowhead=vee, label=" uses"];
   User -> Role [style=dashed, arrowhead=vee, label=" uses"];
   SupplyChainEvent -> EventType [style=dashed, arrowhead=vee, label=" uses"];
 }

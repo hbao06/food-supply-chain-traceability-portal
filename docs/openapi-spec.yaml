@@ -9,7 +9,7 @@ info:
     events. Consumers view public provenance information by scanning a QR code.
 
     Naming follows the Class Diagram (docs/class-diagram): camelCase fields,
-    UUID identifiers, and the shared enums Role and EventType.
+    auto-increment integer identifiers (as in SRS/ERD), and the shared enums Role and EventType.
   version: 1.0.0
 
 servers:
@@ -31,7 +31,10 @@ paths:
     post:
       tags: [Auth]
       summary: Register a new account
-      description: The role ADMIN cannot be chosen at registration.
+      description: |
+        The role ADMIN cannot be chosen at registration and the organization is
+        assigned later by an Admin. The new account has status PENDING until an
+        Admin activates it.
       operationId: register
       requestBody:
         required: true
@@ -55,6 +58,7 @@ paths:
     post:
       tags: [Auth]
       summary: Login to the system
+      description: Only accounts with status ACTIVE can log in. PENDING and LOCKED accounts get 403.
       operationId: login
       requestBody:
         required: true
@@ -73,6 +77,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /users/me:
     get:
@@ -349,6 +355,34 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
+  /trace/code/{batchCode}:
+    get:
+      tags: [Trace]
+      summary: Public provenance by batch code
+      description: |
+        No login required. Consumer types the batch code printed on the product
+        instead of scanning the QR code. Returns the same public data as
+        GET /trace/{qrToken}. An unknown code returns 404.
+      operationId: getPublicTraceByCode
+      security: []
+      parameters:
+        - name: batchCode
+          in: path
+          required: true
+          description: Human-readable unique batch code
+          schema:
+            type: string
+            example: BATCH-2026-0001
+      responses:
+        "200":
+          description: Public provenance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicTrace"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
 components:
   securitySchemes:
     bearerAuth:
@@ -363,8 +397,8 @@ components:
       required: true
       description: Unique identifier of the batch
       schema:
-        type: string
-        format: uuid
+        type: integer
+        format: int64
 
   responses:
     BadRequest:
@@ -421,6 +455,13 @@ components:
       type: string
       enum: [FARMER, DISTRIBUTOR, PROCESSOR, CONSUMER, ADMIN]
 
+    AccountStatus:
+      type: string
+      description: |
+        PENDING: registered, waiting for an Admin to activate.
+        ACTIVE: can log in. LOCKED: locked by an Admin.
+      enum: [PENDING, ACTIVE, LOCKED]
+
     EventType:
       type: string
       description: Used for both the event type and the current status of a batch.
@@ -464,9 +505,6 @@ components:
           type: string
           description: ADMIN and CONSUMER cannot be chosen at registration.
           enum: [FARMER, DISTRIBUTOR, PROCESSOR]
-        organizationId:
-          type: string
-          format: uuid
 
     LoginRequest:
       type: object
@@ -494,8 +532,8 @@ components:
       type: object
       properties:
         userId:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         name:
           type: string
           example: Nguyen Van A
@@ -505,10 +543,10 @@ components:
         role:
           $ref: "#/components/schemas/Role"
         organizationId:
-          type: string
-          format: uuid
-        isActive:
-          type: boolean
+          type: integer
+          format: int64
+        status:
+          $ref: "#/components/schemas/AccountStatus"
 
     CreateBatchRequest:
       type: object
@@ -541,8 +579,8 @@ components:
       type: object
       properties:
         batchId:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         batchCode:
           type: string
           description: Human-readable unique code
@@ -562,8 +600,8 @@ components:
         currentStatus:
           $ref: "#/components/schemas/EventType"
         createdBy:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
 
     BatchPage:
       type: object
@@ -598,14 +636,14 @@ components:
       type: object
       properties:
         eventId:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         batchId:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         actorId:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         eventType:
           $ref: "#/components/schemas/EventType"
         timestamp:
@@ -620,11 +658,11 @@ components:
       type: object
       properties:
         qrId:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         batchId:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         qrData:
           type: string
           description: URL encoded in the QR image, contains the signed token
@@ -647,10 +685,16 @@ components:
       type: object
       description: Public data only. No user ids, emails or internal fields.
       properties:
+        batchCode:
+          type: string
+          example: BATCH-2026-0001
         productName:
           type: string
         origin:
           type: string
+        organizationName:
+          type: string
+          description: Name of the organization that created the batch
         currentStatus:
           $ref: "#/components/schemas/EventType"
         events:
@@ -662,6 +706,9 @@ components:
                 $ref: "#/components/schemas/EventType"
               location:
                 type: string
+              organizationName:
+                type: string
+                description: Name of the organization of the actor
               timestamp:
                 type: string
                 format: date-time
