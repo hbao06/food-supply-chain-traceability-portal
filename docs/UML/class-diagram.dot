@@ -1,0 +1,117 @@
+digraph G {
+  graph [rankdir=TB, nodesep=0.7, ranksep=0.9, fontname="DejaVu Sans", pad=0.3, splines=ortho, labelloc=t,
+         label=<<B>Class Diagram – Food Supply Chain Traceability &amp; Provenance Portal (W3-TV2)</B>>, fontsize=18];
+  node [shape=plain, fontname="DejaVu Sans", fontsize=12];
+  edge [fontname="DejaVu Sans", fontsize=11, arrowhead=none];
+
+  Organization [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="5">
+    <TR><TD BGCOLOR="#E8EEF7"><B>Organization</B></TD></TR><HR/>
+    <TR><TD ALIGN="LEFT">- organizationId: UUID</TD></TR>
+    <TR><TD ALIGN="LEFT">- name: String</TD></TR>
+    </TABLE>>];
+
+  User [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="5">
+    <TR><TD BGCOLOR="#E8EEF7"><B>User</B></TD></TR><HR/>
+    <TR><TD ALIGN="LEFT">- userId: UUID</TD></TR>
+    <TR><TD ALIGN="LEFT">- name: String</TD></TR>
+    <TR><TD ALIGN="LEFT">- email: String</TD></TR>
+    <TR><TD ALIGN="LEFT">- passwordHash: String</TD></TR>
+    <TR><TD ALIGN="LEFT">- role: Role</TD></TR>
+    <TR><TD ALIGN="LEFT">- organizationId: UUID</TD></TR>
+    <TR><TD ALIGN="LEFT">- isActive: Boolean</TD></TR><HR/>
+    <TR><TD ALIGN="LEFT">+ login(): Token</TD></TR>
+    <TR><TD ALIGN="LEFT">+ hasPermission(action: String): Boolean</TD></TR>
+    </TABLE>>];
+
+  Batch [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="5">
+    <TR><TD BGCOLOR="#E8EEF7"><B>Batch</B></TD></TR><HR/>
+    <TR><TD ALIGN="LEFT">- batchId: UUID</TD></TR>
+    <TR><TD ALIGN="LEFT">- batchCode: String {unique}</TD></TR>
+    <TR><TD ALIGN="LEFT">- productName: String</TD></TR>
+    <TR><TD ALIGN="LEFT">- origin: String</TD></TR>
+    <TR><TD ALIGN="LEFT">- quantity: Decimal</TD></TR>
+    <TR><TD ALIGN="LEFT">- creationDate: DateTime</TD></TR>
+    <TR><TD ALIGN="LEFT">- currentStatus: EventType</TD></TR>
+    <TR><TD ALIGN="LEFT">- createdBy: UUID</TD></TR><HR/>
+    <TR><TD ALIGN="LEFT">+ createBatch(): Batch</TD></TR>
+    <TR><TD ALIGN="LEFT">+ updateStatus(event: EventType): void</TD></TR>
+    <TR><TD ALIGN="LEFT">+ validateTransition(next: EventType): Boolean</TD></TR>
+    </TABLE>>];
+
+  QRCode [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="5">
+    <TR><TD BGCOLOR="#E8EEF7"><B>QRCode</B></TD></TR><HR/>
+    <TR><TD ALIGN="LEFT">- qrId: UUID</TD></TR>
+    <TR><TD ALIGN="LEFT">- batchId: UUID</TD></TR>
+    <TR><TD ALIGN="LEFT">- qrData: String</TD></TR>
+    <TR><TD ALIGN="LEFT">- signatureHMAC: String</TD></TR>
+    <TR><TD ALIGN="LEFT">- createdAt: DateTime</TD></TR><HR/>
+    <TR><TD ALIGN="LEFT">+ generate(batchId: UUID): QRCode</TD></TR>
+    <TR><TD ALIGN="LEFT">+ verifySignature(): Boolean</TD></TR>
+    </TABLE>>];
+
+  SupplyChainEvent [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="5">
+    <TR><TD BGCOLOR="#E8EEF7"><B>SupplyChainEvent</B></TD></TR><HR/>
+    <TR><TD ALIGN="LEFT">- eventId: UUID</TD></TR>
+    <TR><TD ALIGN="LEFT">- batchId: UUID</TD></TR>
+    <TR><TD ALIGN="LEFT">- actorId: UUID</TD></TR>
+    <TR><TD ALIGN="LEFT">- eventType: EventType</TD></TR>
+    <TR><TD ALIGN="LEFT">- timestamp: DateTime</TD></TR>
+    <TR><TD ALIGN="LEFT">- location: String</TD></TR>
+    <TR><TD ALIGN="LEFT">- description: String</TD></TR><HR/>
+    <TR><TD ALIGN="LEFT">+ recordEvent(): void</TD></TR>
+    <TR><TD ALIGN="LEFT">+ isSequenceValid(): Boolean</TD></TR>
+    </TABLE>>];
+
+  AuditLog [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="5">
+    <TR><TD BGCOLOR="#E8EEF7"><B>AuditLog</B></TD></TR><HR/>
+    <TR><TD ALIGN="LEFT">- auditId: UUID</TD></TR>
+    <TR><TD ALIGN="LEFT">- actorId: UUID</TD></TR>
+    <TR><TD ALIGN="LEFT">- action: String</TD></TR>
+    <TR><TD ALIGN="LEFT">- entityType: String</TD></TR>
+    <TR><TD ALIGN="LEFT">- entityId: UUID</TD></TR>
+    <TR><TD ALIGN="LEFT">- oldValue: JSON</TD></TR>
+    <TR><TD ALIGN="LEFT">- newValue: JSON</TD></TR>
+    <TR><TD ALIGN="LEFT">- createdAt: DateTime</TD></TR><HR/>
+    <TR><TD ALIGN="LEFT">+ append(): void  {append-only}</TD></TR>
+    </TABLE>>];
+
+  Role [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="5">
+    <TR><TD BGCOLOR="#F3EBD9">«enumeration» <B>Role</B></TD></TR><HR/>
+    <TR><TD ALIGN="LEFT">FARMER</TD></TR>
+    <TR><TD ALIGN="LEFT">DISTRIBUTOR</TD></TR>
+    <TR><TD ALIGN="LEFT">PROCESSOR</TD></TR>
+    <TR><TD ALIGN="LEFT">CONSUMER</TD></TR>
+    <TR><TD ALIGN="LEFT">ADMIN</TD></TR>
+    </TABLE>>];
+
+  EventType [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="5">
+    <TR><TD BGCOLOR="#F3EBD9">«enumeration» <B>EventType</B></TD></TR><HR/>
+    <TR><TD ALIGN="LEFT">CREATED</TD></TR>
+    <TR><TD ALIGN="LEFT">TRANSPORTED</TD></TR>
+    <TR><TD ALIGN="LEFT">RECEIVED</TD></TR>
+    <TR><TD ALIGN="LEFT">PROCESSED</TD></TR>
+    <TR><TD ALIGN="LEFT">PACKAGED</TD></TR>
+    <TR><TD ALIGN="LEFT">SHIPPED</TD></TR>
+    </TABLE>>];
+
+  {rank=same; Organization; User; AuditLog}
+  {rank=same; Batch; QRCode}
+  {rank=same; SupplyChainEvent; EventType; Role}
+
+  Organization -> User [taillabel="1", headlabel="0..*", labeldistance=2.2];
+  User -> AuditLog [taillabel="1", headlabel="0..*", labeldistance=2.2];
+  User -> Batch [taillabel="1", headlabel="0..*", labeldistance=2.2, xlabel="creates "];
+  Batch -> QRCode [taillabel="1", headlabel="1", labeldistance=2.2];
+  Batch -> SupplyChainEvent [taillabel="1", headlabel="1..*", labeldistance=2.2];
+  User -> SupplyChainEvent [taillabel="1", headlabel="0..*", labeldistance=2.2, xlabel="records "];
+  User -> Role [style=dashed, arrowhead=vee, label=" uses"];
+  SupplyChainEvent -> EventType [style=dashed, arrowhead=vee, label=" uses"];
+}
