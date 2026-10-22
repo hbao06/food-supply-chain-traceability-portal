@@ -186,6 +186,11 @@ Tài liệu mô tả nhu cầu và hành vi giao diện để thiết kế, tri�
 - **When** API gặp lỗi hệ thống hoặc mất kết nối.
 - **Then** giao diện hiển thị lỗi tải và thao tác Thử lại, không hiển thị dữ liệu mẫu như kết quả thật hoặc báo QR sai khi chưa xác minh được.
 
+**AC05 — Quá giới hạn tra cứu**
+- **Given** tôi đang tra cứu bằng mã lô hoặc mở kết quả từ QR.
+- **When** API truy xuất công khai trả 429 do gửi quá nhiều yêu cầu.
+- **Then** giao diện thông báo "Bạn thao tác quá nhanh, vui lòng thử lại sau ít phút", giữ mã lô đã nhập nếu có và cho Thử lại; không kết luận mã lô hoặc QR không tồn tại.
+
 ### US-UI07: Đăng xuất khỏi giao diện nội bộ
 
 **As a** người đã đăng nhập,
