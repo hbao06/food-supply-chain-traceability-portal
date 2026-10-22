@@ -188,7 +188,7 @@ Mỗi User Story có Acceptance Criteria theo Given-When-Then, tối thiểu m�
 | 3 | Quy tắc phạm vi lô (theo người tạo hay theo đơn vị) | TV2, TV3 | Đề xuất của TV2: theo đơn vị (`organization_id`), Admin xem tất cả; cần TV3 xác nhận với ma trận quyền |
 | 4 | Mã lỗi khi truy cập ngoài phạm vi (403 hay 404) | TV2, TV3 | Đề xuất của TV2: 404 (ngoài phạm vi hoặc không tồn tại), 403 (sai vai trò), 401 (chưa đăng nhập); cần TV3 xác nhận |
 | 5 | Token của QR: dùng `qr_token` có chữ ký HMAC (US-B01, US-UI06) | TV4, TV2, TV1 | ✅ TV4 đã sửa US-QR-01, FR-QR-01..02; chờ TV2/TV1 xác nhận cấu trúc token và tên biến khóa bí mật |
-| 6 | Thông báo lỗi truy xuất dùng chung "Không tìm thấy thông tin truy xuất hợp lệ"; cách giao diện hiển thị lỗi 429 | TV4, TV1 | ✅ US-QR-03 đã dùng chung câu chữ; ⚠️ US-UI06 vẫn cần bổ sung xử lý 429 |
+| 6 | Thông báo lỗi truy xuất dùng chung "Không tìm thấy thông tin truy xuất hợp lệ"; cách giao diện hiển thị lỗi 429 | TV4, TV1 | ✅ US-QR-03 dùng chung câu chữ; US-UI06 đã bổ sung AC05 cho 429 và wireframe W3 có trạng thái tương ứng |
 | 7 | Tra cứu công khai bằng mã lô (`/trace/code/{batchCode}`) áp dụng cùng giới hạn tần suất, ẩn trường nội bộ và thông báo 404 như đường QR | TV4, TV2 | ✅ Đã đưa vào US-QR-03 (S2, S4, E2, E3); chờ TV2 xác nhận |
 | 8 | Email đã được sử dụng: báo rõ (US-UI01) hay thông báo chung để tránh dò tài khoản (nguyên tắc ở US-UI02) | TV3, TV1 | Cần một quyết định bảo mật nhất quán |
 | 9 | Đăng xuất: có endpoint thu hồi JWT không; "xóa cache phiên" gồm những nơi lưu nào | TV3, TV1 | US-UI07 hiện chỉ cam kết phần frontend |

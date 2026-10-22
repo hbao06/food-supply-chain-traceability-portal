@@ -73,6 +73,21 @@ Các mục này được tích hợp vào màn hình liên quan, không tính th
 
 Danh sách màn hình được cập nhật khi nhóm thống nhất User Story, ma trận quyền và API. Wireframe được hoàn thiện trong tuần 3.
 
+## 8. Bổ sung wireframe W3 sau review
+
+Các cột "Wireframe tuần 1" ở trên ghi nhận phạm vi bàn giao W1, không phản ánh toàn bộ file W3. File `docs/wireframes/W3-Hoai-Bao-wireframes.drawio` hiện có các trang sau:
+
+| Trang W3 | Nội dung | Màn hình / story |
+| --- | --- | --- |
+| 01-04 | Đăng nhập, Dashboard Farmer, Tra cứu công khai, Kết quả truy xuất | UI-03, UI-05, UI-01, UI-02 |
+| 05 | Quy tắc điều hướng, quyền truy cập và phiên | US-UI01..US-UI07 |
+| 06 | Đăng ký và trạng thái chờ duyệt, lỗi nhập liệu | UI-04 / US-UI01 |
+| 07 | Hồ sơ cá nhân, sửa tên và đổi mật khẩu | UI-06 / US-UI03 |
+| 08 | Dashboard theo vai trò Farmer, Processor, Distributor, Admin | UI-05 / US-UI04 |
+| 09 | Trạng thái tra cứu: đang tải, 404, 429 và lỗi tải | UI-01, UI-02 / US-UI05, US-UI06 |
+
+Đăng ký đi từ liên kết ở UI-03 sang UI-04 rồi quay về UI-03 sau khi nhận thông báo chờ duyệt. Dashboard mở UI-06 từ menu Hồ sơ; đăng xuất đưa về UI-03. Consumer vào UI-01/UI-02 mà không cần đăng nhập.
+
 # Ghi chú triển khai wireframe — W1-Hoài Bảo
 
 Người phụ trách: Hoài Bảo — Frontend/UI-UX.
