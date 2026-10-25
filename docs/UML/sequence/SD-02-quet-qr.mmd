@@ -1,0 +1,48 @@
+---
+title: SD-02 Quét mã QR và truy xuất công khai (US-QR-03, US-UI06)
+---
+sequenceDiagram
+    autonumber
+    actor C as Người tiêu dùng
+    participant PH as Điện thoại<br/>(camera)
+    participant FE as Frontend<br/>(React)
+    participant API as Backend API
+    participant RL as Giới hạn<br/>tần suất
+    participant TS as Trace<br/>Service
+    participant QR as QR Service<br/>(HMAC)
+    participant DB as PostgreSQL
+
+    C->>PH: Quét mã QR trên bao bì
+    PH->>FE: Mở URL /trace/{qrToken}
+    FE->>API: GET /trace/{qrToken} (không cần JWT)
+    API->>RL: Kiểm tra giới hạn (60 yêu cầu/phút/IP)
+    alt Vượt giới hạn
+        RL-->>API: Từ chối
+        API-->>FE: 429 Too Many Requests (Retry-After)
+        FE-->>C: "Bạn thao tác quá nhanh, vui lòng thử lại sau ít phút"<br/>kèm thao tác Thử lại
+    else Trong giới hạn
+        RL-->>API: OK
+        API->>TS: getTraceByToken(qrToken)
+        TS->>QR: verify(qrToken)<br/>(so sánh chữ ký HMAC)
+        alt Chữ ký sai hoặc token sai định dạng
+            QR-->>TS: Không hợp lệ
+            TS-->>API: Không tìm thấy
+            API-->>FE: 404 "Không tìm thấy thông tin truy xuất hợp lệ"
+            FE-->>C: Thông báo + liên kết về trang nhập mã lô
+        else Chữ ký đúng
+            QR-->>TS: batch_code
+            TS->>DB: SELECT lô + sự kiện theo batch_code<br/>(chỉ trường công khai, thời gian tăng dần)
+            alt Không có lô
+                DB-->>TS: Rỗng
+                TS-->>API: Không tìm thấy
+                API-->>FE: 404 (cùng thông báo)
+                FE-->>C: Thông báo + liên kết về trang nhập mã lô
+            else Có lô
+                DB-->>TS: Thông tin lô + timeline
+                TS-->>API: Dữ liệu công khai<br/>(đã ẩn email, mã người dùng, người thực hiện, audit log)
+                API-->>FE: 200 OK
+                FE-->>C: Hiển thị thông tin lô và timeline từ cũ đến mới
+            end
+        end
+    end
+    Note over C,DB: Tra cứu bằng mã lô (GET /trace/code/{batchCode}) đi cùng luồng từ bước 4,<br/>bỏ bước verify chữ ký. Lỗi mạng hoặc hệ thống: giao diện báo lỗi và cho Thử lại

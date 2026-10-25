@@ -1,0 +1,55 @@
+---
+title: SD-01 Tạo lô thực phẩm và sinh mã QR (US-B01, US-QR-01)
+---
+sequenceDiagram
+    autonumber
+    actor F as Farmer
+    participant FE as Frontend<br/>(React)
+    participant API as Backend API
+    participant AU as Auth<br/>(JWT, RBAC)
+    participant SV as Batch<br/>Service
+    participant QR as QR Service<br/>(HMAC)
+    participant DB as PostgreSQL
+
+    F->>FE: Nhập tên sản phẩm, nguồn gốc, số lượng, bấm "Tạo lô"
+    FE->>API: POST /batches (JWT + dữ liệu lô)
+    API->>AU: Xác thực JWT, kiểm tra vai trò Farmer
+    alt Chưa đăng nhập hoặc token hết hạn
+        AU-->>API: Từ chối
+        API-->>FE: 401 Unauthorized
+    else Không phải vai trò Farmer
+        AU-->>API: Từ chối
+        API-->>FE: 403 Forbidden
+    else Hợp lệ
+        AU-->>API: OK (userId, organizationId)
+        API->>SV: createBatch(dữ liệu, userId, organizationId)
+        alt Dữ liệu sai (thiếu tên, số lượng ≤ 0)
+            SV-->>API: Lỗi kiểm tra dữ liệu
+            API-->>FE: 400 Bad Request (không lưu gì)
+        else Dữ liệu hợp lệ
+            rect rgb(238, 238, 238)
+            Note over SV,DB: Một Database Transaction
+            SV->>DB: BEGIN
+            SV->>DB: INSERT Batch (batch_code duy nhất, trạng thái CREATED)
+            DB-->>SV: batch_id
+            SV->>QR: sinh qr_token từ batch_code<br/>(HMAC-SHA256, khóa QR_HMAC_SECRET)
+            alt Sinh QR lỗi (ví dụ thiếu QR_HMAC_SECRET)
+                QR-->>SV: Lỗi
+                SV->>DB: ROLLBACK
+            else Sinh QR thành công
+                QR-->>SV: qr_token
+                SV->>DB: INSERT QRCode (batch_id, qr_token)
+                SV->>DB: INSERT Event CREATED (batch_id, người tạo, thời điểm)
+                SV->>DB: COMMIT
+            end
+            end
+            alt Đã ROLLBACK
+                SV-->>API: Lỗi hệ thống
+                API-->>FE: 500 (không lưu Batch, QR, sự kiện)
+            else Đã COMMIT
+                SV-->>API: lô + QR + sự kiện CREATED
+                API-->>FE: 201 Created
+                FE-->>F: Hiển thị lô vừa tạo và mã QR
+            end
+        end
+    end

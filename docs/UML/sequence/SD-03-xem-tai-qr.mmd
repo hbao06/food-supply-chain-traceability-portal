@@ -1,0 +1,44 @@
+---
+title: SD-03 Xem và tải mã QR của lô (US-QR-02)
+---
+sequenceDiagram
+    autonumber
+    actor U as Người dùng<br/>(có quyền đọc lô)
+    participant FE as Frontend<br/>(React)
+    participant API as Backend API
+    participant AU as Auth<br/>(JWT, RBAC)
+    participant SV as Batch<br/>Service
+    participant QR as QR Service
+    participant DB as PostgreSQL
+
+    U->>FE: Chọn xem hoặc tải mã QR của lô
+    FE->>API: GET /batches/{batchId}/qr?format=png|svg (JWT)
+    API->>AU: Xác thực JWT
+    alt Chưa đăng nhập hoặc token hết hạn
+        AU-->>API: Từ chối
+        API-->>FE: 401 Unauthorized
+    else Hợp lệ
+        AU-->>API: OK (userId, organizationId, vai trò)
+        API->>SV: getBatchQr(batchId, phạm vi người dùng)
+        SV->>DB: SELECT lô + qr_token trong phạm vi đơn vị
+        alt Lô ngoài phạm vi hoặc không tồn tại
+            DB-->>SV: Rỗng
+            SV-->>API: Không tìm thấy
+            API-->>FE: 404 Not Found (không trả dữ liệu QR)
+        else Có quyền đọc lô
+            DB-->>SV: batch_code, qr_token
+            alt Không có format
+                SV-->>API: URL truy xuất /trace/{qrToken}
+                API-->>FE: 200 OK (JSON)
+            else format = png hoặc svg
+                SV->>QR: tạo ảnh QR từ URL truy xuất (png ≥ 512 px hoặc svg)
+                QR-->>SV: Ảnh QR
+                SV-->>API: Ảnh QR-{batch_code}.{đuôi}
+                API-->>FE: 200 OK (file)
+                FE-->>U: Tải file QR để in tem
+            else format không hỗ trợ (ví dụ gif)
+                SV-->>API: Định dạng sai
+                API-->>FE: 400 Bad Request (liệt kê png, svg)
+            end
+        end
+    end
