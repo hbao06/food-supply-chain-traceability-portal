@@ -56,7 +56,7 @@ Frontend giao tiếp với backend qua REST API. Backend xử lý nghiệp vụ,
    cd food-supply-chain-traceability-portal
    ```
 
-2. Sao chép `.env.example` thành `.env`, sau đó cấu hình `DATABASE_URL`, `JWT_SECRET` và các biến cần thiết.
+2. Sao chép `.env.example` thành `.env`, sau đó đặt `DB_PASSWORD` (trùng `POSTGRES_PASSWORD` trong `docker-compose.yml`), `JWT_SECRET` (tối thiểu 32 ký tự) và các biến cần thiết.
 
 3. Cài đặt và chạy frontend, backend trong hai terminal riêng:
 

@@ -16,6 +16,14 @@ services:
       - "3000:3000"
     environment:
       PORT: 3000
+      DB_HOST: database # tên service bên dưới, khác với localhost khi chạy ngoài Docker
+      DB_PORT: 5432
+      DB_NAME: food_traceability
+      DB_USER: postgres
+      DB_PASSWORD: postgres # trùng POSTGRES_PASSWORD của service database
+      JWT_SECRET: ${JWT_SECRET} # đặt trong .env ở thư mục gốc (>= 32 ký tự), thiếu thì backend dừng ngay
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1h}
+      BCRYPT_COST: ${BCRYPT_COST:-10}
     depends_on:
       - database
 
