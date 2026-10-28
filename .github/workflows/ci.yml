@@ -39,3 +39,10 @@ jobs:
       - name: Frontend - build
         working-directory: frontend
         run: npm run build --if-present
+        jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      JWT_SECRET: ci-only-secret-not-for-production-0123456789abcdef
+    steps:
+      ...

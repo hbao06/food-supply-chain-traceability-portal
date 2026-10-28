@@ -2,9 +2,15 @@
 
 const { Pool } = require('pg');
 
-// Dùng DATABASE_URL nếu có, nếu không pg tự đọc PGHOST/PGUSER/PGPASSWORD/PGDATABASE.
-// Nếu repo đã có pool chung thì thay file này bằng import của repo, chỉ cần export { pool, withTransaction }.
-const pool = new Pool(process.env.DATABASE_URL ? { connectionString: process.env.DATABASE_URL } : undefined);
+// Cấu hình CSDL chỉ dùng DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD (giống .env.example và docker-compose.yml).
+// Không có DATABASE_URL để tránh hai cách cấu hình song song.
+const pool = new Pool({
+  host: process.env.DB_HOST || 'localhost',
+  port: Number(process.env.DB_PORT) || 5432,
+  database: process.env.DB_NAME,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+});
 
 // Chạy fn(client) trong một transaction; lỗi thì ROLLBACK.
 async function withTransaction(fn) {

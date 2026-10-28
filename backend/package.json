@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node src/app.js",
     "dev": "node --watch src/app.js",
-    "test": "node --test"
+    "test": "node --test",
+    "test:auth": "node --test \"test/*.test.js\"",
+    "smoke:auth": "node scripts/smoke-auth.js"
   },
   "keywords": [
     "food-traceability",

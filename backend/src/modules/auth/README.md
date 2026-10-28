@@ -26,30 +26,51 @@
 | 409 | `CONFLICT` | Vi phạm ràng buộc CSDL (23505 / 23514 / 23503) |
 | 500 | `INTERNAL_ERROR` | Lỗi không lường trước (chi tiết chỉ ghi log) |
 
-## Cấu hình (`.env`)
+## Cấu hình (`.env` ở thư mục gốc repo, sao chép từ `.env.example`)
+
+CSDL dùng các biến sẵn có của repo (không dùng `DATABASE_URL`):
 
 ```
-JWT_SECRET=<chuỗi ngẫu nhiên >= 32 ký tự>     # bắt buộc, không commit
-JWT_EXPIRES_IN=1h                             # tùy chọn
-BCRYPT_COST=10                                # tùy chọn
-DATABASE_URL=postgres://postgres:<mật khẩu>@database:5432/food_traceability
+DB_HOST=localhost        # chạy backend trên máy; trong Docker Compose tự đặt là "database"
+DB_PORT=5432
+DB_NAME=food_traceability
+DB_USER=postgres
+DB_PASSWORD=postgres     # trùng POSTGRES_PASSWORD trong docker-compose.yml
 ```
 
-Cài thư viện: `npm install express pg bcryptjs jsonwebtoken`.
+Thêm cho Auth:
+
+```
+JWT_SECRET=<chuỗi ngẫu nhiên >= 32 ký tự>   # bắt buộc, không commit; thiếu hoặc ngắn thì backend dừng ngay khi khởi động
+JWT_EXPIRES_IN=1h                           # tùy chọn, mặc định 1h
+BCRYPT_COST=10                              # tùy chọn, mặc định 10
+```
+
+`src/app.js` nạp `backend/.env` trước, rồi `.env` ở thư mục gốc repo, nên chạy `npm run dev` trong `backend/` vẫn đọc được `.env` ở gốc.
+Tạo `JWT_SECRET` nhanh: `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`.
+
+Cài thư viện: `npm install pg bcryptjs jsonwebtoken` (Express 5, cors, dotenv đã có sẵn).
+Thêm vào `package.json`: `"scripts": { "test": "node --test test/*.test.js", "smoke:auth": "node scripts/smoke-auth.js" }`.
 
 ## Gắn vào app (`backend/src/app.js`)
 
 ```js
-const { notFound, errorHandler } = require('./common/errorHandler');
-const { authRouter, profileRouter } = require('./modules/auth/auth.routes');
+const { notFound, errorHandler } = require("./common/errorHandler");
+const { authRouter, profileRouter } = require("./modules/auth/auth.routes");
 
-app.use(express.json({ limit: '100kb' }));
-app.use('/api/auth', authRouter);
-app.use('/api/users', profileRouter);
-// ... các router khác (batches, events, trace) đặt ở đây ...
+app.use(express.json());
+app.get("/api/health", /* giữ nguyên */);
+app.use("/api/auth", authRouter);
+app.use("/api/users", profileRouter);
+// ... router của các module khác (batches, events, trace) đặt ở đây ...
 app.use(notFound);      // luôn đặt sau cùng
 app.use(errorHandler);  // và đây là cuối cùng
 ```
+
+Các `require` của module Auth phải đứng SAU `require("dotenv").config()` vì chúng đọc `process.env` ngay khi nạp.
+
+Express 5 tự chuyển lỗi của handler async sang `errorHandler` nên không cần wrapper `asyncHandler`.
+Khi không gửi body, Express 5 để `req.body` là `undefined`; validator xử lý trường hợp này (trả 400).
 
 ## Quy tắc đã áp dụng
 
@@ -66,21 +87,24 @@ app.use(errorHandler);  // và đây là cuối cùng
 cd backend && node --test test/*.test.js
 ```
 
-## Thử thủ công
+## Kiểm thử
+
+**1. Test đơn vị** (không cần CSDL, không cần cài thư viện):
 
 ```bash
-curl -s -X POST localhost:3000/api/auth/register -H 'Content-Type: application/json' \
-  -d '{"name":"Nguyen Van A","email":"a@example.com","password":"password123","role":"FARMER"}'
-# -> 201, status PENDING. Đăng nhập lúc này trả 403 ACCOUNT_PENDING.
-
-# Chưa có endpoint Admin (tuần sau), duyệt tạm bằng SQL:
-#   INSERT INTO organizations (name, type) VALUES ('Nông trại thử', 'FARM');
-#   UPDATE users SET organization_id = (SELECT organization_id FROM organizations WHERE name='Nông trại thử'),
-#                    status = 'ACTIVE' WHERE email = 'a@example.com';
-
-curl -s -X POST localhost:3000/api/auth/login -H 'Content-Type: application/json' \
-  -d '{"email":"a@example.com","password":"password123"}'
-curl -s localhost:3000/api/users/me -H "Authorization: Bearer <token>"
-curl -s -X PATCH localhost:3000/api/users/me -H "Authorization: Bearer <token>" \
-  -H 'Content-Type: application/json' -d '{"name":"Tên mới"}'
+cd backend && node --test test/*.test.js     # kỳ vọng: 33 pass, 0 fail
 ```
+
+**2. Kiểm thử HTTP đầu-cuối với CSDL thật** (đăng ký -> đăng nhập -> xem hồ sơ -> đổi tên, kèm các ca lỗi):
+
+```bash
+docker compose up -d database               # CSDL, rồi tạo schema từ database/schema.sql (xem database/README.md)
+cd backend && npm run dev                   # terminal 1: chạy backend (hoặc: docker compose up -d backend)
+cd backend && npm run smoke:auth            # terminal 2: chạy kiểm thử HTTP
+```
+
+Script `scripts/smoke-auth.js` in `PASS` / `FAIL` từng bước và kết thúc bằng `TẤT CẢ ĐỀU PASS`. Nó kiểm tra:
+201 đăng ký (PENDING, không lộ mật khẩu), 409 email trùng, 400 dữ liệu sai và JSON hỏng, 401 sai mật khẩu / không token / token sai,
+403 `ACCOUNT_PENDING`, đăng nhập sau khi duyệt, `GET` và `PATCH /users/me` (không sửa được `role`), 404 đường dẫn lạ,
+mật khẩu lưu bcrypt, và audit có đúng `REGISTER`, `UPDATE`, `LOGIN_FAILED`.
+Chưa có endpoint Admin duyệt tài khoản nên script duyệt tạm bằng SQL. Mỗi lần chạy tạo thêm một tài khoản thử (audit chỉ ghi thêm nên không xóa được), chỉ dùng CSDL phát triển.
