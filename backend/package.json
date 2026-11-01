@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node src/app.js",
     "dev": "node --watch src/app.js",
-    "test": "node --test"
+    "test": "node --test",
+    "test:auth": "node --test \"test/*.test.js\"",
+    "smoke:auth": "node scripts/smoke-auth.js"
   },
   "keywords": [
     "food-traceability",
@@ -16,8 +18,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
-    "express": "^5.2.1"
+    "express": "^5.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.23.1"
   }
 }

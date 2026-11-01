@@ -25,6 +25,8 @@ tags:
     description: Supply chain events of a batch
   - name: Trace
     description: Internal timeline, QR code and public provenance
+  - name: Admin
+    description: Users, organizations and audit log (ADMIN only)
 
 paths:
   /auth/register:
@@ -96,6 +98,37 @@ paths:
                 $ref: "#/components/schemas/User"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+    patch:
+      tags: [Auth]
+      summary: Update the current user's profile
+      description: |
+        Only `name` can be changed. Email, role, organization and status are managed by an Admin
+        (sending them returns 400). The change is written to the audit log.
+      operationId: updateCurrentUser
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileRequest"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /batches:
     post:
@@ -132,7 +165,7 @@ paths:
     get:
       tags: [Batches]
       summary: List and search batches
-      description: FARMER sees only own batches; ADMIN sees all.
+      description: FARMER sees only batches of their own organization; ADMIN sees all.
       operationId: listBatches
       security:
         - bearerAuth: []
@@ -196,7 +229,10 @@ paths:
     patch:
       tags: [Batches]
       summary: Update batch information
-      description: Only the FARMER who owns the batch can update it. Changes are written to the audit log.
+      description: |
+        Only an ACTIVE FARMER of the organization that owns the batch can update it,
+        and only while currentStatus is CREATED (otherwise 409).
+        Changes are written to the audit log.
       operationId: updateBatch
       security:
         - bearerAuth: []
@@ -223,6 +259,8 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
 
   /batches/{batchId}/events:
     post:
@@ -329,6 +367,286 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
+  /users:
+    get:
+      tags: [Admin]
+      summary: List users
+      operationId: listUsers
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/AccountStatus"
+        - name: role
+          in: query
+          schema:
+            $ref: "#/components/schemas/Role"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Page of users
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /users/{userId}/role:
+    patch:
+      tags: [Admin]
+      summary: Change the role of a user
+      description: The role must match the type of the user's organization (409 otherwise). The last active ADMIN cannot be demoted.
+      operationId: changeUserRole
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangeRoleRequest"
+      responses:
+        "200":
+          description: Role changed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /users/{userId}/organization:
+    patch:
+      tags: [Admin]
+      summary: Assign a user to an organization
+      description: The organization type must match the user's role (409 otherwise). ADMIN accounts cannot belong to an organization.
+      operationId: assignUserOrganization
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignOrganizationRequest"
+      responses:
+        "200":
+          description: Organization assigned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /users/{userId}/status:
+    patch:
+      tags: [Admin]
+      summary: Approve, lock or unlock a user
+      description: |
+        ACTIVE approves a PENDING account or unlocks a LOCKED one. LOCKED locks the account.
+        A non-admin user needs an organization before becoming ACTIVE, and the last
+        active ADMIN cannot be locked (409 in both cases).
+      operationId: changeUserStatus
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangeStatusRequest"
+      responses:
+        "200":
+          description: Status changed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /organizations:
+    get:
+      tags: [Admin]
+      summary: List organizations
+      operationId: listOrganizations
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          schema:
+            $ref: "#/components/schemas/OrganizationType"
+      responses:
+        "200":
+          description: Organizations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Organization"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+    post:
+      tags: [Admin]
+      summary: Create an organization
+      operationId: createOrganization
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrganizationRequest"
+      responses:
+        "201":
+          description: Organization created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organization"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /organizations/{organizationId}:
+    patch:
+      tags: [Admin]
+      summary: Update an organization
+      description: |
+        Organizations cannot be deleted. The type cannot change once the organization
+        has members or batches (409). Name and type must be unique together (409).
+      operationId: updateOrganization
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/OrganizationId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOrganizationRequest"
+      responses:
+        "200":
+          description: Organization updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organization"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /audit-logs:
+    get:
+      tags: [Admin]
+      summary: Search the audit log
+      description: Read-only. Entries are written by the backend in the same transaction as the change.
+      operationId: listAuditLogs
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: entityType
+          in: query
+          schema:
+            $ref: "#/components/schemas/AuditEntityType"
+        - name: entityId
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: actorId
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: action
+          in: query
+          schema:
+            $ref: "#/components/schemas/AuditAction"
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Page of audit entries, newest first
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditLogPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
   /trace/{qrToken}:
     get:
       tags: [Trace]
@@ -400,6 +718,39 @@ components:
         type: integer
         format: int64
 
+    UserId:
+      name: userId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+
+    OrganizationId:
+      name: organizationId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
   responses:
     BadRequest:
       description: Invalid or missing input data
@@ -453,7 +804,8 @@ components:
   schemas:
     Role:
       type: string
-      enum: [FARMER, DISTRIBUTOR, PROCESSOR, CONSUMER, ADMIN]
+      description: Roles stored in the users table. Consumers have no account.
+      enum: [FARMER, DISTRIBUTOR, PROCESSOR, ADMIN]
 
     AccountStatus:
       type: string
@@ -473,6 +825,12 @@ components:
       properties:
         code:
           type: string
+          description: |
+            Stable machine-readable code. Used so the UI can pick a message:
+            VALIDATION_ERROR, INVALID_JSON (400); UNAUTHORIZED, INVALID_CREDENTIALS,
+            INVALID_TOKEN, TOKEN_EXPIRED (401); FORBIDDEN, ACCOUNT_PENDING, ACCOUNT_LOCKED (403);
+            NOT_FOUND (404); EMAIL_EXISTS, CONFLICT, INVALID_SEQUENCE (409);
+            PAYLOAD_TOO_LARGE (413); INTERNAL_ERROR (500).
           example: VALIDATION_ERROR
         message:
           type: string
@@ -503,8 +861,18 @@ components:
           minLength: 8
         role:
           type: string
-          description: ADMIN and CONSUMER cannot be chosen at registration.
+          description: ADMIN cannot be chosen at registration.
           enum: [FARMER, DISTRIBUTOR, PROCESSOR]
+
+    UpdateProfileRequest:
+      type: object
+      required: [name]
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          maxLength: 100
+          example: Nguyen Van B
 
     LoginRequest:
       type: object
@@ -543,8 +911,9 @@ components:
         role:
           $ref: "#/components/schemas/Role"
         organizationId:
-          type: integer
+          type: [integer, "null"]
           format: int64
+          description: Null until an Admin assigns an organization
         status:
           $ref: "#/components/schemas/AccountStatus"
 
@@ -602,6 +971,10 @@ components:
         createdBy:
           type: integer
           format: int64
+        organizationId:
+          type: integer
+          format: int64
+          description: Organization that owns the batch
 
     BatchPage:
       type: object
@@ -712,3 +1085,130 @@ components:
               timestamp:
                 type: string
                 format: date-time
+
+    OrganizationType:
+      type: string
+      enum: [FARM, PROCESSOR, DISTRIBUTOR]
+
+    Organization:
+      type: object
+      properties:
+        organizationId:
+          type: integer
+          format: int64
+        name:
+          type: string
+          example: Nong trai Dak Lak
+        type:
+          $ref: "#/components/schemas/OrganizationType"
+        address:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateOrganizationRequest:
+      type: object
+      required: [name, type]
+      properties:
+        name:
+          type: string
+        type:
+          $ref: "#/components/schemas/OrganizationType"
+        address:
+          type: string
+
+    UpdateOrganizationRequest:
+      type: object
+      minProperties: 1
+      properties:
+        name:
+          type: string
+        type:
+          $ref: "#/components/schemas/OrganizationType"
+        address:
+          type: string
+
+    UserPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+
+    ChangeRoleRequest:
+      type: object
+      required: [role]
+      properties:
+        role:
+          $ref: "#/components/schemas/Role"
+
+    AssignOrganizationRequest:
+      type: object
+      required: [organizationId]
+      properties:
+        organizationId:
+          type: integer
+          format: int64
+
+    ChangeStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [ACTIVE, LOCKED]
+
+    AuditAction:
+      type: string
+      enum: [CREATE, UPDATE, REGISTER, LOGIN_FAILED, APPROVE, CHANGE_ROLE, LOCK, UNLOCK, ASSIGN_ORGANIZATION]
+
+    AuditEntityType:
+      type: string
+      enum: [USER, ORGANIZATION, BATCH, EVENT, QR_CODE]
+
+    AuditLog:
+      type: object
+      properties:
+        auditId:
+          type: integer
+          format: int64
+        actorId:
+          type: [integer, "null"]
+          format: int64
+          description: Null when the user is unknown (for example a failed login with an unknown email)
+        action:
+          $ref: "#/components/schemas/AuditAction"
+        entityType:
+          $ref: "#/components/schemas/AuditEntityType"
+        entityId:
+          type: [integer, "null"]
+          format: int64
+        oldValue:
+          type: [object, "null"]
+        newValue:
+          type: [object, "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    AuditLogPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditLog"
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
