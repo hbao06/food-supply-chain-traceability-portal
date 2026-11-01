@@ -1,6 +1,6 @@
 -- =============================================================================
--- Kiểm tra nhanh schema.sql v1 (W3-TV3)
--- Chạy trên CSDL vừa tạo từ schema.sql (các bảng còn trống):
+-- Kiểm tra ràng buộc CSDL (W3-TV3, cập nhật W4-TV3 cho bảng roles)
+-- Chạy trên CSDL trống SAU KHI đã chạy migration (cd backend && npm run db:migrate):
 --   psql -U postgres -d food_traceability -v ON_ERROR_STOP=1 -f database/tests/schema-check.sql
 -- Mọi dữ liệu thử được ROLLBACK ở cuối, CSDL giữ nguyên.
 -- Kết quả mong đợi: mỗi dòng in ra "PASS ..." và dòng cuối "ALL CHECKS PASSED".
@@ -82,6 +82,19 @@ SELECT pg_temp.expect_fail('Không khóa Admin ACTIVE cuối cùng',
   $$UPDATE users SET status='LOCKED' WHERE email='admin@example.com'$$);
 SELECT pg_temp.expect_ok('Duyệt tài khoản: gán đơn vị rồi ACTIVE',
   $$UPDATE users SET organization_id=1, status='ACTIVE' WHERE email='pending@example.com'$$);
+
+-- ---------- roles (migration 002) ----------
+SELECT pg_temp.expect_fail('Vai trò không có trong bảng roles',
+  $$INSERT INTO users (name,email,password_hash,role) VALUES ('X','r@example.com',pg_temp.h(),'RETAILER')$$);
+SELECT pg_temp.expect_fail('Không sửa mã vai trò', $$UPDATE roles SET role_code='FARM_X' WHERE role_code='FARMER'$$);
+SELECT pg_temp.expect_fail('Không xóa vai trò',    $$DELETE FROM roles WHERE role_code='PROCESSOR'$$);
+DO $$
+BEGIN
+    IF (SELECT string_agg(role_code, ',' ORDER BY role_code) FROM roles WHERE self_register) <> 'DISTRIBUTOR,FARMER,PROCESSOR' THEN
+        RAISE EXCEPTION 'FAIL  roles.self_register sai';
+    END IF;
+    RAISE NOTICE 'PASS  Chỉ FARMER, PROCESSOR, DISTRIBUTOR được tự đăng ký';
+END $$;
 
 -- ---------- organizations (US-S03) ----------
 SELECT pg_temp.expect_fail('Đơn vị trùng tên và loại',

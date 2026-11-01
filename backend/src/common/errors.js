@@ -45,4 +45,13 @@ class ConflictError extends AppError {
   }
 }
 
-module.exports = { AppError, ValidationError, UnauthorizedError, ForbiddenError, NotFoundError, ConflictError };
+// 429 – gửi quá nhiều yêu cầu trong một khoảng thời gian (middleware/rateLimit.js)
+class TooManyRequestsError extends AppError {
+  constructor(code = 'TOO_MANY_REQUESTS', message = 'Bạn thao tác quá nhanh, vui lòng thử lại sau ít phút') {
+    super(429, code, message);
+  }
+}
+
+module.exports = {
+  AppError, ValidationError, UnauthorizedError, ForbiddenError, NotFoundError, ConflictError, TooManyRequestsError,
+};

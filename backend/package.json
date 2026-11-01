@@ -8,7 +8,9 @@
     "dev": "node --watch src/app.js",
     "test": "node --test",
     "test:auth": "node --test \"test/*.test.js\"",
-    "smoke:auth": "node scripts/smoke-auth.js"
+    "smoke:auth": "node scripts/smoke-auth.js",
+    "db:migrate": "node scripts/migrate.js",
+    "db:seed:admin": "node scripts/seed-admin.js"
   },
   "keywords": [
     "food-traceability",

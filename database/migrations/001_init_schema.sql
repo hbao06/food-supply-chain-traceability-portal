@@ -1,4 +1,11 @@
 -- =============================================================================
+-- Migration 001 – schema v1 (W3-TV3)
+-- Nội dung giống database/schema.sql, bỏ BEGIN/COMMIT vì trình chạy migration
+-- (backend/scripts/migrate.js) tự bọc mỗi file trong một transaction.
+-- KHÔNG sửa file này sau khi đã chạy; thay đổi CSDL bằng migration mới (002, 003...).
+-- =============================================================================
+
+-- =============================================================================
 -- Food Supply Chain Traceability & Provenance Portal – Nhóm 13
 -- schema.sql v1 (W3-TV3)            PostgreSQL 16
 --
@@ -16,7 +23,6 @@
 -- Toàn bộ file chạy trong một transaction: lỗi ở đâu thì không tạo gì cả.
 -- =============================================================================
 
-BEGIN;
 
 -- -----------------------------------------------------------------------------
 -- 0. Hàm dùng chung
@@ -437,4 +443,3 @@ LEFT JOIN organizations o ON o.organization_id = u.organization_id;
 COMMENT ON VIEW public_batch_trace IS 'Thông tin lô công khai: không có id nội bộ, email hay người tạo.';
 COMMENT ON VIEW public_event_trace IS 'Timeline công khai: không có actor_id, email hay audit.';
 
-COMMIT;

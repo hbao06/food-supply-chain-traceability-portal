@@ -44,3 +44,18 @@ test("health endpoint allows browser cross-origin requests", async () => {
   assert.equal(response.headers.get("access-control-allow-origin"), "*");
   await response.text();
 });
+
+test("responses carry security headers and hide the framework (W4-TV3)", async () => {
+  const response = await fetch(`${baseUrl}/api/health`);
+  assert.equal(response.headers.get("x-content-type-options"), "nosniff");
+  assert.equal(response.headers.get("x-frame-options"), "DENY");
+  assert.equal(response.headers.get("cache-control"), "no-store");
+  assert.equal(response.headers.get("x-powered-by"), null);
+  await response.text();
+});
+
+test("protected profile route still requires a token (requireAuth)", async () => {
+  const response = await fetch(`${baseUrl}/api/users/me`);
+  assert.equal(response.status, 401);
+  assert.equal((await response.json()).code, "UNAUTHORIZED");
+});
