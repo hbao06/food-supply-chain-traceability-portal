@@ -31,7 +31,8 @@ sequenceDiagram
             FE-->>C: Thông báo + liên kết về trang nhập mã lô
         else Chữ ký đúng
             QR-->>TS: batch_code
-            TS->>DB: SELECT lô + sự kiện theo batch_code<br/>(chỉ trường công khai, thời gian tăng dần)
+            TS->>DB: SELECT public_batch_trace theo batch_code<br/>(chỉ các cột công khai của lô)
+            TS->>DB: SELECT public_event_trace theo batch_code<br/>(chỉ các cột công khai, thời gian tăng dần)
             alt Không có lô
                 DB-->>TS: Rỗng
                 TS-->>API: Không tìm thấy

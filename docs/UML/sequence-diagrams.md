@@ -2,12 +2,12 @@
 
 > Bàn giao W3-TV4: Sequence Diagram cho **tạo lô** và **quét QR** (kèm xem/tải QR).
 > Người lập: TV4 | Người review: TV3 | Ảnh PNG (độ phân giải cao) và mã nguồn Mermaid: thư mục [`sequence/`](sequence)
-> Các sơ đồ bám theo SRS v1.5 (`docs/SRS/SRS-v1.md`), `user-stories-tv4.md` và `user-stories-batch.md`. Trong sơ đồ, **Auth (JWT, RBAC)**, **QR Service** và **Trace Service** là thành phần logic; tên lớp cụ thể sẽ thống nhất với Class Diagram của TV2.
+> Các sơ đồ bám theo SRS v1.5 (`docs/SRS/SRS-v1.md`), `docs/SRS/user-stories-tv4.md` và `docs/SRS/user-stories-batch.md`. Trong sơ đồ, **Auth (JWT, RBAC)**, **QR Service** và **Trace Service** là thành phần logic.
 
 ## Quy ước
 - Đường liền là yêu cầu, đường đứt là phản hồi; số thứ tự ở mỗi mũi tên là thứ tự thực hiện.
 - Khung `alt` là các nhánh điều kiện (thành công, lỗi, ngoài quyền); khung nền xám là phạm vi Database Transaction.
-- Mã lỗi: 401 chưa đăng nhập hoặc token hết hạn, 403 sai vai trò, 404 ngoài phạm vi hoặc không tồn tại, 400 dữ liệu sai, 429 vượt giới hạn tần suất.
+- Mã lỗi: 401 chưa đăng nhập hoặc token hết hạn, 403 sai vai trò hoặc tài khoản không `ACTIVE` (PENDING/LOCKED), 404 ngoài phạm vi hoặc không tồn tại, 400 dữ liệu sai, 429 vượt giới hạn tần suất.
 
 ## SD-01. Tạo lô thực phẩm và sinh mã QR
 
@@ -19,8 +19,8 @@
 
 **Diễn giải**
 
-- Farmer tạo lô qua `POST /batches`; hệ thống kiểm tra JWT và vai trò trước khi xử lý (401 chưa đăng nhập, 403 sai vai trò).
-- Batch, QRCode và sự kiện `CREATED` được ghi trong **một Database Transaction**. `qr_token` có chữ ký HMAC-SHA256 tạo bằng khóa `QR_HMAC_SECRET`.
+- Farmer tạo lô qua `POST /batches`; hệ thống kiểm tra JWT, trạng thái `ACTIVE` và vai trò trước khi xử lý (401 chưa đăng nhập/token sai; 403 sai vai trò hoặc PENDING/LOCKED).
+- `batches`, `qr_codes`, sự kiện `CREATED` và `audit_logs` được ghi trong **một Database Transaction**, theo thứ tự đó. Bản ghi QR lưu `qr_data` và `signature_hmac`; audit được ghi cùng transaction theo US-S05.
 - Nếu sinh QR lỗi (ví dụ thiếu khóa) thì ROLLBACK toàn bộ, trả 500 và không để lại Batch, QR hay sự kiện nào.
 - Dữ liệu sai (thiếu tên, số lượng ≤ 0) trả 400 trước khi mở transaction.
 
@@ -45,7 +45,7 @@ sequenceDiagram
     alt Chưa đăng nhập hoặc token hết hạn
         AU-->>API: Từ chối
         API-->>FE: 401 Unauthorized
-    else Không phải vai trò Farmer
+    else Không phải Farmer hoặc tài khoản không ACTIVE (PENDING/LOCKED)
         AU-->>API: Từ chối
         API-->>FE: 403 Forbidden
     else Hợp lệ
@@ -66,14 +66,15 @@ sequenceDiagram
                 SV->>DB: ROLLBACK
             else Sinh QR thành công
                 QR-->>SV: qr_token
-                SV->>DB: INSERT QRCode (batch_id, qr_token)
-                SV->>DB: INSERT Event CREATED (batch_id, người tạo, thời điểm)
+                SV->>DB: INSERT qr_codes (batch_id, qr_data, signature_hmac)
+                SV->>DB: INSERT supply_chain_events (CREATED)
+                SV->>DB: INSERT audit_logs (action=CREATE, entity_type=BATCH)
                 SV->>DB: COMMIT
             end
             end
             alt Đã ROLLBACK
                 SV-->>API: Lỗi hệ thống
-                API-->>FE: 500 (không lưu Batch, QR, sự kiện)
+        API-->>FE: 500 (không lưu batch, QR, sự kiện, audit)
             else Đã COMMIT
                 SV-->>API: lô + QR + sự kiện CREATED
                 API-->>FE: 201 Created
@@ -136,7 +137,8 @@ sequenceDiagram
             FE-->>C: Thông báo + liên kết về trang nhập mã lô
         else Chữ ký đúng
             QR-->>TS: batch_code
-            TS->>DB: SELECT lô + sự kiện theo batch_code<br/>(chỉ trường công khai, thời gian tăng dần)
+            TS->>DB: SELECT public_batch_trace theo batch_code<br/>(chỉ các cột công khai của lô)
+            TS->>DB: SELECT public_event_trace theo batch_code<br/>(chỉ các cột công khai, thời gian tăng dần)
             alt Không có lô
                 DB-->>TS: Rỗng
                 TS-->>API: Không tìm thấy
@@ -166,7 +168,7 @@ sequenceDiagram
 **Diễn giải**
 
 - Người dùng có quyền đọc lô gọi `GET /batches/{batchId}/qr` (JWT). Endpoint này là **đề xuất**, cần đối chiếu OpenAPI.
-- Lô ngoài phạm vi đơn vị hoặc không tồn tại trả 404; chưa đăng nhập trả 401.
+- Farmer đọc lô thuộc đơn vị mình; Processor/Distributor đọc lô mà đơn vị của họ đã ghi ít nhất một sự kiện; Admin đọc mọi lô. Ngoài phạm vi hoặc không tồn tại trả 404; chưa đăng nhập trả 401.
 - Không kèm `format` thì trả URL truy xuất (JSON); `format=png` (≥ 512 px) hoặc `svg` thì trả file `QR-{batch_code}.{đuôi}`; định dạng khác trả 400.
 
 ![SD-03. Xem và tải mã QR của lô](sequence/SD-03-xem-tai-qr.png)
@@ -193,16 +195,22 @@ sequenceDiagram
     else Hợp lệ
         AU-->>API: OK (userId, organizationId, vai trò)
         API->>SV: getBatchQr(batchId, phạm vi người dùng)
-        SV->>DB: SELECT lô + qr_token trong phạm vi đơn vị
+        alt Vai trò FARMER
+            SV->>DB: SELECT batches + qr_codes theo organization_id của Farmer
+        else Vai trò PROCESSOR hoặc DISTRIBUTOR
+            SV->>DB: SELECT batches + qr_codes cho lô có sự kiện do organization_id này ghi
+        else Vai trò ADMIN
+            SV->>DB: SELECT batches + qr_codes không giới hạn đơn vị
+        end
         alt Lô ngoài phạm vi hoặc không tồn tại
             DB-->>SV: Rỗng
             SV-->>API: Không tìm thấy
             API-->>FE: 404 Not Found (không trả dữ liệu QR)
         else Có quyền đọc lô
-            DB-->>SV: batch_code, qr_token
+            DB-->>SV: batch_code, qr_data, signature_hmac
             alt Không có format
-                SV-->>API: URL truy xuất /trace/{qrToken}
-                API-->>FE: 200 OK (JSON)
+                SV-->>API: QRCode { qrData, batchId, ... }
+                API-->>FE: 200 OK (JSON theo schema QRCode của OpenAPI)
             else format = png hoặc svg
                 SV->>QR: tạo ảnh QR từ URL truy xuất (png ≥ 512 px hoặc svg)
                 QR-->>SV: Ảnh QR
@@ -220,10 +228,9 @@ sequenceDiagram
 </details>
 
 ## Điểm chờ xác nhận
-- Cấu trúc `qr_token` và tên biến `QR_HMAC_SECRET` (chờ TV2), xem SRS mục 11 (P1, P2).
-- Endpoint `GET /batches/{batchId}/qr` và định dạng phản hồi (chờ TV2), SRS mục 11 (P3).
+- Cấu trúc `qr_token` và tên biến `QR_HMAC_SECRET` theo SRS P1/P2.
+- Endpoint `GET /batches/{batchId}/qr` và phản hồi JSON theo schema `QRCode.qrData` OpenAPI; điểm mở P3 chỉ còn ảnh PNG/SVG vì OpenAPI hiện mới mô tả `qrData`.
 - Mã lỗi khi truy cập ngoài phạm vi (404) và thông báo lỗi truy xuất dùng chung (chờ TV3, TV1), SRS mục 10.
-- Tên lớp và thành phần trong sơ đồ cần khớp Class Diagram (TV2) và ERD (TV3) để đạt mốc "tên dữ liệu thống nhất" của Tuần 3.
 
 ## Cách xuất lại ảnh PNG
 ```bash

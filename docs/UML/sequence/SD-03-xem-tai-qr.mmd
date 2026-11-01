@@ -19,17 +19,23 @@ sequenceDiagram
         API-->>FE: 401 Unauthorized
     else Hợp lệ
         AU-->>API: OK (userId, organizationId, vai trò)
-        API->>SV: getBatchQr(batchId, phạm vi người dùng)
-        SV->>DB: SELECT lô + qr_token trong phạm vi đơn vị
+        API->>SV: getBatchQr(batchId, phạm vi theo vai trò)
+        alt Vai trò FARMER
+            SV->>DB: SELECT batches + qr_codes theo organization_id của Farmer
+        else Vai trò PROCESSOR hoặc DISTRIBUTOR
+            SV->>DB: SELECT batches + qr_codes cho lô có sự kiện do organization_id này ghi
+        else Vai trò ADMIN
+            SV->>DB: SELECT batches + qr_codes không giới hạn đơn vị
+        end
         alt Lô ngoài phạm vi hoặc không tồn tại
             DB-->>SV: Rỗng
             SV-->>API: Không tìm thấy
             API-->>FE: 404 Not Found (không trả dữ liệu QR)
         else Có quyền đọc lô
-            DB-->>SV: batch_code, qr_token
+            DB-->>SV: batch_code, qr_data, signature_hmac
             alt Không có format
-                SV-->>API: URL truy xuất /trace/{qrToken}
-                API-->>FE: 200 OK (JSON)
+                SV-->>API: QRCode { qrData, batchId, ... }
+                API-->>FE: 200 OK (JSON theo schema QRCode của OpenAPI)
             else format = png hoặc svg
                 SV->>QR: tạo ảnh QR từ URL truy xuất (png ≥ 512 px hoặc svg)
                 QR-->>SV: Ảnh QR

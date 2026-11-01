@@ -73,9 +73,9 @@ Công cụ ở bảng trên là **đề xuất**, nhóm có thể thay bằng c�
 | `processor_a`, `distributor_a` | Processor và Distributor của đơn vị A |
 | `admin_1` | Quản trị viên |
 | `user_pending`, `user_locked` | Tài khoản ở trạng thái PENDING và LOCKED |
-| `BATCH-001` | Lô đơn vị A, trạng thái `CREATED`, có QR |
-| `BATCH-002` | Lô đơn vị A đã chuyển khỏi `CREATED` |
-| `BATCH-B01` | Lô của đơn vị B (dùng kiểm tra ngoài phạm vi) |
+| `BATCH-2026-0001` | Lô đơn vị A, trạng thái `CREATED`, có QR |
+| `BATCH-2026-0002` | Lô đơn vị A đã chuyển khỏi `CREATED` |
+| `BATCH-2026-0101` | Lô của đơn vị B (dùng kiểm tra ngoài phạm vi) |
 
 ⚠️ Seed do TV3 cung cấp (`database/`), TV4 thống nhất tên mã khi viết test.
 
@@ -107,21 +107,21 @@ Công cụ ở bảng trên là **đề xuất**, nhóm có thể thay bằng c�
 | Mã | Ca kiểm thử (Given / When) | Kết quả mong đợi | AC | Loại | Ưu tiên |
 |---|---|---|---|---|---|
 | TC-QR-01 | Farmer đăng nhập tạo lô hợp lệ | 201; lô có đúng 1 QR; `qr_token` có chữ ký HMAC; URL `/trace/<qr_token>`; phản hồi kèm dữ liệu QR | AC-QR-01-S1 | API | M |
-| TC-QR-02 | Lô `BATCH-001` có `qr_token` T; Farmer cập nhật thông tin lô | `qr_token` vẫn là T | AC-QR-01-S2 | API | M |
-| TC-QR-03 | Thiếu khóa `QR_HMAC_SECRET` khi tạo lô | 500; không có Batch, QR, sự kiện `CREATED` (rollback) | AC-QR-01-E1 | API + DB | M |
+| TC-QR-02 | Lô `BATCH-2026-0001` có `qr_token` T; Farmer cập nhật thông tin lô | `qr_token` vẫn là T | AC-QR-01-S2 | API | M |
+| TC-QR-03 | Thiếu khóa `QR_HMAC_SECRET` khi tạo lô | 500; không có batch, QR, sự kiện `CREATED` hoặc audit tương ứng (rollback toàn transaction) | AC-QR-01-E1, US-S05 AC02 | API + DB | M |
 | TC-QR-04 | Sửa 1 ký tự của `qr_token` rồi mở `/trace/<token đã sửa>` | 404, cùng thông báo như token không tồn tại | AC-QR-01-E2 | API | M |
-| TC-QR-05 | Người dùng có quyền đọc `BATCH-001` gọi `GET /batches/{id}/qr` không `format` ⚠️ | 200 kèm URL truy xuất của lô | AC-QR-02-S1 | API | M |
-| TC-QR-06 | Như trên với `format=png` ⚠️ | File `QR-BATCH-001.png` ≥ 512x512 px; quét ra đúng URL | AC-QR-02-S2 | API | M |
-| TC-QR-07 | Như trên với `format=svg` ⚠️ | File `QR-BATCH-001.svg`, không vỡ nét khi phóng to | AC-QR-02-S3 | API | S |
-| TC-QR-08 | Người dùng đơn vị A xin QR của `BATCH-B01`; và QR của `BATCH-999` không tồn tại | 404, không trả dữ liệu QR | AC-QR-02-E1 | API | M |
+| TC-QR-05 | Người dùng có quyền đọc `BATCH-2026-0001` gọi `GET /batches/{id}/qr` không `format` ⚠️ | 200; response JSON theo schema `QRCode`, trường `qrData` chứa URL truy xuất | AC-QR-02-S1 | API | M |
+| TC-QR-06 | Như trên với `format=png` ⚠️ | File `QR-BATCH-2026-0001.png` ≥ 512x512 px; quét ra đúng URL | AC-QR-02-S2 | API | M |
+| TC-QR-07 | Như trên với `format=svg` ⚠️ | File `QR-BATCH-2026-0001.svg`, không vỡ nét khi phóng to | AC-QR-02-S3 | API | S |
+| TC-QR-08 | Người dùng đơn vị A xin QR của `BATCH-2026-0101`; và QR của `BATCH-2026-9999` không tồn tại | 404, không trả dữ liệu QR | AC-QR-02-E1 | API | M |
 | TC-QR-09 | Gọi xin QR khi chưa đăng nhập hoặc token hết hạn | 401 | AC-QR-02-E2 | API | M |
 | TC-QR-10 | `format=gif` | 400, liệt kê `png`, `svg` | AC-QR-02-E3 | API | S |
 | TC-QR-11 | Mở `/trace/<qr_token hợp lệ>` không đăng nhập | 200: tên sản phẩm, mã lô, xuất xứ, đơn vị, timeline cũ đến mới; tải < 3 giây | AC-QR-03-S1 | API + Perf | M |
-| TC-QR-12 | `GET /trace/code/BATCH-001` không đăng nhập | 200, cùng nội dung và giới hạn trường như TC-QR-11 | AC-QR-03-S2 | API | M |
+| TC-QR-12 | `GET /trace/code/BATCH-2026-0001` không đăng nhập | 200, cùng nội dung và giới hạn trường như TC-QR-11 | AC-QR-03-S2 | API | M |
 | TC-QR-13 | Truy xuất lô vừa tạo, chỉ có sự kiện `CREATED` | 200 với đúng 1 sự kiện `CREATED` | AC-QR-03-S3 | API | M |
 | TC-QR-14 | Truy xuất công khai lô có dữ liệu nội bộ | Phản hồi không có email, mã người dùng, mã người thực hiện, audit log | AC-QR-03-S4 | API | M |
 | TC-QR-15 | Token không tồn tại hoặc sai chữ ký | 404 "Không tìm thấy thông tin truy xuất hợp lệ", không nêu lý do | AC-QR-03-E1 | API | M |
-| TC-QR-16 | `GET /trace/code/BATCH-999` | 404 cùng thông báo như TC-QR-15 | AC-QR-03-E2 | API | M |
+| TC-QR-16 | `GET /trace/code/BATCH-2026-9999` | 404 cùng thông báo như TC-QR-15 | AC-QR-03-E2 | API | M |
 | TC-QR-17 | Một IP gửi 61 yêu cầu trong 1 phút tới endpoint truy xuất | Yêu cầu thứ 61 trả 429 | AC-QR-03-E3 | API | S |
 
 ### 5.2 CI/CD và Docker (TV4)
@@ -140,11 +140,11 @@ Công cụ ở bảng trên là **đề xuất**, nhóm có thể thay bằng c�
 AC chi tiết của TV2 nằm trong `user-stories-batch.md`; các ca dưới đây ở mức User Story, ⚠️ cập nhật mã AC khi TV2 chốt.
 | Mã | Ca kiểm thử | Kết quả mong đợi | Story | Loại | Ưu tiên |
 |---|---|---|---|---|---|
-| TC-BATCH-01 | Farmer tạo lô hợp lệ, kiểm tra DB sau khi tạo | 201; Batch, QRCode, sự kiện `CREATED` cùng tồn tại (một transaction) | US-B01 | API + DB | M |
-| TC-BATCH-02 | Tạo lô thiếu tên hoặc số lượng ≤ 0 | 400; không lưu Batch, QR, sự kiện | US-B01 | API | M |
+| TC-BATCH-01 | Farmer tạo lô hợp lệ, kiểm tra DB sau khi tạo | 201; batch, `qr_codes`, sự kiện `CREATED`, audit cùng tồn tại theo thứ tự trong một transaction | US-B01, US-S05 AC01–02 | API + DB | M |
+| TC-BATCH-02 | Tạo lô thiếu tên hoặc số lượng ≤ 0 | 400; không lưu batch, QR, sự kiện hoặc audit | US-B01 | API | M |
 | TC-BATCH-03 | Tạo lô bằng tài khoản không phải Farmer; và khi chưa đăng nhập | 403; 401 | US-B01 | API | M |
-| TC-BATCH-04 | Farmer sửa thông tin lô `BATCH-001` đang `CREATED` | 200; dữ liệu cập nhật | US-B02 | API | M |
-| TC-BATCH-05 | Sửa lô `BATCH-002` đã chuyển khỏi `CREATED` ⚠️ | Từ chối (409 đề xuất); dữ liệu không đổi | US-B02 | API | M |
+| TC-BATCH-04 | Farmer sửa thông tin lô `BATCH-2026-0001` đang `CREATED` | 200; dữ liệu cập nhật | US-B02 | API | M |
+| TC-BATCH-05 | Sửa lô `BATCH-2026-0002` đã chuyển khỏi `CREATED` ⚠️ | Từ chối (409 đề xuất); dữ liệu không đổi | US-B02 | API | M |
 | TC-BATCH-06 | Sửa lô của đơn vị khác hoặc lô không tồn tại | 404; dữ liệu không đổi | US-B02 | API | M |
 | TC-BATCH-07 | Danh sách lô cho Farmer, Processor, Distributor, Admin ⚠️ | Mỗi vai trò chỉ thấy lô trong phạm vi được phép; Admin thấy tất cả | US-B03 | API | M |
 | TC-BATCH-08 | Lọc theo `status` hợp lệ; và `status` không hợp lệ | Kết quả đúng; 400 kèm giá trị hợp lệ | US-B03 | API | M |
@@ -187,7 +187,16 @@ AC chi tiết của TV2 nằm trong `user-stories-batch.md`; các ca dưới đ�
 | TC-UI-08 | QR hoặc mã lô không hợp lệ | Một thông báo thống nhất và liên kết về trang nhập mã | US-UI06-AC03 | UI | M |
 | TC-UI-09 | Lỗi tải kết quả truy xuất; và lỗi 429 ⚠️ | Thông báo lỗi kèm Thử lại; không hiện dữ liệu mẫu như kết quả thật | US-UI06-AC04 | UI | S |
 | TC-UI-10 | Đăng xuất, rồi Quay lại, tải lại hoặc mở trực tiếp dashboard | Về trang đăng nhập; không hiện lại dữ liệu nội bộ | US-UI07-AC01, AC02 | UI | M |
-| TC-SEC-xx | Bảo mật và dữ liệu (RBAC, audit log, khóa tài khoản) | ⚠️ Chờ User Story của TV3 | (chờ) | API | M |
+| TC-SEC-01 | Admin gán đơn vị đúng loại cho tài khoản PENDING rồi kích hoạt; thử kích hoạt khi chưa gán đơn vị | Thành công sau khi gán đúng đơn vị; chưa gán → 400 | US-S01 AC01–02 | API | M |
+| TC-SEC-02 | Admin gán vai trò không khớp loại đơn vị; tự hạ quyền hoặc khóa Admin ACTIVE cuối cùng | Sai loại → 400; tự hạ quyền/khóa Admin cuối → 409 | US-S01 AC02–03 | API + DB | M |
+| TC-SEC-03 | Farmer/Processor/Distributor gọi `/users`, `/organizations`, `/audit-logs` | Mỗi endpoint trả 403 | US-S01 AC04, US-S03 AC05, US-S06 AC03 | API | M |
+| TC-SEC-04 | Gửi `role`, `status`, `organization_id` trong `PATCH /users/me` | Yêu cầu bị từ chối hoặc các field không đổi; `name` không bị ghi ngoài ý muốn | US-S02 AC05 | API | M |
+| TC-SEC-05 | Tạo organization trùng `(name, type)`; đổi `type` khi organization đã có thành viên | Cả hai trả 409; dữ liệu không đổi | US-S03 AC02–03 | API + DB | M |
+| TC-SEC-06 | Khóa tài khoản rồi gọi API bằng token cũ; đăng nhập bằng tài khoản LOCKED và mật khẩu đúng | Token cũ bị chặn 403; đăng nhập LOCKED trả 403 | US-S04 AC01–02 | API | M |
+| TC-SEC-07 | Khóa người tạo lô đã có lịch sử rồi truy xuất công khai | Lô và sự kiện trước đó vẫn hiển thị theo dữ liệu công khai | US-S04 AC03 | API | M |
+| TC-SEC-08 | Tạo/sửa lô, ghi sự kiện, duyệt/khóa tài khoản; kiểm tra audit tương ứng và dữ liệu nhạy cảm | Mỗi thay đổi có đúng audit theo hợp đồng; audit không chứa mật khẩu/hash/JWT/token | US-S05 AC01–03 | API + DB | M |
+| TC-SEC-09 | Admin gọi `GET /audit-logs` với bộ lọc; thử `from > to` | Có lọc đúng; khoảng thời gian sai → 400 | US-S06 AC01–02 | API | M |
+| TC-SEC-10 | Thử `UPDATE`/`DELETE` trực tiếp trên `audit_logs` và `supply_chain_events` | CSDL từ chối; dữ liệu không đổi (đã có kiểm tra trong `database/tests/schema-check.sql`) | US-S06 AC04 | DB | M |
 
 ---
 
@@ -212,9 +221,16 @@ AC chi tiết của TV2 nằm trong `user-stories-batch.md`; các ca dưới đ�
 | US-QR-03 Truy xuất công khai | FR-QR-05..08, NFR-01, NFR-04 | TC-QR-11..17 | 7 |
 | US-QA-01 CI mỗi PR | FR-QA-01, FR-QA-02, NFR-05, NFR-09 | TC-QA-01..05 | 4 |
 | US-DEPLOY-01 Docker | FR-DEP-01, FR-DEP-02, NFR-07 | TC-DEP-01..03 | 8 |
-| US-SEC (TV3) | FR mục 3.5 (chờ) | TC-SEC-xx (chờ) | 4 đến 7 |
+| US-S01 Duyệt tài khoản, vai trò, đơn vị | US-S01 AC01–04 | TC-SEC-01..03 | 4 |
+| US-S02 Chặn field hồ sơ không được sửa | US-S02 AC05 | TC-SEC-04 | 4 |
+| US-S03 Quản lý đơn vị | US-S03 AC02–03, AC05 | TC-SEC-03, 05 | 4 |
+| US-S04 Khóa/mở khóa tài khoản | US-S04 AC01–03 | TC-SEC-02, 06..07 | 4 |
+| US-S05 Audit tự động | US-S05 AC01–03 | TC-SEC-08 | 4 đến 7 |
+| US-S06 Tra cứu/bảo vệ audit | US-S06 AC01–04 | TC-SEC-03, 09..10 | 4 đến 7 |
 
-**Thống kê hiện có:** 17 TC nhóm QR, 8 TC nhóm CI và Docker, 18 TC nhóm lô và timeline, 14 TC API tài khoản, 10 TC giao diện; tổng 67 TC đã mô tả, chưa tính TC-EVT và TC-SEC đang chờ AC.
+Các ca `TC-SEC` truy vết tới [User Story bảo mật/dữ liệu](../SRS/user-stories-security-data.md); `TC-SEC-10` dùng kiểm tra ràng buộc trong [`database/tests/schema-check.sql`](../../database/tests/schema-check.sql) (39 ca kiểm tra schema theo bàn giao W3-TV3).
+
+**Thống kê hiện có:** 17 TC nhóm QR, 8 TC nhóm CI và Docker, 18 TC nhóm lô và timeline, 14 TC API tài khoản, 10 TC giao diện, 10 TC bảo mật/dữ liệu; tổng 77 TC đã mô tả, chưa tính TC-EVT đang chờ AC chi tiết.
 
 ---
 
@@ -289,4 +305,4 @@ Mỗi lỗi tạo thành GitHub Issue với label `type: bug`, mức `priority:`
 | 4 | Phạm vi đọc lô của Processor, Distributor ("đã tiếp nhận/xử lý" hay chỉ "thuộc đơn vị") | TV2 | TC-BATCH-07, 12, 15 |
 | 5 | Chính sách mật khẩu, mã lỗi email trùng (P5, P6) | TV3 | TC-AUTH-03, 12 |
 | 6 | Hiển thị lỗi 429 trên giao diện (P4) | TV1, TV2 | TC-UI-09 |
-| 7 | AC cho sự kiện chuỗi cung ứng và story bảo mật (TV3) | TV2, TV3 | TC-EVT, TC-SEC |
+| 7 | AC chi tiết cho sự kiện chuỗi cung ứng | TV2 | TC-EVT |
