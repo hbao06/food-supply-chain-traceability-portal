@@ -54,10 +54,18 @@ const can = (role, permission) => rolesFor(permission).includes(role);
 
 // Middleware: 401 nếu chưa xác thực, 403 FORBIDDEN nếu vai trò không có quyền.
 // Tên quyền sai bị phát hiện ngay khi khởi động (ném lỗi lúc tạo route), không phải lúc chạy.
+//
+// Chỉ tin req.auth đã qua loadCurrentUser (có `status` lấy từ CSDL). Nếu route quên loadCurrentUser
+// (chỉ có authenticate, req.auth lấy từ token, không có status) thì trả 500 và ghi log, để lỗi
+// cấu hình route lộ ra ngay khi chạy thử thay vì âm thầm tin vai trò trong token.
 function requirePermission(permission) {
   const roles = rolesFor(permission);
   return function checkPermission(req, res, next) {
     if (!req.auth) return next(new UnauthorizedError());
+    if (req.auth.status === undefined) {
+      return next(new Error(`Route ${req.method} ${req.originalUrl}: requirePermission('${permission}') cần đặt sau requireAuth (thiếu loadCurrentUser)`));
+    }
+    if (req.auth.status !== 'ACTIVE') return next(new ForbiddenError('ACCOUNT_LOCKED', 'Tài khoản không ở trạng thái hoạt động'));
     if (!roles.includes(req.auth.role)) return next(new ForbiddenError());
     return next();
   };

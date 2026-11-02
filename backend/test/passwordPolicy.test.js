@@ -16,3 +16,21 @@ test('không hợp lệ: ngắn, thiếu số, thiếu chữ, quá 72 byte, sai 
   assert.match(passwordProblem(undefined), /ít nhất 8/);
   assert.match(passwordProblem(12345678), /ít nhất 8/);
 });
+
+test('mật khẩu không phải chuỗi (số, null, thiếu, object, mảng, boolean) -> báo lỗi, không ném exception', () => {
+  for (const pw of [12345678, 12345678.5, null, undefined, {}, { length: 10 }, ['abc12345'], true]) {
+    assert.doesNotThrow(() => passwordProblem(pw));
+    assert.match(passwordProblem(pw), /ít nhất 8/, JSON.stringify(pw));
+  }
+});
+
+test('đăng ký qua validator: password null / số / thiếu -> 400 trên trường password', () => {
+  const { validateRegister } = require('../src/common/validators');
+  const base = { name: 'A', email: 'a@example.com', role: 'FARMER' };
+  for (const password of [null, 12345678, undefined]) {
+    try { validateRegister({ ...base, password }); assert.fail('phải ném lỗi'); } catch (e) {
+      assert.equal(e.status, 400);
+      assert.deepEqual(e.details.map((d) => d.field), ['password']);
+    }
+  }
+});

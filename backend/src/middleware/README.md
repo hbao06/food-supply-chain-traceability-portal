@@ -26,6 +26,7 @@ router.post('/:batchId/events', requireAuth, requirePermission('event:create'), 
 
 Luôn dùng `requireAuth` (không dùng `authenticate` một mình) cho route nội bộ.
 Sau `requireAuth`, `req.auth = { userId, role, organizationId, status }` là dữ liệu **lấy từ CSDL**.
+`requirePermission` kiểm tra thêm `status === 'ACTIVE'`; nếu route quên `requireAuth` (req.auth chỉ từ token, không có `status`) thì trả 500 kèm log nêu tên route, để phát hiện ngay khi chạy thử.
 
 Tên quyền có sẵn (`PERMISSIONS` trong `rbac.js`):
 
@@ -78,7 +79,16 @@ CSDL cũng kiểm tra lại vai trò và thứ tự bằng trigger (lớp chặn
 
 ## 4. Giới hạn tần suất
 
-Đã gắn cho `/api/auth/login` (20 lần) và `/api/auth/register` (10 lần) mỗi 15 phút / IP. Đổi bằng `.env`: `RATE_LIMIT_WINDOW_MINUTES`, `RATE_LIMIT_LOGIN_MAX`, `RATE_LIMIT_REGISTER_MAX`.
+Đã gắn sẵn trong `app.js`:
+
+| Route | Đếm | Mặc định | Biến `.env` |
+| --- | --- | --- | --- |
+| `POST /api/auth/login` | Chỉ lần **sai** (phản hồi ≥ 400), theo IP + email | 10 lần / 15 phút | `RATE_LIMIT_LOGIN_MAX` |
+| `POST /api/auth/register` | Mọi lần, theo IP | 30 lần / 15 phút | `RATE_LIMIT_REGISTER_MAX` |
+
+Đăng nhập đúng không bị tính, và khóa theo IP + email nên cả lớp dùng chung một IP vẫn đăng nhập bình thường.
+Tắt hẳn khi `NODE_ENV=test` hoặc `RATE_LIMIT_DISABLED=true` (smoke test, demo). Cửa sổ thời gian: `RATE_LIMIT_WINDOW_MINUTES`.
+
 Dùng lại cho truy xuất công khai (FR-QR-08, tuần 7):
 
 ```js
@@ -87,7 +97,7 @@ const traceLimiter = createRateLimiter({ windowMs: 60_000, max: 60 });
 router.get('/:qrToken', traceLimiter, controller.traceByToken);
 ```
 
-Bộ đếm nằm trong bộ nhớ của một tiến trình Node (đủ cho một container backend). Nếu đặt sau reverse proxy cần `app.set('trust proxy', 1)`.
+Bộ đếm nằm trong bộ nhớ của một tiến trình Node (đủ cho một container backend), tối đa `maxKeys` khóa (mặc định 10 000; đầy thì bỏ khóa hết hạn rồi tới khóa cũ nhất). Nếu đặt sau reverse proxy cần `app.set('trust proxy', 1)`.
 
 ## 5. Kiểm thử
 

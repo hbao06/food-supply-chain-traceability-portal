@@ -28,12 +28,29 @@ test('Consumer / vai trò lạ không có quyền nội bộ nào', () => {
   }
 });
 
+const active = (role) => ({ auth: { userId: 1, role, organizationId: 1, status: 'ACTIVE' } });
+
 test('requirePermission: đúng vai trò đi tiếp, sai vai trò 403, chưa xác thực 401', () => {
   const mw = rbac.requirePermission('batch:create');
-  assert.equal(call(mw, { auth: { role: 'FARMER' } }), undefined);
-  const e = call(mw, { auth: { role: 'DISTRIBUTOR' } });
+  assert.equal(call(mw, active('FARMER')), undefined);
+  const e = call(mw, active('DISTRIBUTOR'));
   assert.equal(e.status, 403); assert.equal(e.code, 'FORBIDDEN');
   assert.equal(call(mw, {}).status, 401);
+});
+
+test('requirePermission: route quên loadCurrentUser (req.auth chỉ từ token, không có status) -> lỗi 500, không cho đi tiếp', () => {
+  const mw = rbac.requirePermission('batch:create');
+  const e = call(mw, { method: 'POST', originalUrl: '/api/batches', auth: { userId: 1, role: 'FARMER', organizationId: 1 } });
+  assert.ok(e instanceof Error); assert.equal(e.status, undefined); // errorHandler -> 500 + log
+  assert.match(e.message, /thiếu loadCurrentUser/);
+});
+
+test('requirePermission: tài khoản không ACTIVE -> 403 kể cả đúng vai trò', () => {
+  const mw = rbac.requirePermission('batch:create');
+  for (const status of ['LOCKED', 'PENDING']) {
+    const e = call(mw, { auth: { userId: 1, role: 'FARMER', organizationId: 1, status } });
+    assert.equal(e.status, 403);
+  }
 });
 
 test('requirePermission: gõ sai tên quyền bị phát hiện ngay khi tạo route', () => {
@@ -81,4 +98,22 @@ test('batchReadScope: không có đơn vị, vai trò lạ, chưa xác thực ->
 test('batchReadScope: chặn alias / startIndex có thể gây SQL injection', () => {
   assert.throws(() => rbac.batchReadScope({ role: 'ADMIN' }, { alias: 'b; DROP TABLE users' }), /alias/);
   assert.throws(() => rbac.batchReadScope({ role: 'ADMIN' }, { startIndex: 0 }), /startIndex/);
+});
+
+// Danh sách vai trò nằm ở 3 nơi: bảng roles (migration 002), ROLES (rbac.js), REGISTER_ROLES (validators.js).
+test('danh sách vai trò khớp nhau giữa bảng roles, rbac.js và validators.js', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const { REGISTER_ROLES } = require('../src/common/validators');
+  const sql = fs.readFileSync(path.resolve(__dirname, '../../database/migrations/002_roles_table.sql'), 'utf8');
+  const rows = [...sql.matchAll(/\(\s*'([A-Z_]+)',\s*'[^']*',\s*'[^']*',\s*(TRUE|FALSE)\s*\)/g)];
+  const dbRoles = rows.map((m) => m[1]).sort();
+  const dbSelfRegister = rows.filter((m) => m[2] === 'TRUE').map((m) => m[1]).sort();
+
+  assert.deepEqual(dbRoles, Object.values(rbac.ROLES).sort(), 'bảng roles ≠ ROLES trong rbac.js');
+  assert.deepEqual(dbSelfRegister, [...REGISTER_ROLES].sort(), 'roles.self_register ≠ REGISTER_ROLES');
+  for (const [perm, roles] of Object.entries(rbac.PERMISSIONS)) {
+    for (const r of roles) assert.ok(dbRoles.includes(r), `${perm}: vai trò ${r} không có trong bảng roles`);
+  }
+  for (const r of Object.values(rbac.EVENT_TYPE_ROLE)) assert.ok(dbRoles.includes(r), `EVENT_TYPE_ROLE: ${r}`);
 });
