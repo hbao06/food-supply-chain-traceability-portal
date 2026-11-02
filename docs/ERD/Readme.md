@@ -1,10 +1,11 @@
-# ERD v3 – Cơ sở dữ liệu (W3-TV3)
+# ERD v3.1 – Cơ sở dữ liệu (W3-TV3, cập nhật W4-TV3)
 
 **Dự án:** Food Supply Chain Traceability & Provenance Portal – Nhóm 13
 **Người phụ trách:** Đặng Vĩnh Quang (TV3 - Database / Auth / Security)
 **Người review:** Chung Nguyễn Minh Trí (TV2 - Backend / API)
 **Hệ quản trị:** PostgreSQL 16
-**Bàn giao tuần 3:** `docs/ERD/ERD-v3.pdf` (sơ đồ), `database/schema.sql` (schema v1), `database/tests/schema-check.sql` (39 ca kiểm tra ràng buộc).
+**Bàn giao tuần 3:** `docs/ERD/ERD-v3.pdf` (sơ đồ), `database/schema.sql` (schema v1), `database/tests/schema-check.sql`.
+**Cập nhật tuần 4 (v3.1):** thêm bảng `roles` (`database/migrations/002_roles_table.sql`); từ tuần 4 CSDL được tạo bằng migration (`database/migrations`), `schema.sql` chỉ giữ để tham chiếu.
 
 ERD v3 thay cho bản nháp v2 (`erd-draft.md`). Tên bảng và cột được thống nhất với Class Diagram (`docs/UML/class-diagram.dot`) và OpenAPI (`docs/openapi-spec.yaml`, bản W3-TV2): CSDL dùng `snake_case`, API dùng `camelCase` tương ứng.
 
@@ -12,6 +13,7 @@ ERD v3 thay cho bản nháp v2 (`erd-draft.md`). Tên bảng và cột được 
 
 ```mermaid
 erDiagram
+    ROLES ||--o{ USERS : "gán cho"
     ORGANIZATIONS |o--o{ USERS : "có thành viên"
     ORGANIZATIONS ||--o{ BATCHES : "sở hữu"
     USERS ||--o{ BATCHES : "tạo"
@@ -19,6 +21,13 @@ erDiagram
     BATCHES ||--|{ SUPPLY_CHAIN_EVENTS : "có"
     USERS ||--o{ SUPPLY_CHAIN_EVENTS : "ghi"
     USERS |o--o{ AUDIT_LOGS : "gây ra"
+
+    ROLES {
+        varchar role_code PK "ADMIN | FARMER | PROCESSOR | DISTRIBUTOR"
+        varchar name "NOT NULL"
+        varchar description "NOT NULL"
+        boolean self_register "được tự đăng ký"
+    }
 
     ORGANIZATIONS {
         bigint organization_id PK
@@ -35,7 +44,7 @@ erDiagram
         varchar name "NOT NULL"
         varchar email UK "duy nhất, không phân biệt hoa thường"
         varchar password_hash "bcrypt, CHECK định dạng"
-        varchar role "FARMER | PROCESSOR | DISTRIBUTOR | ADMIN"
+        varchar role FK "roles.role_code"
         varchar status "PENDING | ACTIVE | LOCKED"
         timestamptz created_at
         timestamptz updated_at
@@ -89,6 +98,17 @@ Bản in: [`ERD-v3.pdf`](ERD-v3.pdf) · ảnh: [`ERD-v3.png`](ERD-v3.png).
 
 ## 2. Từ điển dữ liệu
 
+### 2.0 `roles` (thêm ở W4, migration 002)
+| Cột | Kiểu | Ràng buộc | API |
+| --- | --- | --- | --- |
+| role_code | VARCHAR(20) | PK; CHECK `^[A-Z_]{3,20}$` | Role (enum) |
+| name | VARCHAR(50) | NOT NULL | – |
+| description | VARCHAR(255) | NOT NULL | – |
+| self_register | BOOLEAN | NOT NULL, mặc định FALSE; TRUE với FARMER, PROCESSOR, DISTRIBUTOR | – |
+
+Dữ liệu cố định 4 dòng, trigger chặn UPDATE / DELETE (đổi mã vai trò sẽ làm sai trigger CSDL và middleware RBAC). Thêm vai trò mới bằng migration mới. Quyền của từng vai trò nằm trong `backend/src/middleware/rbac.js` theo `docs/permission-matrix.md`.
+
+
 ### 2.1 `organizations`
 | Cột | Kiểu | Ràng buộc | API |
 | --- | --- | --- | --- |
@@ -106,7 +126,7 @@ Bản in: [`ERD-v3.pdf`](ERD-v3.pdf) · ảnh: [`ERD-v3.png`](ERD-v3.png).
 | name | VARCHAR(100) | NOT NULL, không rỗng | name |
 | email | VARCHAR(255) | NOT NULL, định dạng email; UNIQUE trên `lower(email)` | email |
 | password_hash | VARCHAR(255) | NOT NULL; CHECK đúng định dạng bcrypt (chặn lưu mật khẩu thô) | **không bao giờ trả ra** |
-| role | VARCHAR(20) | CHECK FARMER / PROCESSOR / DISTRIBUTOR / ADMIN | role |
+| role | VARCHAR(20) | FK → roles.role_code (trước W4 là CHECK) | role |
 | status | VARCHAR(20) | CHECK PENDING / ACTIVE / LOCKED; mặc định PENDING | status |
 | created_at, updated_at | TIMESTAMPTZ | NOT NULL | – |
 
@@ -223,11 +243,13 @@ Các quy tắc dưới đây vẫn phải được kiểm tra ở backend để 
 ## 7. Cách chạy và kiểm tra
 
 ```bash
-# Tạo schema trên CSDL trống (ví dụ container database trong docker-compose)
-psql -h localhost -U postgres -d food_traceability -v ON_ERROR_STOP=1 -f database/schema.sql
+# Tạo / cập nhật CSDL bằng migration (từ W4)
+cd backend && npm run db:migrate
 
-# Kiểm tra 39 ràng buộc (dữ liệu thử được ROLLBACK, CSDL giữ nguyên)
+# Kiểm tra 43 ràng buộc trên CSDL trống sau khi migrate (dữ liệu thử được ROLLBACK, CSDL giữ nguyên)
 psql -h localhost -U postgres -d food_traceability -v ON_ERROR_STOP=1 -f database/tests/schema-check.sql
 ```
+
+Chi tiết: [`database/Readme.md`](../../database/Readme.md).
 
 Kết quả mong đợi: mọi dòng `PASS ...` và dòng cuối `ALL CHECKS PASSED`.

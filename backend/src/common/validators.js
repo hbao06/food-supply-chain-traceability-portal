@@ -1,6 +1,7 @@
 'use strict';
 
 const { ValidationError } = require('./errors');
+const { passwordProblem } = require('./passwordPolicy');
 
 // Cùng quy tắc với CHECK chk_users_email_format trong schema.sql.
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
@@ -38,11 +39,8 @@ function validateRegister(body) {
   checkEmail(body.email, errors);
 
   const pw = body.password;
-  if (typeof pw !== 'string' || pw.length < 8) {
-    errors.push({ field: 'password', message: 'Mật khẩu phải có ít nhất 8 ký tự' });
-  } else if (Buffer.byteLength(pw, 'utf8') > 72) { // bcrypt chỉ xét 72 byte đầu
-    errors.push({ field: 'password', message: 'Mật khẩu tối đa 72 byte' });
-  }
+  const pwProblem = passwordProblem(pw); // ≥ 8 ký tự, có chữ và số, ≤ 72 byte (common/passwordPolicy.js)
+  if (pwProblem) errors.push({ field: 'password', message: pwProblem });
 
   if (!REGISTER_ROLES.includes(body.role)) {
     errors.push({ field: 'role', message: `Vai trò phải là một trong: ${REGISTER_ROLES.join(', ')}` });

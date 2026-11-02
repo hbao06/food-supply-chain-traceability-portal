@@ -26,7 +26,13 @@ test('đăng ký: không cho chọn ADMIN hoặc CONSUMER', () => {
 
 test('đăng ký: mật khẩu quá dài theo byte (bcrypt 72 byte)', () => {
   assert.deepEqual(fieldsOf(() => validateRegister({ ...valid, password: 'a'.repeat(73) })), ['password']);
-  assert.doesNotThrow(() => validateRegister({ ...valid, password: 'a'.repeat(72) }));
+  assert.doesNotThrow(() => validateRegister({ ...valid, password: 'a'.repeat(71) + '1' }));
+});
+
+test('đăng ký: mật khẩu phải có cả chữ và số (SRS P5)', () => {
+  assert.deepEqual(fieldsOf(() => validateRegister({ ...valid, password: 'chiconchu' })), ['password']);
+  assert.deepEqual(fieldsOf(() => validateRegister({ ...valid, password: '12345678' })), ['password']);
+  assert.doesNotThrow(() => validateRegister({ ...valid, password: 'mậtkhẩu99' })); // chữ có dấu vẫn tính là chữ
 });
 
 test('đăng ký: body không phải object', () => {
