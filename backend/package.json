@@ -10,7 +10,9 @@
     "test:auth": "node --test \"test/*.test.js\"",
     "smoke:auth": "node scripts/smoke-auth.js",
     "db:migrate": "node scripts/migrate.js",
-    "db:seed:admin": "node scripts/seed-admin.js"
+    "db:seed:admin": "node scripts/seed-admin.js",
+    "smoke:batches": "node scripts/smoke-batches.js",
+    "smoke:events": "node scripts/smoke-events.js"
   },
   "keywords": [
     "food-traceability",
