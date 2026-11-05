@@ -10,6 +10,7 @@ import {
   formatDateTime,
   formatQuantity,
 } from './batchConstants.js'
+import { IconEdit, IconQr, IconMapPin, IconLock, IconUnlock, IconShield } from '../components/Icons.jsx'
 
 export function BatchDetail({
   batchId,
@@ -158,7 +159,7 @@ export function BatchDetail({
           </div>
           <h1 className="detail-product-title">{batch.productName}</h1>
           <p className="detail-origin-subtitle">
-            <span className="geo-icon">📍</span> Xuất xứ: <strong>{batch.origin}</strong>
+            <span className="geo-icon"><IconMapPin /></span> Xuất xứ: <strong>{batch.origin}</strong>
           </p>
         </div>
 
@@ -166,18 +167,18 @@ export function BatchDetail({
           {canEdit && (
             <button
               type="button"
-              className="button secondary"
+              className="button secondary with-icon"
               onClick={() => onEdit(batch)}
             >
-              ✏️ Hiệu chỉnh lô
+              <IconEdit /> Hiệu chỉnh lô
             </button>
           )}
           <button
             type="button"
-            className="button primary"
+            className="button primary with-icon"
             onClick={() => setShowQrModal(true)}
           >
-            📱 Xem & Tải mã QR
+            <IconQr /> Xem & Tải mã QR
           </button>
         </div>
       </header>
@@ -231,7 +232,7 @@ export function BatchDetail({
             </div>
 
             <div className={`immutability-badge-box ${canEdit ? 'editable' : 'locked'}`}>
-              <div className="immutability-icon">{canEdit ? '🔓' : '🔒'}</div>
+              <div className="immutability-icon">{canEdit ? <IconUnlock /> : <IconLock />}</div>
               <div className="immutability-text">
                 <strong>
                   {canEdit
@@ -339,7 +340,7 @@ export function BatchDetail({
             </div>
 
             <div className="qr-security-note">
-              <span className="shield-icon">🛡️</span>
+              <span className="shield-icon"><IconShield /></span>
               <small>
                 Mã QR được ký bởi HMAC-SHA256 bí mật tại máy chủ, đảm bảo người tiêu dùng tra cứu
                 đúng lô hàng chính gốc.

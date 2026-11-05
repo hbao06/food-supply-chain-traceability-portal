@@ -9,6 +9,15 @@ import {
   formatDateOnly,
   formatQuantity,
 } from './batchConstants.js'
+import {
+  IconSearch,
+  IconRefresh,
+  IconQr,
+  IconEdit,
+  IconPlus,
+  IconMapPin,
+  IconBatches,
+} from '../components/Icons.jsx'
 
 export function BatchList({
   token,
@@ -142,7 +151,7 @@ export function BatchList({
             className="button primary with-icon"
             onClick={onCreateBatch}
           >
-            <span className="plus-icon">+</span> Khởi tạo lô mới
+            <IconPlus /> Khởi tạo lô mới
           </button>
         )}
       </div>
@@ -187,7 +196,7 @@ export function BatchList({
         {/* Search input */}
         <div className="search-box-wrap">
           <span className="search-icon" aria-hidden="true">
-            🔍
+            <IconSearch />
           </span>
           <input
             type="text"
@@ -216,7 +225,7 @@ export function BatchList({
           title="Tải lại danh sách"
           aria-label="Tải lại danh sách"
         >
-          🔄
+          <IconRefresh />
         </button>
       </div>
 
@@ -272,7 +281,7 @@ export function BatchList({
           </div>
         ) : displayedBatches.length === 0 ? (
           <div className="batches-empty-state">
-            <div className="empty-icon-wrap">🌾</div>
+            <div className="empty-icon-wrap"><IconBatches /></div>
             <h3>Không tìm thấy lô thực phẩm nào</h3>
             <p>
               {searchQuery || filterStatus
@@ -364,7 +373,7 @@ export function BatchList({
                               title="Xem mã QR"
                               onClick={() => setQrModalBatch(batch)}
                             >
-                              📱 QR
+                              <IconQr /> QR
                             </button>
                             {canEditRow && (
                               <button
@@ -373,7 +382,7 @@ export function BatchList({
                                 title="Hiệu chỉnh thông tin lô"
                                 onClick={() => onEditBatch(batch)}
                               >
-                                ✏️ Sửa
+                                <IconEdit /> Sửa
                               </button>
                             )}
                             <button
@@ -410,7 +419,7 @@ export function BatchList({
                     </div>
 
                     <h3 className="mobile-card-title">{batch.productName}</h3>
-                    <p className="mobile-card-origin">📍 {batch.origin}</p>
+                    <p className="mobile-card-origin"><IconMapPin /> {batch.origin}</p>
 
                     <div className="mobile-card-facts">
                       <div>
@@ -429,18 +438,18 @@ export function BatchList({
                     >
                       <button
                         type="button"
-                        className="button secondary sm"
+                        className="button secondary sm with-icon"
                         onClick={() => setQrModalBatch(batch)}
                       >
-                        📱 QR
+                        <IconQr /> QR
                       </button>
                       {canEditRow && (
                         <button
                           type="button"
-                          className="button secondary sm"
+                          className="button secondary sm with-icon"
                           onClick={() => onEditBatch(batch)}
                         >
-                          ✏️ Sửa
+                          <IconEdit /> Sửa
                         </button>
                       )}
                       <button

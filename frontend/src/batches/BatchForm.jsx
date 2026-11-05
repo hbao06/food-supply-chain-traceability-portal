@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { api, ApiError, errorMessage } from '../api.js'
 import { BatchStatusBadge } from './BatchStatusBadge.jsx'
 import { formatQuantity } from './batchConstants.js'
+import { IconQr, IconLock, IconClipboard } from '../components/Icons.jsx'
 
 const PRODUCT_SUGGESTIONS = [
   'Cà phê Arabica Cầu Đất',
@@ -147,7 +148,7 @@ export function BatchForm({
 
         {!isEditable && (
           <div className="callout-locked-banner" role="alert">
-            <span className="locked-icon">🔒</span>
+            <span className="locked-icon"><IconLock /></span>
             <div>
               <strong>Lô hàng này đã bị khóa chỉnh sửa</strong>
               <p>
@@ -272,7 +273,7 @@ export function BatchForm({
 
           {/* Policy banner */}
           <div className="audit-info-banner">
-            <div className="audit-info-icon">📋</div>
+            <div className="audit-info-icon"><IconClipboard /></div>
             <div className="audit-info-text">
               <strong>Quy tắc bất biến & Kiểm toán:</strong>
               <span>
@@ -354,7 +355,7 @@ export function BatchForm({
             </div>
 
             <div className="preview-qr-placeholder">
-              <div className="qr-mini-icon">📱</div>
+              <div className="qr-mini-icon"><IconQr /></div>
               <span>Mã QR bảo mật sẽ được hệ thống sinh tự động ngay khi lưu</span>
             </div>
           </div>

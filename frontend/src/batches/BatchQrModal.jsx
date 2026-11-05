@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import QRCode from 'qrcode'
+import { IconMapPin, IconDownload } from '../components/Icons.jsx'
 
 export function BatchQrModal({ batch, onClose }) {
   const canvasRef = useRef(null)
@@ -129,7 +130,7 @@ export function BatchQrModal({ batch, onClose }) {
 
           <div className="qr-batch-info">
             <h4>{batch.productName}</h4>
-            <p className="qr-batch-origin">📍 {batch.origin}</p>
+            <p className="qr-batch-origin"><IconMapPin /> {batch.origin}</p>
           </div>
 
           <div className="qr-url-box">
@@ -156,8 +157,9 @@ export function BatchQrModal({ batch, onClose }) {
             className="button secondary"
             onClick={handleDownloadPng}
             disabled={downloading}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
           >
-            {downloading ? 'Đang chuẩn bị…' : '📥 Tải ảnh QR (PNG)'}
+            {downloading ? 'Đang chuẩn bị…' : (<><IconDownload /> Tải ảnh QR (PNG)</>)}
           </button>
           <a
             href={traceUrl}
