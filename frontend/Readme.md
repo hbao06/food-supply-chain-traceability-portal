@@ -21,6 +21,10 @@ Registration creates a PENDING account that must be activated by an admin.
 The current profile API supports updating `name`; password change requires a
 backend endpoint before it can be offered in the UI.
 
+The account-screen produce photograph is stored locally at
+`public/account-produce.jpg` (source: Unsplash photo
+`1542838132-92c53300491e`).
+
 The current checkout has only `GET /api/health` in its backend. Until the
 Auth/Profile backend from PR #42 is available locally and its PostgreSQL
 database is running, registration and login cannot succeed. The frontend
