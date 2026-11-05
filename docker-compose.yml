@@ -7,6 +7,8 @@ services:
       - "5173:5173"
     environment:
       VITE_API_PROXY_TARGET: http://backend:3000
+      QR_HMAC_SECRET: ${QR_HMAC_SECRET}
+      TRACE_BASE_URL: ${TRACE_BASE_URL:-http://localhost:5173}
     depends_on:
       - backend
 

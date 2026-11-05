@@ -36,7 +36,7 @@ paths:
       description: |
         The role ADMIN cannot be chosen at registration and the organization is
         assigned later by an Admin. The new account has status PENDING until an
-        Admin activates it.
+        Admin activates it. Registration is rate limited per IP (429).
       operationId: register
       requestBody:
         required: true
@@ -55,12 +55,17 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "409":
           $ref: "#/components/responses/Conflict"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
 
   /auth/login:
     post:
       tags: [Auth]
       summary: Login to the system
-      description: Only accounts with status ACTIVE can log in. PENDING and LOCKED accounts get 403.
+      description: |
+        Only accounts with status ACTIVE can log in. PENDING and LOCKED accounts get 403.
+        Failed attempts are rate limited per IP and email (429 with Retry-After); successful
+        logins are not counted.
       operationId: login
       requestBody:
         required: true
@@ -81,6 +86,8 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
 
   /users/me:
     get:
@@ -135,8 +142,10 @@ paths:
       tags: [Batches]
       summary: Create a new batch
       description: |
-        Creates the batch, its QR code and the CREATED event in one transaction.
-        Only FARMER can create batches.
+        Creates the batch, its QR code and the CREATED event in one transaction, and writes the audit log.
+        Only FARMER can create batches (403 for other roles). The server generates the unique
+        `batchCode` in the form BATCH-YYYY-NNNN; the client never sends it. The batch belongs to the
+        organization of the caller. A FARMER account without an organization gets 403 (NO_ORGANIZATION).
       operationId: createBatch
       security:
         - bearerAuth: []
@@ -165,7 +174,9 @@ paths:
     get:
       tags: [Batches]
       summary: List and search batches
-      description: FARMER sees only batches of their own organization; ADMIN sees all.
+      description: |
+        Scope by role: ADMIN sees all batches; FARMER sees batches of their own organization;
+        PROCESSOR and DISTRIBUTOR see batches on which their organization has recorded at least one event.
       operationId: listBatches
       security:
         - bearerAuth: []
@@ -177,17 +188,20 @@ paths:
             $ref: "#/components/schemas/EventType"
         - name: q
           in: query
-          description: Search by product name or batch code
+          description: Case-insensitive search by product name or batch code (at most 100 characters)
           schema:
             type: string
+            maxLength: 100
         - name: page
           in: query
+          description: Page number, starting at 1
           schema:
             type: integer
             minimum: 1
             default: 1
         - name: limit
           in: query
+          description: Items per page
           schema:
             type: integer
             minimum: 1
@@ -195,7 +209,7 @@ paths:
             default: 20
       responses:
         "200":
-          description: Page of batches (empty items if nothing matches)
+          description: Page of batches, newest first (empty items if nothing matches)
           content:
             application/json:
               schema:
@@ -209,6 +223,10 @@ paths:
     get:
       tags: [Batches]
       summary: Get batch details
+      description: |
+        A batch outside the caller's scope returns 404, the same as a batch that does not exist
+        (the API does not reveal that it exists). PROCESSOR and DISTRIBUTOR can also open a batch
+        that is waiting for the next step of their role.
       operationId: getBatch
       security:
         - bearerAuth: []
@@ -230,9 +248,10 @@ paths:
       tags: [Batches]
       summary: Update batch information
       description: |
-        Only an ACTIVE FARMER of the organization that owns the batch can update it,
-        and only while currentStatus is CREATED (otherwise 409).
-        Changes are written to the audit log.
+        Checks run in this order: 401 not logged in; 403 role is not FARMER; 404 the batch does not
+        exist or belongs to another organization (not distinguished); 409 currentStatus is no longer
+        CREATED. Only an ACTIVE FARMER of the owning organization can update, and changes are written
+        to the audit log.
       operationId: updateBatch
       security:
         - bearerAuth: []
@@ -268,7 +287,8 @@ paths:
       summary: Record a supply chain event
       description: |
         DISTRIBUTOR records TRANSPORTED, RECEIVED and SHIPPED.
-        PROCESSOR records PROCESSED and PACKAGED.
+        PROCESSOR records PROCESSED and PACKAGED. Another role gets 403; a batch outside the
+        caller's scope gets 404.
         The event must follow the valid sequence
         CREATED, TRANSPORTED, RECEIVED, PROCESSED, PACKAGED, SHIPPED.
         The event and the new batch status are saved in one transaction.
@@ -349,7 +369,10 @@ paths:
     get:
       tags: [Trace]
       summary: Get the QR code of a batch
-      description: The QR code is created together with the batch.
+      description: |
+        The QR code is created together with the batch. `qrData` is the URL encoded in the QR image:
+        `<TRACE_BASE_URL>/trace/<batchCode>.<signature>`, where the signature is
+        base64url(HMAC-SHA256(QR_HMAC_SECRET, batchCode)). A batch outside the caller's scope returns 404.
       operationId: getQRCode
       security:
         - bearerAuth: []
@@ -783,7 +806,7 @@ components:
             code: FORBIDDEN
             message: Insufficient permissions
     NotFound:
-      description: Resource not found
+      description: Resource not found, or outside the caller's access scope (the two cases are not distinguished)
       content:
         application/json:
           schema:
@@ -791,6 +814,28 @@ components:
           example:
             code: NOT_FOUND
             message: Resource not found
+    TooManyRequests:
+      description: Too many requests. Wait the number of seconds in the Retry-After header.
+      headers:
+        Retry-After:
+          description: Seconds to wait before trying again
+          schema:
+            type: integer
+        RateLimit-Limit:
+          description: Maximum requests allowed in the current window
+          schema:
+            type: integer
+        RateLimit-Remaining:
+          description: Requests left in the current window
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            code: TOO_MANY_REQUESTS
+            message: Bạn thao tác quá nhanh, vui lòng thử lại sau ít phút
     Conflict:
       description: Duplicate value or invalid status sequence
       content:
@@ -830,7 +875,8 @@ components:
             VALIDATION_ERROR, INVALID_JSON (400); UNAUTHORIZED, INVALID_CREDENTIALS,
             INVALID_TOKEN, TOKEN_EXPIRED (401); FORBIDDEN, ACCOUNT_PENDING, ACCOUNT_LOCKED (403);
             NOT_FOUND (404); EMAIL_EXISTS, CONFLICT, INVALID_SEQUENCE (409);
-            PAYLOAD_TOO_LARGE (413); INTERNAL_ERROR (500).
+            PAYLOAD_TOO_LARGE (413); TOO_MANY_REQUESTS (429); INTERNAL_ERROR (500).
+            Batch codes: NO_ORGANIZATION (403), BATCH_NOT_EDITABLE (409).
           example: VALIDATION_ERROR
         message:
           type: string
@@ -859,6 +905,7 @@ components:
           type: string
           format: password
           minLength: 8
+          description: At least 8 characters with at least one letter and one digit; at most 72 bytes (bcrypt limit).
         role:
           type: string
           description: ADMIN cannot be chosen at registration.
@@ -920,29 +967,40 @@ components:
     CreateBatchRequest:
       type: object
       required: [productName, origin, quantity]
+      additionalProperties: false
       properties:
         productName:
           type: string
+          maxLength: 150
           example: Organic Coffee
         origin:
           type: string
+          maxLength: 255
           example: Dak Lak, Vietnam
         quantity:
           type: number
           exclusiveMinimum: 0
+          maximum: 9999999999.99
+          multipleOf: 0.01
           example: 500
 
     UpdateBatchRequest:
       type: object
       minProperties: 1
+      additionalProperties: false
+      description: Only these fields can change. batchCode, currentStatus, createdBy and organizationId are rejected with 400.
       properties:
         productName:
           type: string
+          maxLength: 150
         origin:
           type: string
+          maxLength: 255
         quantity:
           type: number
           exclusiveMinimum: 0
+          maximum: 9999999999.99
+          multipleOf: 0.01
 
     Batch:
       type: object
