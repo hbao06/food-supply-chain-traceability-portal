@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node src/app.js",
     "dev": "node --watch src/app.js",
+    "db:seed:demo": "node scripts/seed-demo.js",
     "test": "node --test",
     "test:auth": "node --test \"test/*.test.js\"",
     "smoke:auth": "node scripts/smoke-auth.js",
