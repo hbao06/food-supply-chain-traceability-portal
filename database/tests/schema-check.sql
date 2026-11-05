@@ -1,5 +1,5 @@
 -- =============================================================================
--- Kiểm tra ràng buộc CSDL (W3-TV3, cập nhật W4-TV3 cho bảng roles)
+-- Kiểm tra ràng buộc CSDL (W3-TV3; W4-TV3 bảng roles; W5-TV3 bảng products, view farms)
 -- Chạy trên CSDL trống SAU KHI đã chạy migration (cd backend && npm run db:migrate):
 --   psql -U postgres -d food_traceability -v ON_ERROR_STOP=1 -f database/tests/schema-check.sql
 -- Mọi dữ liệu thử được ROLLBACK ở cuối, CSDL giữ nguyên.
@@ -39,7 +39,8 @@ AS $f$ SELECT '$2b$10$CwTycUXWue0Thq9StjUM0uJ8.Xh8gN1H0r1b8O4l6m3bS4qv0r1yW' $f$
 -- Chỉ chạy trên CSDL trống; đặt lại bộ đếm IDENTITY về 1 (được ROLLBACK cùng transaction).
 DO $$
 BEGIN
-    IF EXISTS (SELECT 1 FROM users) OR EXISTS (SELECT 1 FROM organizations) OR EXISTS (SELECT 1 FROM batches) THEN
+    IF EXISTS (SELECT 1 FROM users) OR EXISTS (SELECT 1 FROM organizations) OR EXISTS (SELECT 1 FROM batches)
+       OR EXISTS (SELECT 1 FROM products) THEN
         RAISE EXCEPTION 'CSDL đã có dữ liệu – hãy chạy kiểm thử trên CSDL mới tạo từ schema.sql';
     END IF;
 END $$;
@@ -49,6 +50,7 @@ ALTER TABLE batches             ALTER COLUMN batch_id        RESTART WITH 1;
 ALTER TABLE qr_codes            ALTER COLUMN qr_id           RESTART WITH 1;
 ALTER TABLE supply_chain_events ALTER COLUMN event_id        RESTART WITH 1;
 ALTER TABLE audit_logs          ALTER COLUMN audit_id        RESTART WITH 1;
+ALTER TABLE products            ALTER COLUMN product_id      RESTART WITH 1;
 
 -- ---------- Dữ liệu nền ----------
 INSERT INTO organizations (name, type) VALUES
@@ -114,6 +116,40 @@ VALUES (1, 'https://example.com/trace/BATCH-2026-0001.sigAAA', 'sigAAA');
 INSERT INTO supply_chain_events (batch_id, actor_id, event_type, location)
 VALUES (1, 2, 'CREATED', 'Đắk Lắk');
 SELECT pg_temp.expect_ok('Tạo lô + QR + CREATED', 'SELECT 1');
+
+-- ---------- products, view farms (migration 003) ----------
+INSERT INTO products (organization_id, name, category, unit) VALUES (1, 'Cà phê Arabica', 'Cà phê', 'kg');
+SELECT pg_temp.expect_fail('Sản phẩm của đơn vị không phải FARM',
+  $$INSERT INTO products (organization_id,name,category) VALUES (2,'Gói chế biến','Khác')$$);
+SELECT pg_temp.expect_fail('Trùng tên sản phẩm trong cùng nông trại (khác hoa thường)',
+  $$INSERT INTO products (organization_id,name,category) VALUES (1,'CÀ PHÊ ARABICA','Cà phê')$$);
+SELECT pg_temp.expect_ok('Nông trại khác được trùng tên sản phẩm',
+  $$INSERT INTO products (organization_id,name,category) VALUES (4,'Cà phê Arabica','Cà phê')$$);
+SELECT pg_temp.expect_fail('Tên sản phẩm rỗng',
+  $$INSERT INTO products (organization_id,name,category) VALUES (1,'  ','Cà phê')$$);
+SELECT pg_temp.expect_ok('Lô chỉ gửi product_id: tự lấy product_name từ danh mục',
+  $$INSERT INTO batches (batch_code,origin,quantity,created_by,organization_id,product_id)
+    VALUES ('BATCH-2026-0050','Đà Lạt',10,2,1,1)$$);
+DO $$
+BEGIN
+    IF (SELECT product_name FROM batches WHERE batch_code = 'BATCH-2026-0050') <> 'Cà phê Arabica' THEN
+        RAISE EXCEPTION 'FAIL  product_name không được điền từ products';
+    END IF;
+    RAISE NOTICE 'PASS  product_name lấy đúng từ products';
+END $$;
+SELECT pg_temp.expect_fail('Lô dùng sản phẩm của nông trại khác',
+  $$INSERT INTO batches (batch_code,product_name,origin,quantity,created_by,organization_id,product_id)
+    VALUES ('BATCH-2026-0051','X','Y',1,2,1,2)$$);
+SELECT pg_temp.expect_fail('Đổi nông trại của sản phẩm đã có lô',
+  $$UPDATE products SET organization_id = 4 WHERE product_id = 1$$);
+SELECT pg_temp.expect_fail('Xóa sản phẩm đã có lô', $$DELETE FROM products WHERE product_id = 1$$);
+DO $$
+BEGIN
+    IF (SELECT string_agg(farm_id::text || ':' || product_count || '/' || batch_count, ',' ORDER BY farm_id) FROM farms) <> '1:1/2,4:1/0' THEN -- nông trại 1: BATCH-2026-0001 (tạo ở trên) + 0050
+        RAISE EXCEPTION 'FAIL  view farms sai: %', (SELECT string_agg(farm_id::text || ':' || product_count || '/' || batch_count, ',') FROM farms);
+    END IF;
+    RAISE NOTICE 'PASS  view farms chỉ gồm đơn vị FARM, đếm đúng sản phẩm và lô';
+END $$;
 
 -- ---------- batches ----------
 SELECT pg_temp.expect_fail('Mã lô trùng',

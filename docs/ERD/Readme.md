@@ -1,4 +1,4 @@
-# ERD v3.1 – Cơ sở dữ liệu (W3-TV3, cập nhật W4-TV3)
+# ERD v3.2 – Cơ sở dữ liệu (W3-TV3, cập nhật W4, W5)
 
 **Dự án:** Food Supply Chain Traceability & Provenance Portal – Nhóm 13
 **Người phụ trách:** Đặng Vĩnh Quang (TV3 - Database / Auth / Security)
@@ -6,6 +6,7 @@
 **Hệ quản trị:** PostgreSQL 16
 **Bàn giao tuần 3:** `docs/ERD/ERD-v3.pdf` (sơ đồ), `database/schema.sql` (schema v1), `database/tests/schema-check.sql`.
 **Cập nhật tuần 4 (v3.1):** thêm bảng `roles` (`database/migrations/002_roles_table.sql`); từ tuần 4 CSDL được tạo bằng migration (`database/migrations`), `schema.sql` chỉ giữ để tham chiếu.
+**Cập nhật tuần 5 (v3.2):** thêm bảng `products`, cột `batches.product_id`, view `farms` (`database/migrations/003_products_farms.sql`) và dữ liệu mẫu (`npm run db:seed:demo`).
 
 ERD v3 thay cho bản nháp v2 (`erd-draft.md`). Tên bảng và cột được thống nhất với Class Diagram (`docs/UML/class-diagram.dot`) và OpenAPI (`docs/openapi-spec.yaml`, bản W3-TV2): CSDL dùng `snake_case`, API dùng `camelCase` tương ứng.
 
@@ -14,6 +15,8 @@ ERD v3 thay cho bản nháp v2 (`erd-draft.md`). Tên bảng và cột được 
 ```mermaid
 erDiagram
     ROLES ||--o{ USERS : "gán cho"
+    ORGANIZATIONS ||--o{ PRODUCTS : "có sản phẩm"
+    PRODUCTS |o--o{ BATCHES : "được sản xuất thành"
     ORGANIZATIONS |o--o{ USERS : "có thành viên"
     ORGANIZATIONS ||--o{ BATCHES : "sở hữu"
     USERS ||--o{ BATCHES : "tạo"
@@ -50,10 +53,22 @@ erDiagram
         timestamptz updated_at
     }
 
+    PRODUCTS {
+        bigint product_id PK
+        bigint organization_id FK "nông trại (type FARM)"
+        varchar name "UNIQUE trong nông trại"
+        varchar category "NOT NULL"
+        varchar unit "đơn vị của quantity"
+        text description
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
     BATCHES {
         bigint batch_id PK
         varchar batch_code UK "BATCH-YYYY-NNNN"
-        varchar product_name "NOT NULL"
+        bigint product_id FK "không bắt buộc"
+        varchar product_name "NOT NULL, tự lấy từ products"
         varchar origin "NOT NULL"
         numeric quantity "lớn hơn 0"
         timestamptz creation_date
@@ -109,6 +124,19 @@ Bản in: [`ERD-v3.pdf`](ERD-v3.pdf) · ảnh: [`ERD-v3.png`](ERD-v3.png).
 Dữ liệu cố định 4 dòng, trigger chặn UPDATE / DELETE (đổi mã vai trò sẽ làm sai trigger CSDL và middleware RBAC). Thêm vai trò mới bằng migration mới. Quyền của từng vai trò nằm trong `backend/src/middleware/rbac.js` theo `docs/permission-matrix.md`.
 
 
+### 2.0b `products` (thêm ở W5, migration 003)
+| Cột | Kiểu | Ràng buộc | API |
+| --- | --- | --- | --- |
+| product_id | BIGINT IDENTITY | PK | productId |
+| organization_id | BIGINT | FK → organizations, RESTRICT; đơn vị phải là FARM; không đổi khi sản phẩm đã có lô | organizationId |
+| name | VARCHAR(150) | NOT NULL, không rỗng; UNIQUE (organization_id, lower(name)) | name |
+| category | VARCHAR(50) | NOT NULL, không rỗng | category |
+| unit | VARCHAR(20) | NOT NULL, mặc định `kg` – đơn vị của `batches.quantity` | unit |
+| description | TEXT | | description |
+| created_at, updated_at | TIMESTAMPTZ | NOT NULL | – |
+
+**Ánh xạ tên trong kế hoạch tuần 5:** *Product* → `products`; *Farm* → `organizations` có `type = 'FARM'` (xem bằng view `farms`: `farm_id`, `name`, `address`, `product_count`, `batch_count`); *ProductBatch* → `batches`.
+
 ### 2.1 `organizations`
 | Cột | Kiểu | Ràng buộc | API |
 | --- | --- | --- | --- |
@@ -135,7 +163,8 @@ Dữ liệu cố định 4 dòng, trigger chặn UPDATE / DELETE (đổi mã vai
 | --- | --- | --- | --- |
 | batch_id | BIGINT IDENTITY | PK | batchId |
 | batch_code | VARCHAR(30) | NOT NULL, UNIQUE (có chỉ mục), CHECK `^BATCH-[0-9]{4}-[0-9]{4,}$` | batchCode |
-| product_name | VARCHAR(150) | NOT NULL, không rỗng | productName |
+| product_id | BIGINT | FK → products, RESTRICT; không bắt buộc; sản phẩm phải thuộc đúng nông trại của lô; chỉ đổi khi lô còn CREATED | productId (W5, tùy chọn) |
+| product_name | VARCHAR(150) | NOT NULL, không rỗng; nếu chỉ gửi `product_id` thì CSDL tự lấy tên từ `products` (ảnh chụp tên lúc tạo lô) | productName |
 | origin | VARCHAR(255) | NOT NULL, không rỗng | origin |
 | quantity | NUMERIC(12,2) | NOT NULL, > 0 | quantity |
 | creation_date | TIMESTAMPTZ | NOT NULL, mặc định now(), không sửa | creationDate |
@@ -225,7 +254,7 @@ Các quy tắc dưới đây vẫn phải được kiểm tra ở backend để 
 | D2 | `Batch` không có `organizationId` | Phạm vi đọc/sửa của Farmer theo đơn vị (FR-BATCH-08); `PublicTrace.organizationName` cần biết đơn vị sở hữu | Thêm `organizationId` vào Class Diagram và schema `Batch` |
 | D3 | Enum `Role` có `CONSUMER` | Consumer không có tài khoản (ma trận quyền, SRS 2.1), nên CSDL không lưu | Bỏ `CONSUMER` khỏi `Role`, hoặc ghi chú "không lưu trong users" |
 | D4 | OpenAPI chưa có endpoint quản trị `/users`, `/users/{id}/role`, `/users/{id}/status`, `/organizations`, `/audit-logs` | Có trong ma trận quyền và US-S01, S03, S04, S06 | Bổ sung trước tuần 4 |
-| D5 | Bản nháp v2 có bảng `product` | Class Diagram/OpenAPI để `productName` trực tiếp trên `Batch` | **Đã theo UML**: bỏ bảng `product` |
+| D5 | Bản nháp v2 có bảng `product` | Class Diagram/OpenAPI để `productName` trực tiếp trên `Batch` | W3 theo UML (bỏ bảng). **W5 thêm lại `products` theo kế hoạch tuần 5**, nhưng `batches.product_id` không bắt buộc và `productName` giữ nguyên, nên API không phải đổi. Đề xuất TV2 bổ sung `Product` vào Class Diagram và `productId` (tùy chọn) vào `CreateBatchRequest` |
 
 ## 6. Thay đổi so với ERD v2 (`erd-draft.md`)
 
@@ -246,7 +275,7 @@ Các quy tắc dưới đây vẫn phải được kiểm tra ở backend để 
 # Tạo / cập nhật CSDL bằng migration (từ W4)
 cd backend && npm run db:migrate
 
-# Kiểm tra 43 ràng buộc trên CSDL trống sau khi migrate (dữ liệu thử được ROLLBACK, CSDL giữ nguyên)
+# Kiểm tra 53 ràng buộc trên CSDL trống sau khi migrate (dữ liệu thử được ROLLBACK, CSDL giữ nguyên)
 psql -h localhost -U postgres -d food_traceability -v ON_ERROR_STOP=1 -f database/tests/schema-check.sql
 ```
 
