@@ -42,11 +42,24 @@ export const api = {
   login: (body) => request('/auth/login', { method: 'POST', body: JSON.stringify(body) }),
   me: (token) => request('/users/me', { token }),
   updateMe: (token, body) => request('/users/me', { method: 'PATCH', token, body: JSON.stringify(body) }),
+  listBatches: (token, { status, q, page = 1, limit = 20 } = {}) => {
+    const params = new URLSearchParams()
+    if (status) params.set('status', status)
+    if (q && q.trim()) params.set('q', q.trim())
+    if (page) params.set('page', String(page))
+    if (limit) params.set('limit', String(limit))
+    const query = params.toString()
+    return request(`/batches${query ? `?${query}` : ''}`, { token })
+  },
+  getBatch: (token, batchId) => request(`/batches/${batchId}`, { token }),
+  createBatch: (token, body) => request('/batches', { method: 'POST', token, body: JSON.stringify(body) }),
+  updateBatch: (token, batchId, body) => request(`/batches/${batchId}`, { method: 'PATCH', token, body: JSON.stringify(body) }),
+  getBatchQr: (token, batchId) => request(`/batches/${batchId}/qr`, { token }),
 }
 
 const messages = {
   NETWORK_ERROR: 'Không thể kết nối tới máy chủ. Vui lòng thử lại.',
-  API_UNAVAILABLE: 'API tài khoản chưa chạy. Vui lòng khởi động backend rồi thử lại.',
+  API_UNAVAILABLE: 'API hệ thống chưa chạy. Vui lòng khởi động backend rồi thử lại.',
   INVALID_RESPONSE: 'Phản hồi từ máy chủ không hợp lệ.',
   INVALID_CREDENTIALS: 'Email hoặc mật khẩu không đúng.',
   ACCOUNT_PENDING: 'Tài khoản đang chờ duyệt.',
@@ -55,6 +68,11 @@ const messages = {
   TOKEN_EXPIRED: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
   INVALID_TOKEN: 'Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.',
   VALIDATION_ERROR: 'Thông tin chưa hợp lệ. Vui lòng kiểm tra lại.',
+  NO_ORGANIZATION: 'Tài khoản chưa thuộc đơn vị nào nên chưa thể tạo lô hàng.',
+  BATCH_NOT_EDITABLE: 'Lô đã chuyển sang trạng thái tiếp theo trong chuỗi cung ứng, không thể chỉnh sửa.',
+  NOT_FOUND: 'Không tìm thấy lô hàng hoặc bạn không có quyền truy cập.',
+  FORBIDDEN: 'Bạn không có quyền thực hiện thao tác này.',
+  TOO_MANY_REQUESTS: 'Bạn thao tác quá nhanh, vui lòng chờ giây lát rồi thử lại.',
 }
 
 export function errorMessage(error) {
