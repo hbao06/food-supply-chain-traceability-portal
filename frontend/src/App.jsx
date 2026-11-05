@@ -26,13 +26,23 @@ function validateEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
 
-function Field({ label, name, value, onChange, error, type = 'text', autoComplete, children }) {
+function Field({ label, name, value, onChange, error, type = 'text', autoComplete, placeholder, children }) {
+  const [visible, setVisible] = useState(false)
+  const isPassword = type === 'password'
   return (
     <div className="field">
       <label htmlFor={name}>{label}</label>
-      {children || <input id={name} name={name} type={type} autoComplete={autoComplete}
-        value={value} onChange={onChange} aria-invalid={Boolean(error)}
-        aria-describedby={error ? `${name}-error` : undefined} />}
+      {children || <div className="input-wrap">
+        <input id={name} name={name} type={isPassword && visible ? 'text' : type}
+          autoComplete={autoComplete} placeholder={placeholder} value={value}
+          onChange={onChange} aria-invalid={Boolean(error)}
+          aria-describedby={error ? `${name}-error` : undefined} />
+        {isPassword && <button type="button" className="password-toggle"
+          onClick={() => setVisible((current) => !current)}
+          aria-label={visible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}>
+          {visible ? 'Ẩn' : 'Hiện'}
+        </button>}
+      </div>}
       {error && <span id={`${name}-error`} className="field-error">{error}</span>}
     </div>
   )
@@ -44,23 +54,28 @@ function Notice({ message, success = false }) {
 }
 
 function Brand() {
-  return <div className="brand"><span className="brand-mark" aria-hidden="true">✳</span>Food Trace</div>
+  return <div className="brand"><span className="brand-mark" aria-hidden="true">FT</span><span>Food Trace</span></div>
 }
 
 function AuthShell({ title, subtitle, children }) {
   return (
     <div className="auth-shell">
       <div className="auth-photo" aria-hidden="true">
-        <div className="photo-caption"><span>FOOD TRACE</span>
-          <strong>Nguồn gốc rõ ràng.<br />Niềm tin bền vững.</strong></div>
+        <img className="auth-photo-image" src="/account-produce.jpg" alt="" />
+        <div className="photo-topline"><span className="photo-rule" /> TRUY XUẤT NGUỒN GỐC THỰC PHẨM</div>
+        <div className="photo-caption">
+          <div className="photo-kicker">FOOD TRACE / SUPPLY CHAIN</div>
+          <strong>Minh bạch<br />từ nông trại.</strong>
+          <p>Mỗi lô hàng, một hành trình có thể kiểm chứng.</p>
+        </div>
       </div>
       <main className="auth-main">
+        <div className="auth-topline"><Brand /><span>CỔNG THÔNG TIN</span></div>
         <div className="auth-content">
-          <Brand />
           <div className="auth-heading"><h1>{title}</h1><p>{subtitle}</p></div>
           {children}
         </div>
-        <footer>Food Supply Chain Traceability Portal</footer>
+        <footer>© Food Trace <span>·</span> Cổng truy xuất nguồn gốc</footer>
       </main>
     </div>
   )
@@ -99,9 +114,11 @@ function Login({ navigate, onLogin, flash }) {
     <Notice message={message} />
     <form onSubmit={submit} noValidate>
       <Field name="login-email" label="Email" type="email" autoComplete="username"
+        placeholder="ten@donvi.vn"
         value={form.email} error={errors.email}
         onChange={(event) => setForm({ ...form, email: event.target.value })} />
       <Field name="login-password" label="Mật khẩu" type="password" autoComplete="current-password"
+        placeholder="Nhập mật khẩu"
         value={form.password} error={errors.password}
         onChange={(event) => setForm({ ...form, password: event.target.value })} />
       <button className="button primary wide" type="submit" disabled={busy}>
@@ -173,15 +190,18 @@ function Register({ navigate }) {
     </div> : <>
       <Notice message={message} />
       <form onSubmit={submit} noValidate>
-        <Field name="name" label="Họ và tên" autoComplete="name" value={form.name} error={errors.name}
+        <Field name="name" label="Họ và tên" autoComplete="name" placeholder="Họ và tên của bạn"
+          value={form.name} error={errors.name}
           onChange={(event) => setForm({ ...form, name: event.target.value })} />
-        <Field name="email" label="Email" type="email" autoComplete="email"
+        <Field name="email" label="Email" type="email" autoComplete="email" placeholder="ten@donvi.vn"
           value={form.email} error={errors.email}
           onChange={(event) => setForm({ ...form, email: event.target.value })} />
         <Field name="password" label="Mật khẩu" type="password" autoComplete="new-password"
+          placeholder="Ít nhất 8 ký tự"
           value={form.password} error={errors.password}
           onChange={(event) => setForm({ ...form, password: event.target.value })} />
         <Field name="confirm" label="Xác nhận mật khẩu" type="password" autoComplete="new-password"
+          placeholder="Nhập lại mật khẩu"
           value={form.confirm} error={errors.confirm}
           onChange={(event) => setForm({ ...form, confirm: event.target.value })} />
         <Field name="role" label="Vai trò" error={errors.role}>
@@ -281,6 +301,11 @@ function Workspace({ route, navigate, token, user, onLogout, onUserUpdate, previ
       </div>
     </aside>
     <main className="workspace-main">
+      <header className="workspace-topbar">
+        <div><span className="topbar-label">TÀI KHOẢN</span><span className="topbar-separator">/</span>
+          <strong>{route === '/profile' ? 'Hồ sơ cá nhân' : 'Tổng quan'}</strong></div>
+        <div className="topbar-identity"><span className="topbar-status" />{profile?.name || 'Tài khoản'}</div>
+      </header>
       <header className="mobile-header"><Brand />
         <button className="text-button" type="button" onClick={() => onLogout()}>Đăng xuất</button></header>
       <nav className="mobile-nav" aria-label="Điều hướng di động">
@@ -297,20 +322,27 @@ function Workspace({ route, navigate, token, user, onLogout, onUserUpdate, previ
               setLoading(true); setRetry((value) => value + 1)
             }}>Thử lại</button></div> : route === '/profile' ? <>
             <div className="page-heading"><span className="eyebrow">TÀI KHOẢN</span>
-              <h1>Hồ sơ cá nhân</h1><p>Thông tin tài khoản của bạn trong hệ thống.</p></div>
+              <h1>Hồ sơ cá nhân</h1><p>Quản lý thông tin hiển thị và xem quyền truy cập của bạn.</p></div>
+            <div className="profile-identity">
+              <span className="profile-avatar" aria-hidden="true">{(profile.name || 'U')[0]}</span>
+              <div><strong>{profile.name}</strong><span>{profile.email}</span></div>
+              <span className="account-state"><span />{profile.status === 'ACTIVE' ? 'Đang hoạt động' : profile.status}</span>
+            </div>
             <div className="profile-layout">
               <section className="profile-section">
-                <h2>Thông tin cá nhân</h2><p>Họ tên được cập nhật sau khi lưu thành công.</p>
+                <div className="section-heading"><div><span className="section-index">01</span><h2>Thông tin cá nhân</h2></div>
+                  <p>Chỉnh sửa tên hiển thị của bạn.</p></div>
                 <Notice message={saveError} /><Notice message={saved ? 'Đã cập nhật họ và tên.' : ''} success />
                 <form onSubmit={saveName} noValidate>
-                  <Field name="profile-name" label="Họ và tên" value={name} error={nameError}
+                  <Field name="profile-name" label="Họ và tên" placeholder="Họ và tên" value={name} error={nameError}
                     onChange={(event) => { setName(event.target.value); setNameError(''); setSaved(false) }} />
                   <button className="button primary" type="submit"
                     disabled={preview || saving || name.trim() === profile.name}>{saving ? 'Đang lưu…' : 'Lưu thay đổi'}</button>
                 </form>
               </section>
               <section className="profile-section">
-                <h2>Thông tin tài khoản</h2>
+                <div className="section-heading"><div><span className="section-index">02</span><h2>Thông tin tài khoản</h2></div>
+                  <p>Do hệ thống quản lý.</p></div>
                 <dl className="facts">
                   <div><dt>Email</dt><dd>{profile.email || '—'}</dd></div>
                   <div><dt>Vai trò</dt><dd>{ROLE_LABELS[profile.role] || profile.role || '—'}</dd></div>
