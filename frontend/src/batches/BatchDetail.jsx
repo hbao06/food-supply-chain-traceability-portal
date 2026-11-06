@@ -3,14 +3,29 @@ import QRCode from 'qrcode'
 import { api, ApiError, errorMessage } from '../api.js'
 import { BatchStatusBadge } from './BatchStatusBadge.jsx'
 import { BatchQrModal } from './BatchQrModal.jsx'
+import { BatchTimeline } from './BatchTimeline.jsx'
+import { AddEventModal } from './AddEventModal.jsx'
 import {
   PREVIEW_BATCHES,
   STATUS_META,
   SUPPLY_CHAIN_STEPS,
   formatDateTime,
   formatQuantity,
+  canUserAddEvent,
 } from './batchConstants.js'
-import { IconEdit, IconQr, IconMapPin, IconLock, IconUnlock, IconShield } from '../components/Icons.jsx'
+import {
+  IconEdit,
+  IconQr,
+  IconMapPin,
+  IconLock,
+  IconUnlock,
+  IconShield,
+  IconTimeline,
+  IconPlus,
+  IconClipboard,
+  IconAlertTriangle,
+  IconCheck,
+} from '../components/Icons.jsx'
 
 export function BatchDetail({
   batchId,
@@ -30,9 +45,12 @@ export function BatchDetail({
   })
   const [loading, setLoading] = useState(() => !initialBatch && !preview)
   const [error, setError] = useState('')
+  const [activeTab, setActiveTab] = useState('timeline') // 'timeline' | 'info'
   const [showQrModal, setShowQrModal] = useState(false)
+  const [showAddEventModal, setShowAddEventModal] = useState(false)
   const [copiedCode, setCopiedCode] = useState(false)
   const [copiedUrl, setCopiedUrl] = useState(false)
+  const [flashMessage, setFlashMessage] = useState('')
   const qrCanvasRef = useRef(null)
 
   useEffect(() => {
@@ -77,7 +95,7 @@ export function BatchDetail({
       qrCanvasRef.current,
       traceUrl,
       {
-        width: 180,
+        width: 170,
         margin: 2,
         color: {
           dark: '#0f3a2c',
@@ -120,7 +138,7 @@ export function BatchDetail({
   if (error || !batch) {
     return (
       <div className="state-block" role="alert">
-        <span className="state-icon">⚠️</span>
+        <span className="state-icon"><IconAlertTriangle /></span>
         <h2>Không thể tải lô hàng</h2>
         <p>{error || 'Lô hàng không tồn tại hoặc bạn không có quyền truy cập.'}</p>
         <button type="button" className="button secondary" onClick={onBack}>
@@ -135,6 +153,16 @@ export function BatchDetail({
   )
   const isFarmer = user?.role === 'FARMER' || preview
   const canEdit = isFarmer && batch.currentStatus === 'CREATED'
+
+  const eventPermission = canUserAddEvent(user, batch)
+  const canAddEvent = preview || user?.role === 'ADMIN' || eventPermission.allowed
+
+  function handleEventAdded(newEvent, updatedBatch) {
+    setBatch(updatedBatch)
+    setShowAddEventModal(false)
+    setFlashMessage(`Đã ghi nhận thành công sự kiện: ${STATUS_META[newEvent.eventType]?.label || newEvent.eventType}`)
+    setTimeout(() => setFlashMessage(''), 4000)
+  }
 
   return (
     <div className="batch-detail-view">
@@ -153,7 +181,7 @@ export function BatchDetail({
           <div className="hero-tags">
             <span className="hero-code-badge" onClick={handleCopyCode} title="Bấm để sao chép mã">
               <code>{batch.batchCode}</code>
-              <span className="copy-icon-sub">{copiedCode ? '✓ Đã chép' : 'Sao chép'}</span>
+              <span className="copy-icon-sub">{copiedCode ? <><IconCheck /> Đã chép</> : 'Sao chép'}</span>
             </span>
             <BatchStatusBadge status={batch.currentStatus} size="large" />
           </div>
@@ -164,6 +192,15 @@ export function BatchDetail({
         </div>
 
         <div className="detail-hero-actions">
+          {canAddEvent && batch.currentStatus !== 'SHIPPED' && (
+            <button
+              type="button"
+              className="button primary with-icon pulse-on-hover"
+              onClick={() => setShowAddEventModal(true)}
+            >
+              <IconPlus /> Ghi nhận sự kiện mới
+            </button>
+          )}
           {canEdit && (
             <button
               type="button"
@@ -175,129 +212,177 @@ export function BatchDetail({
           )}
           <button
             type="button"
-            className="button primary with-icon"
+            className="button secondary with-icon"
             onClick={() => setShowQrModal(true)}
           >
-            <IconQr /> Xem & Tải mã QR
+            <IconQr /> Mã QR
           </button>
         </div>
       </header>
 
+      {flashMessage && (
+        <div className="notice success" role="status" style={{ marginBottom: 20 }}>
+          {flashMessage}
+        </div>
+      )}
+
+      {/* Segmented View Tabs: Timeline vs Origin Info */}
+      <nav className="detail-tab-nav" aria-label="Phân khu chi tiết lô">
+        <button
+          type="button"
+          className={`detail-tab-btn ${activeTab === 'timeline' ? 'active' : ''}`}
+          onClick={() => setActiveTab('timeline')}
+        >
+          <IconTimeline /> Dòng thời gian & Timeline sự kiện
+        </button>
+        <button
+          type="button"
+          className={`detail-tab-btn ${activeTab === 'info' ? 'active' : ''}`}
+          onClick={() => setActiveTab('info')}
+        >
+          <IconClipboard /> Thông tin xuất xứ & Hồ sơ lô
+        </button>
+      </nav>
+
       {/* Main Grid Content */}
       <div className="detail-grid-layout">
-        {/* Left Column: Info & Timeline */}
+        {/* Left Column: Tab Content */}
         <div className="detail-left-col">
-          {/* Card: Thông tin cơ bản */}
-          <section className="detail-card">
-            <div className="detail-card-head">
-              <div>
-                <span className="section-index">01</span>
-                <h2>Thông tin xuất xứ & Đặc tính</h2>
-              </div>
-              <span className="card-badge-info">Hồ sơ nông sản</span>
-            </div>
-
-            <div className="facts-grid">
-              <div className="fact-item">
-                <span className="fact-label">Mã lô hệ thống</span>
-                <span className="fact-val mono">{batch.batchCode}</span>
-              </div>
-              <div className="fact-item">
-                <span className="fact-label">Sản lượng đăng ký</span>
-                <span className="fact-val highlight-qty">
-                  {formatQuantity(batch.quantity)}
-                </span>
-              </div>
-              <div className="fact-item">
-                <span className="fact-label">Nơi canh tác / Thu hoạch</span>
-                <span className="fact-val">{batch.origin}</span>
-              </div>
-              <div className="fact-item">
-                <span className="fact-label">Thời gian khởi tạo</span>
-                <span className="fact-val">{formatDateTime(batch.creationDate)}</span>
-              </div>
-              <div className="fact-item">
-                <span className="fact-label">Đơn vị sở hữu</span>
-                <span className="fact-val">
-                  {batch.organizationName ||
-                    (batch.organizationId
-                      ? `Đơn vị #${batch.organizationId}`
-                      : 'Hợp tác xã nông nghiệp')}
-                </span>
-              </div>
-              <div className="fact-item">
-                <span className="fact-label">Mã định danh nội bộ</span>
-                <span className="fact-val mono">#{batch.batchId}</span>
-              </div>
-            </div>
-
-            <div className={`immutability-badge-box ${canEdit ? 'editable' : 'locked'}`}>
-              <div className="immutability-icon">{canEdit ? <IconUnlock /> : <IconLock />}</div>
-              <div className="immutability-text">
-                <strong>
-                  {canEdit
-                    ? 'Lô hàng đang ở trạng thái Khởi tạo (CREATED) — Được phép hiệu chỉnh'
-                    : 'Thông tin lô hàng đã được khóa bất biến'}
-                </strong>
-                <p>
-                  {canEdit
-                    ? 'Chủ sở hữu có thể cập nhật tên sản phẩm, nguồn gốc và số lượng trước khi bắt đầu chuyển giao chuỗi cung ứng.'
-                    : `Lô đã tiến vào giai đoạn ${STATUS_META[batch.currentStatus]?.label || batch.currentStatus}. Mọi dữ liệu gốc được bảo lưu vĩnh viễn trên sổ cái hệ thống theo tiêu chuẩn an toàn thực phẩm.`}
-                </p>
-              </div>
-            </div>
-          </section>
-
-          {/* Card: Tiến trình Chuỗi cung ứng (Visual Stepper) */}
-          <section className="detail-card">
-            <div className="detail-card-head">
-              <div>
-                <span className="section-index">02</span>
-                <h2>Tiến trình chuỗi cung ứng</h2>
-              </div>
-              <span className="card-badge-info">6 giai đoạn chuẩn</span>
-            </div>
-
-            <p className="timeline-lead">
-              Hành trình truy xuất từ nông trại tới tay người tiêu dùng theo quy trình kiểm định chất lượng:
-            </p>
-
-            <div className="supply-stepper">
-              {SUPPLY_CHAIN_STEPS.map((step, index) => {
-                const isCompleted = index < currentStepIndex
-                const isCurrent = index === currentStepIndex
-                const stepMeta = STATUS_META[step.type]
-
-                return (
-                  <div
-                    key={step.type}
-                    className={`stepper-node ${
-                      isCompleted ? 'completed' : isCurrent ? 'current' : 'upcoming'
-                    }`}
-                  >
-                    <div className="node-icon-wrap">
-                      <span className="node-number">
-                        {isCompleted ? '✓' : index + 1}
-                      </span>
-                    </div>
-                    <div className="node-content">
-                      <div className="node-title-row">
-                        <strong className="node-title">{step.label}</strong>
-                        <span className="node-role-tag">{step.role}</span>
-                      </div>
-                      <span className="node-status-desc">
-                        {isCurrent
-                          ? `Đang ở bước này: ${stepMeta?.description || ''}`
-                          : isCompleted
-                          ? 'Đã hoàn thành xác thực'
-                          : 'Đang chờ xử lý'}
-                      </span>
-                    </div>
+          {activeTab === 'timeline' ? (
+            <BatchTimeline
+              batch={batch}
+              user={user}
+              token={token}
+              preview={preview}
+              onBatchUpdated={(updated) => setBatch(updated)}
+            />
+          ) : (
+            <div className="detail-info-tab-pane">
+              {/* Card: Thông tin cơ bản */}
+              <section className="detail-card">
+                <div className="detail-card-head">
+                  <div>
+                    <span className="section-index">01</span>
+                    <h2>Thông tin xuất xứ & Đặc tính</h2>
                   </div>
-                )
-              })}
+                  <span className="card-badge-info">Hồ sơ nông sản</span>
+                </div>
+
+                <div className="facts-grid">
+                  <div className="fact-item">
+                    <span className="fact-label">Mã lô hệ thống</span>
+                    <span className="fact-val mono">{batch.batchCode}</span>
+                  </div>
+                  <div className="fact-item">
+                    <span className="fact-label">Sản lượng đăng ký</span>
+                    <span className="fact-val highlight-qty">
+                      {formatQuantity(batch.quantity)}
+                    </span>
+                  </div>
+                  <div className="fact-item">
+                    <span className="fact-label">Nơi canh tác / Thu hoạch</span>
+                    <span className="fact-val">{batch.origin}</span>
+                  </div>
+                  <div className="fact-item">
+                    <span className="fact-label">Thời gian khởi tạo</span>
+                    <span className="fact-val">{formatDateTime(batch.creationDate)}</span>
+                  </div>
+                  <div className="fact-item">
+                    <span className="fact-label">Đơn vị sở hữu</span>
+                    <span className="fact-val">
+                      {batch.organizationName ||
+                        (batch.organizationId
+                          ? `Đơn vị #${batch.organizationId}`
+                          : 'Hợp tác xã nông nghiệp')}
+                    </span>
+                  </div>
+                  <div className="fact-item">
+                    <span className="fact-label">Mã định danh nội bộ</span>
+                    <span className="fact-val mono">#{batch.batchId}</span>
+                  </div>
+                </div>
+
+                <div className={`immutability-badge-box ${canEdit ? 'editable' : 'locked'}`}>
+                  <div className="immutability-icon">{canEdit ? <IconUnlock /> : <IconLock />}</div>
+                  <div className="immutability-text">
+                    <strong>
+                      {canEdit
+                        ? 'Lô hàng đang ở trạng thái Khởi tạo (CREATED) — Được phép hiệu chỉnh'
+                        : 'Thông tin lô hàng đã được khóa bất biến'}
+                    </strong>
+                    <p>
+                      {canEdit
+                        ? 'Chủ sở hữu có thể cập nhật tên sản phẩm, nguồn gốc và số lượng trước khi bắt đầu chuyển giao chuỗi cung ứng.'
+                        : `Lô đã tiến vào giai đoạn ${STATUS_META[batch.currentStatus]?.label || batch.currentStatus}. Mọi dữ liệu gốc được bảo lưu vĩnh viễn trên sổ cái hệ thống theo tiêu chuẩn an toàn thực phẩm.`}
+                    </p>
+                  </div>
+                </div>
+
+                {canEdit && (
+                  <div style={{ marginTop: 20 }}>
+                    <button
+                      type="button"
+                      className="button primary with-icon"
+                      onClick={() => onEdit(batch)}
+                    >
+                      <IconEdit /> Chuyển sang trang Cập nhật lô hàng
+                    </button>
+                  </div>
+                )}
+              </section>
+
+              {/* Card: Tiến trình Chuỗi cung ứng (Visual Stepper) */}
+              <section className="detail-card">
+                <div className="detail-card-head">
+                  <div>
+                    <span className="section-index">02</span>
+                    <h2>Tiến trình chuỗi cung ứng</h2>
+                  </div>
+                  <span className="card-badge-info">6 giai đoạn chuẩn</span>
+                </div>
+
+                <p className="timeline-lead">
+                  Hành trình truy xuất từ nông trại tới tay người tiêu dùng theo quy trình kiểm định chất lượng:
+                </p>
+
+                <div className="supply-stepper">
+                  {SUPPLY_CHAIN_STEPS.map((step, index) => {
+                    const isCompleted = index < currentStepIndex
+                    const isCurrent = index === currentStepIndex
+                    const stepMeta = STATUS_META[step.type]
+
+                    return (
+                      <div
+                        key={step.type}
+                        className={`stepper-node ${
+                          isCompleted ? 'completed' : isCurrent ? 'current' : 'upcoming'
+                        }`}
+                      >
+                        <div className="node-icon-wrap">
+                          <span className="node-number">
+                            {isCompleted ? <IconCheck /> : index + 1}
+                          </span>
+                        </div>
+                        <div className="node-content">
+                          <div className="node-title-row">
+                            <strong className="node-title">{step.label}</strong>
+                            <span className="node-role-tag">{step.role}</span>
+                          </div>
+                          <span className="node-status-desc">
+                            {isCurrent
+                              ? `Đang ở bước này: ${stepMeta?.description || ''}`
+                              : isCompleted
+                              ? 'Đã hoàn thành xác thực'
+                              : 'Đang chờ xử lý'}
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </section>
             </div>
-          </section>
+          )}
         </div>
 
         {/* Right Column: QR Code Card & Verification */}
@@ -325,7 +410,7 @@ export function BatchDetail({
                 className="text-button copy-link-btn"
                 onClick={handleCopyUrl}
               >
-                {copiedUrl ? '✓ Đã chép' : 'Chép link'}
+                {copiedUrl ? <><IconCheck /> Đã chép</> : 'Chép link'}
               </button>
             </div>
 
@@ -337,6 +422,16 @@ export function BatchDetail({
               >
                 Phóng to & Tải tem QR
               </button>
+              {canAddEvent && batch.currentStatus !== 'SHIPPED' && (
+                <button
+                  type="button"
+                  className="button secondary wide with-icon"
+                  style={{ marginTop: 8 }}
+                  onClick={() => setShowAddEventModal(true)}
+                >
+                  <IconPlus /> Ghi nhận sự kiện
+                </button>
+              )}
             </div>
 
             <div className="qr-security-note">
@@ -353,6 +448,18 @@ export function BatchDetail({
       {/* QR Modal */}
       {showQrModal && (
         <BatchQrModal batch={batch} onClose={() => setShowQrModal(false)} />
+      )}
+
+      {/* Add Event Modal */}
+      {showAddEventModal && (
+        <AddEventModal
+          batch={batch}
+          user={user}
+          token={token}
+          preview={preview}
+          onSuccess={handleEventAdded}
+          onClose={() => setShowAddEventModal(false)}
+        />
       )}
     </div>
   )

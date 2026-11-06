@@ -65,12 +65,12 @@ export const STATUS_META = {
 }
 
 export const SUPPLY_CHAIN_STEPS = [
-  { type: 'CREATED', label: 'Khởi tạo', role: 'FARMER', icon: '🌱' },
-  { type: 'TRANSPORTED', label: 'Vận chuyển', role: 'DISTRIBUTOR', icon: '🚚' },
-  { type: 'RECEIVED', label: 'Tiếp nhận', role: 'PROCESSOR', icon: '🏢' },
-  { type: 'PROCESSED', label: 'Chế biến', role: 'PROCESSOR', icon: '⚙️' },
-  { type: 'PACKAGED', label: 'Đóng gói', role: 'PROCESSOR', icon: '📦' },
-  { type: 'SHIPPED', label: 'Xuất kho', role: 'DISTRIBUTOR', icon: '🚀' },
+  { type: 'CREATED', label: 'Khởi tạo', role: 'FARMER', iconName: 'seedling' },
+  { type: 'TRANSPORTED', label: 'Vận chuyển', role: 'DISTRIBUTOR', iconName: 'truck' },
+  { type: 'RECEIVED', label: 'Tiếp nhận', role: 'PROCESSOR', iconName: 'warehouse' },
+  { type: 'PROCESSED', label: 'Chế biến', role: 'PROCESSOR', iconName: 'cogs' },
+  { type: 'PACKAGED', label: 'Đóng gói', role: 'PROCESSOR', iconName: 'box' },
+  { type: 'SHIPPED', label: 'Xuất kho', role: 'DISTRIBUTOR', iconName: 'truck-fast' },
 ]
 
 export const PREVIEW_BATCHES = [
@@ -188,4 +188,338 @@ export function formatDateOnly(isoString) {
   } catch {
     return isoString
   }
+}
+
+export function formatRelativeTime(isoString) {
+  if (!isoString) return ''
+  try {
+    const d = new Date(isoString)
+    const now = new Date()
+    const diffMs = now.getTime() - d.getTime()
+    if (diffMs < 0) return 'Vừa mới đây'
+    const diffMins = Math.floor(diffMs / (60 * 1000))
+    if (diffMins < 1) return 'Vừa xong'
+    if (diffMins < 60) return `${diffMins} phút trước`
+    const diffHours = Math.floor(diffMins / 60)
+    if (diffHours < 24) return `${diffHours} giờ trước`
+    const diffDays = Math.floor(diffHours / 24)
+    if (diffDays === 1) return 'Hôm qua'
+    if (diffDays < 30) return `${diffDays} ngày trước`
+    return formatDateOnly(isoString)
+  } catch {
+    return ''
+  }
+}
+
+export const NEXT_EVENT_MAP = {
+  CREATED: 'TRANSPORTED',
+  TRANSPORTED: 'RECEIVED',
+  RECEIVED: 'PROCESSED',
+  PROCESSED: 'PACKAGED',
+  PACKAGED: 'SHIPPED',
+  SHIPPED: null,
+}
+
+export const EVENT_ROLE_MAP = {
+  TRANSPORTED: ['DISTRIBUTOR'],
+  RECEIVED: ['DISTRIBUTOR', 'PROCESSOR'],
+  PROCESSED: ['PROCESSOR'],
+  PACKAGED: ['PROCESSOR'],
+  SHIPPED: ['DISTRIBUTOR'],
+}
+
+export function getNextEventType(currentStatus) {
+  return NEXT_EVENT_MAP[currentStatus] || null
+}
+
+export function canUserAddEvent(user, batch) {
+  if (!batch || !batch.currentStatus) {
+    return { allowed: false, reason: 'Dữ liệu lô hàng không hợp lệ.' }
+  }
+  if (batch.currentStatus === 'SHIPPED') {
+    return { allowed: false, reason: 'Lô hàng đã hoàn tất toàn bộ chuỗi cung ứng (SHIPPED).' }
+  }
+  const nextType = NEXT_EVENT_MAP[batch.currentStatus]
+  if (!nextType) {
+    return { allowed: false, reason: 'Lô hàng đã ở giai đoạn cuối cùng.' }
+  }
+  if (!user) return { allowed: true, nextType }
+  if (user.role === 'ADMIN') return { allowed: true, nextType }
+
+  const allowedRoles = EVENT_ROLE_MAP[nextType] || []
+  if (allowedRoles.includes(user.role)) {
+    return { allowed: true, nextType }
+  }
+  return {
+    allowed: false,
+    reason: `Giai đoạn tiếp theo (${STATUS_META[nextType]?.label || nextType}) yêu cầu vai trò: ${allowedRoles.join(' hoặc ')}.`,
+    nextType,
+  }
+}
+
+export const PREVIEW_EVENTS = {
+  101: [
+    {
+      eventId: 1001,
+      batchId: 101,
+      actorId: 2,
+      actorName: 'Nguyễn Văn An (Chủ vườn)',
+      organizationName: 'HTX Cà phê Cầu Đất',
+      role: 'FARMER',
+      eventType: 'CREATED',
+      timestamp: '2026-11-04T08:30:00.000Z',
+      location: 'Nông trường Trạm Hành, TP. Đà Lạt, Lâm Đồng',
+      description: 'Khởi tạo lô cà phê Arabica Cầu Đất chín mọng 100%, thu hoạch đạt tiêu chuẩn VietGAP.',
+    },
+  ],
+  102: [
+    {
+      eventId: 1002,
+      batchId: 102,
+      actorId: 2,
+      actorName: 'Lê Văn Lúa',
+      organizationName: 'HTX Nông Nghiệp Xanh',
+      role: 'FARMER',
+      eventType: 'CREATED',
+      timestamp: '2026-11-03T14:15:00.000Z',
+      location: 'Cánh đồng mẫu lớn Mỹ Xuyên, Tỉnh Sóc Trăng',
+      description: 'Thu hoạch và sơ chế sấy ẩm lúa giống ST25 hữu cơ đạt tỷ lệ hạt đều 98%.',
+    },
+    {
+      eventId: 1003,
+      batchId: 102,
+      actorId: 4,
+      actorName: 'Trần Hữu Vận (Tài xế logistics)',
+      organizationName: 'Công ty Vận tải Mekong Xanh',
+      role: 'DISTRIBUTOR',
+      eventType: 'TRANSPORTED',
+      timestamp: '2026-11-04T09:00:00.000Z',
+      location: 'Trạm logistics Phụng Hiệp, Hậu Giang',
+      description: 'Vận chuyển 5 tấn lúa ST25 bằng xe thùng kín chuyên dụng số hiệu 65C-142.88.',
+    },
+  ],
+  103: [
+    {
+      eventId: 1004,
+      batchId: 103,
+      actorId: 2,
+      actorName: 'Hoàng Thị Trà',
+      organizationName: 'HTX Trà Cao Nguyên',
+      role: 'FARMER',
+      eventType: 'CREATED',
+      timestamp: '2026-11-01T09:40:00.000Z',
+      location: 'Đồi chè Nông trường Mộc Châu, Sơn La',
+      description: 'Hái búp trà Ô Long tươi vào sáng sớm đạt chuẩn 1 tôm 2 lá vùng núi cao.',
+    },
+    {
+      eventId: 1005,
+      batchId: 103,
+      actorId: 4,
+      actorName: 'Vũ Văn Tài',
+      organizationName: 'Đội Vận tải Tây Bắc',
+      role: 'DISTRIBUTOR',
+      eventType: 'TRANSPORTED',
+      timestamp: '2026-11-01T15:30:00.000Z',
+      location: 'Tuyến đường đèo Thung Khe, Hòa Bình',
+      description: 'Vận chuyển búp trà bảo quản trong sọt tre thông gió thoáng mát.',
+    },
+    {
+      eventId: 1006,
+      batchId: 103,
+      actorId: 3,
+      actorName: 'Đặng Đình Kiểm (KCS Kho)',
+      organizationName: 'Nhà máy Chế biến Trà Hương Việt',
+      role: 'PROCESSOR',
+      eventType: 'RECEIVED',
+      timestamp: '2026-11-02T07:15:00.000Z',
+      location: 'Kho tiếp nhận nguyên liệu, KCN Thạch Thất, Hà Nội',
+      description: 'Kiểm nghiệm dư lượng, độ tươi và bàn giao nguyên liệu vào phòng mát 18°C.',
+    },
+  ],
+  104: [
+    {
+      eventId: 1007,
+      batchId: 104,
+      actorId: 2,
+      actorName: 'Trần Nông',
+      organizationName: 'Nông trang An Phước',
+      role: 'FARMER',
+      eventType: 'CREATED',
+      timestamp: '2026-10-28T11:20:00.000Z',
+      location: 'Xã Đắk Nhau, Huyện Bù Đăng, Bình Phước',
+      description: 'Thu hoạch 820 kg hạt điều tươi chất lượng cao.',
+    },
+    {
+      eventId: 1008,
+      batchId: 104,
+      actorId: 4,
+      actorName: 'Lý Tấn',
+      organizationName: 'Vận tải Đông Nam Bộ',
+      role: 'DISTRIBUTOR',
+      eventType: 'TRANSPORTED',
+      timestamp: '2026-10-29T08:00:00.000Z',
+      location: 'Trạm cân Quốc lộ 14, Đồng Xoài, Bình Phước',
+      description: 'Vận chuyển đến xưởng chế biến nông sản tập trung.',
+    },
+    {
+      eventId: 1009,
+      batchId: 104,
+      actorId: 3,
+      actorName: 'Bùi Bích',
+      organizationName: 'Cơ sở Chế biến Phước Long',
+      role: 'PROCESSOR',
+      eventType: 'RECEIVED',
+      timestamp: '2026-10-29T13:30:00.000Z',
+      location: 'Xưởng chế biến số 3, TX. Phước Long, Bình Phước',
+      description: 'Tiếp nhận phân loại kích cỡ hạt điều chuẩn xuất khẩu W240.',
+    },
+    {
+      eventId: 1010,
+      batchId: 104,
+      actorId: 3,
+      actorName: 'Nguyễn Văn Chế (Trưởng ca)',
+      organizationName: 'Cơ sở Chế biến Phước Long',
+      role: 'PROCESSOR',
+      eventType: 'PROCESSED',
+      timestamp: '2026-10-31T16:00:00.000Z',
+      location: 'Xưởng rang muối củi Phước Long, Bình Phước',
+      description: 'Rang củi điều truyền thống, gia nhiệt 160°C kết hợp muối hạt tinh khiết.',
+    },
+  ],
+  105: [
+    {
+      eventId: 1011,
+      batchId: 105,
+      actorId: 2,
+      actorName: 'Võ Minh Trí',
+      organizationName: 'HTX Nông sản Tiền Giang',
+      role: 'FARMER',
+      eventType: 'CREATED',
+      timestamp: '2026-10-25T16:05:00.000Z',
+      location: 'Vườn thanh long Chợ Gạo, Tiền Giang',
+      description: 'Thu hoạch thanh long ruột đỏ GlobalGAP đạt chỉ tiêu độ ngọt Brix 15+.',
+    },
+    {
+      eventId: 1012,
+      batchId: 105,
+      actorId: 4,
+      actorName: 'Ngô Văn Tốc',
+      organizationName: 'Logistics Đồng Bằng',
+      role: 'DISTRIBUTOR',
+      eventType: 'TRANSPORTED',
+      timestamp: '2026-10-26T06:00:00.000Z',
+      location: 'Đường cao tốc Trung Lương - TP.HCM',
+      description: 'Vận chuyển xe tải lạnh 10 tấn nhiệt độ 8°C.',
+    },
+    {
+      eventId: 1013,
+      batchId: 105,
+      actorId: 3,
+      actorName: 'Lê Thùy Dung',
+      organizationName: 'Nhà máy Đóng gói Rau quả Mekong',
+      role: 'PROCESSOR',
+      eventType: 'RECEIVED',
+      timestamp: '2026-10-26T10:30:00.000Z',
+      location: 'Khu công nghiệp Tân Hương, Tiền Giang',
+      description: 'Tiếp nhận và kiểm tra ngoại quan, độ cứng trái và cuống xanh.',
+    },
+    {
+      eventId: 1014,
+      batchId: 105,
+      actorId: 3,
+      actorName: 'Phạm Tuấn Anh',
+      organizationName: 'Nhà máy Đóng gói Rau quả Mekong',
+      role: 'PROCESSOR',
+      eventType: 'PROCESSED',
+      timestamp: '2026-10-26T17:00:00.000Z',
+      location: 'Dây chuyền rửa ozone & sấy khô tự động',
+      description: 'Xử lý rửa hơi nước nóng kiểm soát vi sinh và nấm bề mặt quả.',
+    },
+    {
+      eventId: 1015,
+      batchId: 105,
+      actorId: 3,
+      actorName: 'Đặng Ngọc Lan (Quản lý QC)',
+      organizationName: 'Nhà máy Đóng gói Rau quả Mekong',
+      role: 'PROCESSOR',
+      eventType: 'PACKAGED',
+      timestamp: '2026-10-27T10:30:00.000Z',
+      location: 'Phòng đóng gói vô trùng Tân Hương',
+      description: 'Đóng thùng carton 5kg chống va đập, dán tem QR truy xuất nguồn gốc từng thùng.',
+    },
+  ],
+  106: [
+    {
+      eventId: 1016,
+      batchId: 106,
+      actorId: 2,
+      actorName: 'Nguyễn Văn Kiên',
+      organizationName: 'Nông trại Cái Mơn',
+      role: 'FARMER',
+      eventType: 'CREATED',
+      timestamp: '2026-10-20T07:15:00.000Z',
+      location: 'Cù lao Chợ Lách, Bến Tre',
+      description: 'Thu hoạch 1.800 kg bưởi da xanh ruột hồng chín cây.',
+    },
+    {
+      eventId: 1017,
+      batchId: 106,
+      actorId: 4,
+      actorName: 'Huỳnh Tấn Phát',
+      organizationName: 'Vận chuyển Miền Tây Xanh',
+      role: 'DISTRIBUTOR',
+      eventType: 'TRANSPORTED',
+      timestamp: '2026-10-20T14:30:00.000Z',
+      location: 'Cầu Rạch Miễu, Bến Tre sang Tiền Giang',
+      description: 'Chuyển hàng an toàn qua phà và cầu liên tỉnh.',
+    },
+    {
+      eventId: 1018,
+      batchId: 106,
+      actorId: 3,
+      actorName: 'Mai Tuyết Trinh',
+      organizationName: 'Tổng kho Chế biến Bến Tre Fruit',
+      role: 'PROCESSOR',
+      eventType: 'RECEIVED',
+      timestamp: '2026-10-21T08:00:00.000Z',
+      location: 'Kho tổng Châu Thành, Bến Tre',
+      description: 'Đo kích thước quả đạt chuẩn loại 1 trọng lượng 1.4kg - 1.8kg.',
+    },
+    {
+      eventId: 1019,
+      batchId: 106,
+      actorId: 3,
+      actorName: 'Trần Văn Hưng',
+      organizationName: 'Tổng kho Chế biến Bến Tre Fruit',
+      role: 'PROCESSOR',
+      eventType: 'PROCESSED',
+      timestamp: '2026-10-21T15:00:00.000Z',
+      location: 'Xưởng sơ chế trái cây Bến Tre',
+      description: 'Rửa sạch sát khuẩn vỏ, bọc lưới xốp bảo vệ quả.',
+    },
+    {
+      eventId: 1020,
+      batchId: 106,
+      actorId: 3,
+      actorName: 'Lương Hoàng Yến',
+      organizationName: 'Tổng kho Chế biến Bến Tre Fruit',
+      role: 'PROCESSOR',
+      eventType: 'PACKAGED',
+      timestamp: '2026-10-22T09:30:00.000Z',
+      location: 'Phòng dán nhãn xuất xưởng',
+      description: 'Đóng thùng carton 12 quả/thùng và in mã truy xuất QR chuẩn GS1.',
+    },
+    {
+      eventId: 1021,
+      batchId: 106,
+      actorId: 4,
+      actorName: 'Đỗ Quốc Thắng (Điều phối vận chuyển)',
+      organizationName: 'Tổng kho Phân phối Miền Nam',
+      role: 'DISTRIBUTOR',
+      eventType: 'SHIPPED',
+      timestamp: '2026-10-23T14:00:00.000Z',
+      location: 'Trung tâm Phân phối Tân Tạo, Bình Tân, TP.HCM',
+      description: 'Xuất kho phân phối chính thức đến chuỗi siêu thị bán lẻ Co.opmart và WinMart toàn quốc.',
+    },
+  ],
 }

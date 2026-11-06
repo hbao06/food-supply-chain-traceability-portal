@@ -18,6 +18,12 @@ import {
   IconGlobe,
   IconPlus,
   IconBuilding,
+  IconSeedling,
+  IconIndustry,
+  IconTruck,
+  IconShield,
+  IconSparkles,
+  IconCheck,
 } from './components/Icons.jsx'
 
 const TOKEN_KEY = 'food-trace-token'
@@ -40,6 +46,8 @@ function parseRoute(path) {
   if (path === '/batches/new') return { name: 'batch-new' }
   const editMatch = path.match(/^\/batches\/(\d+)\/edit$/)
   if (editMatch) return { name: 'batch-edit', batchId: Number(editMatch[1]) }
+  const timelineMatch = path.match(/^\/batches\/(\d+)\/timeline$/)
+  if (timelineMatch) return { name: 'batch-timeline', batchId: Number(timelineMatch[1]) }
   const detailMatch = path.match(/^\/batches\/(\d+)$/)
   if (detailMatch) return { name: 'batch-detail', batchId: Number(detailMatch[1]) }
   if (path === '/batches') return { name: 'batches' }
@@ -232,16 +240,16 @@ function Login({ navigate, onLogin, flash }) {
       <span className="demo-accounts-label">Đăng nhập nhanh thử nghiệm (Không cần CSDL):</span>
       <div className="demo-accounts-grid">
         <button type="button" className="demo-account-chip" onClick={() => quickLogin('FARMER')}>
-          🌱 Nông dân (Farmer)
+          <IconSeedling /> Nông dân (Farmer)
         </button>
         <button type="button" className="demo-account-chip" onClick={() => quickLogin('PROCESSOR')}>
-          🏭 Chế biến (Processor)
+          <IconIndustry /> Chế biến (Processor)
         </button>
         <button type="button" className="demo-account-chip" onClick={() => quickLogin('DISTRIBUTOR')}>
-          🚚 Phân phối (Distributor)
+          <IconTruck /> Phân phối (Distributor)
         </button>
         <button type="button" className="demo-account-chip" onClick={() => quickLogin('ADMIN')}>
-          🛡️ Admin
+          <IconShield /> Quản trị viên (Admin)
         </button>
       </div>
     </div>
@@ -304,7 +312,7 @@ function Register({ navigate }) {
 
   return <AuthShell title="Đăng ký tài khoản" subtitle="Tạo tài khoản để tham gia chuỗi cung ứng.">
     {done ? <div className="completion">
-      <span className="completion-mark" aria-hidden="true">✓</span>
+      <span className="completion-mark" aria-hidden="true"><IconCheck /></span>
       <h2>Đăng ký thành công</h2>
       <p>Tài khoản của bạn đã được ghi nhận ở trạng thái chờ duyệt. Quản trị viên sẽ kích hoạt trước khi bạn có thể đăng nhập.</p>
       <button className="button primary wide" type="button" onClick={() => navigate('/login')}>
@@ -549,7 +557,7 @@ function Workspace({
         <div className="workspace-content">
           {preview && (
             <div className="preview-banner" role="status">
-              <strong>✨ Bản xem trước giao diện Quản lý lô (W5-Hoài Bảo)</strong> — Dữ liệu minh họa sẵn sàng để kiểm tra UI/UX, tra cứu, tạo mới và xem chi tiết mã QR.
+              <strong><IconSparkles /> Bản xem trước giao diện Quản lý lô & Timeline (W6-Hoài Bảo)</strong> — Dữ liệu minh họa sẵn sàng để kiểm tra quy trình ghi nhận sự kiện chuỗi cung ứng, hiển thị timeline (đơn vị, địa điểm, thời gian, trạng thái) và cập nhật lô.
             </div>
           )}
 
@@ -602,7 +610,7 @@ function Workspace({
               }}
               onCancel={() => navigate(`/batches/${routeInfo.batchId}`)}
             />
-          ) : routeInfo.name === 'batch-detail' ? (
+          ) : routeInfo.name === 'batch-detail' || routeInfo.name === 'batch-timeline' ? (
             <BatchDetail
               batchId={routeInfo.batchId}
               token={token}
