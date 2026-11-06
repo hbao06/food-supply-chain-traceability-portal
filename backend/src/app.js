@@ -9,6 +9,7 @@ require("dotenv").config();
 require("dotenv").config({ path: path.resolve(__dirname, "../../.env") });
 
 const { notFound, errorHandler } = require("./common/errorHandler");
+const { eventsRouter, timelineRouter } = require("./modules/events/events.routes");
 const { authRouter, profileRouter } = require("./modules/auth/auth.routes");
 const { batchesRouter } = require("./modules/batches/batches.routes");
 const { securityHeaders } = require("./middleware/securityHeaders");
@@ -56,6 +57,8 @@ app.use("/api/auth/register", registerLimiter);
 app.use("/api/auth", authRouter);
 app.use("/api/users", profileRouter);
 app.use("/api/batches", batchesRouter);
+app.use("/api/batches/:batchId/events", eventsRouter);
+app.use("/api/batches/:batchId/timeline", timelineRouter);
 
 // Router của các module khác (batches, events, trace) đặt TRƯỚC notFound.
 app.use(notFound); // đường dẫn không tồn tại -> 404 { code, message }
