@@ -288,7 +288,9 @@ paths:
       description: |
         DISTRIBUTOR records TRANSPORTED, RECEIVED and SHIPPED.
         PROCESSOR records PROCESSED and PACKAGED. Another role gets 403; a batch outside the
-        caller's scope gets 404.
+        caller's scope gets 404. The server sets the actor (from the token) and the time of the event;
+        sending `timestamp`, `actorId` or `batchId` returns 400. A wrong order returns 409
+        INVALID_SEQUENCE. Every event writes two audit entries (the event and the batch status change).
         The event must follow the valid sequence
         CREATED, TRANSPORTED, RECEIVED, PROCESSED, PACKAGED, SHIPPED.
         The event and the new batch status are saved in one transaction.
@@ -309,7 +311,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SupplyChainEvent"
+                $ref: "#/components/schemas/TimelineEvent"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -324,6 +326,7 @@ paths:
     get:
       tags: [Events]
       summary: List events of a batch
+      description: Events ordered from oldest to newest. Same items as `events` in the timeline. A batch outside the caller's scope returns 404.
       operationId: listSupplyChainEvents
       security:
         - bearerAuth: []
@@ -337,7 +340,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/SupplyChainEvent"
+                  $ref: "#/components/schemas/TimelineEvent"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -347,7 +350,9 @@ paths:
     get:
       tags: [Trace]
       summary: Get the internal timeline of a batch
-      description: Batch information and all events ordered from oldest to newest.
+      description: |
+        Batch information and all events ordered from oldest to newest, each with the actor name and the
+        organization name for display. A batch outside the caller's scope returns 404.
       operationId: getTimeline
       security:
         - bearerAuth: []
@@ -1051,6 +1056,7 @@ components:
     CreateEventRequest:
       type: object
       required: [eventType, location]
+      additionalProperties: false
       properties:
         eventType:
           type: string
@@ -1058,9 +1064,11 @@ components:
           enum: [TRANSPORTED, RECEIVED, PROCESSED, PACKAGED, SHIPPED]
         location:
           type: string
+          maxLength: 255
           example: Ho Chi Minh City
         description:
-          type: string
+          type: [string, "null"]
+          maxLength: 1000
           example: Batch transported to the distribution center.
 
     SupplyChainEvent:
@@ -1102,6 +1110,19 @@ components:
           type: string
           format: date-time
 
+    TimelineEvent:
+      description: A supply chain event with display fields for the actor and the actor's organization.
+      allOf:
+        - $ref: "#/components/schemas/SupplyChainEvent"
+        - type: object
+          properties:
+            actorName:
+              type: string
+              example: Nguyen Van A
+            organizationName:
+              type: [string, "null"]
+              example: Phan phoi Mien Nam
+
     Timeline:
       type: object
       properties:
@@ -1110,7 +1131,7 @@ components:
         events:
           type: array
           items:
-            $ref: "#/components/schemas/SupplyChainEvent"
+            $ref: "#/components/schemas/TimelineEvent"
 
     PublicTrace:
       type: object
