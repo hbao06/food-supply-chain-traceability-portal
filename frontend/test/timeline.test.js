@@ -30,20 +30,22 @@ test('timeline - getNextEventType returns correct sequential next status', () =>
 })
 
 test('timeline - EVENT_ROLE_MAP assigns proper roles per supply chain event', () => {
-  assert.ok(EVENT_ROLE_MAP.TRANSPORTED.includes('DISTRIBUTOR'))
-  assert.ok(EVENT_ROLE_MAP.RECEIVED.includes('PROCESSOR'))
-  assert.ok(EVENT_ROLE_MAP.PROCESSED.includes('PROCESSOR'))
-  assert.ok(EVENT_ROLE_MAP.PACKAGED.includes('PROCESSOR'))
-  assert.ok(EVENT_ROLE_MAP.SHIPPED.includes('DISTRIBUTOR'))
+  assert.deepEqual(EVENT_ROLE_MAP.TRANSPORTED, ['DISTRIBUTOR'])
+  assert.deepEqual(EVENT_ROLE_MAP.RECEIVED, ['DISTRIBUTOR'])
+  assert.deepEqual(EVENT_ROLE_MAP.PROCESSED, ['PROCESSOR'])
+  assert.deepEqual(EVENT_ROLE_MAP.PACKAGED, ['PROCESSOR'])
+  assert.deepEqual(EVENT_ROLE_MAP.SHIPPED, ['DISTRIBUTOR'])
 })
 
 test('timeline - canUserAddEvent checks role authorization and batch status', () => {
   const batchCreated = { batchId: 101, currentStatus: 'CREATED' }
   const batchShipped = { batchId: 106, currentStatus: 'SHIPPED' }
 
-  // Admin is always allowed (unless shipped)
+  // Admin cannot record supply chain events (read/audit only)
   const admin = { role: 'ADMIN' }
-  assert.equal(canUserAddEvent(admin, batchCreated).allowed, true)
+  const checkAdmin = canUserAddEvent(admin, batchCreated)
+  assert.equal(checkAdmin.allowed, false)
+  assert.match(checkAdmin.reason, /Quản trị viên/)
   assert.equal(canUserAddEvent(admin, batchShipped).allowed, false)
 
   // Distributor can record TRANSPORTED on CREATED batch
@@ -52,11 +54,22 @@ test('timeline - canUserAddEvent checks role authorization and batch status', ()
   assert.equal(checkDist.allowed, true)
   assert.equal(checkDist.nextType, 'TRANSPORTED')
 
+  // Batch at TRANSPORTED: next is RECEIVED, must be DISTRIBUTOR not PROCESSOR
+  const batchTransported = { batchId: 102, currentStatus: 'TRANSPORTED' }
+  const distReceived = canUserAddEvent(distributor, batchTransported)
+  assert.equal(distReceived.allowed, true)
+  assert.equal(distReceived.nextType, 'RECEIVED')
+
+  const processor = { role: 'PROCESSOR' }
+  const procReceived = canUserAddEvent(processor, batchTransported)
+  assert.equal(procReceived.allowed, false)
+  assert.match(procReceived.reason, /DISTRIBUTOR/)
+
   // Farmer cannot record next event after CREATED
   const farmer = { role: 'FARMER' }
   const checkFarmer = canUserAddEvent(farmer, batchCreated)
   assert.equal(checkFarmer.allowed, false)
-  assert.match(checkFarmer.reason, /yêu cầu vai trò: DISTRIBUTOR/)
+  assert.match(checkFarmer.reason, /Nhà sản xuất/)
 })
 
 test('timeline - PREVIEW_EVENTS contains required 4 core factors for each event (Đơn vị, Địa điểm, Thời gian, Trạng thái)', () => {

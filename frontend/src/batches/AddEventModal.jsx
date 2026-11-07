@@ -104,8 +104,8 @@ export function AddEventModal({
     if (!organizationName.trim()) {
       errs.organizationName = 'Tên đơn vị thực hiện không được để trống.'
     }
-    if (description && description.length > 2000) {
-      errs.description = 'Mô tả tối đa 2000 ký tự.'
+    if (description && description.length > 1000) {
+      errs.description = 'Mô tả tối đa 1000 ký tự.'
     }
     setErrors(errs)
     return Object.keys(errs).length === 0
@@ -227,12 +227,14 @@ export function AddEventModal({
                   const isNext = step.type === defaultNextType
                   const isSelected = step.type === eventType
                   const allowedRoles = EVENT_ROLE_MAP[step.type] || []
-                  const isRoleMatch = user?.role === 'ADMIN' || preview || allowedRoles.includes(user?.role)
+                  const isRoleMatch = allowedRoles.includes(user?.role) || (!user && preview)
 
                   return (
                     <button
                       key={step.type}
                       type="button"
+                      disabled={!isNext}
+                      title={!isNext ? 'Chỉ được ghi nhận sự kiện tuần tự kế tiếp theo quy trình chuỗi cung ứng' : undefined}
                       className={`stage-pick-btn ${isSelected ? 'active' : ''} ${
                         isNext ? 'recommended' : ''
                       } ${!isRoleMatch ? 'role-dimmed' : ''}`}
@@ -246,7 +248,7 @@ export function AddEventModal({
                           <StepIcon type={step.type} />
                         </span>
                         <strong className="pick-title">{step.label}</strong>
-                        {isNext && <span className="pick-chip-next">Bước kế tiếp</span>}
+                        {isNext ? <span className="pick-chip-next">Bước kế tiếp</span> : <span className="pick-chip-locked">Đã khóa</span>}
                       </div>
                       <span className="pick-role">Phụ trách: {allowedRoles.join(' / ')}</span>
                     </button>
@@ -357,6 +359,7 @@ export function AddEventModal({
             </label>
             <textarea
               id="event-description"
+              maxLength={1000}
               rows="3"
               value={description}
               onChange={(e) => {

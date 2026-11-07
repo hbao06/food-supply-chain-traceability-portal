@@ -155,7 +155,7 @@ export function BatchDetail({
   const canEdit = isFarmer && batch.currentStatus === 'CREATED'
 
   const eventPermission = canUserAddEvent(user, batch)
-  const canAddEvent = preview || user?.role === 'ADMIN' || eventPermission.allowed
+  const canAddEvent = eventPermission.allowed
 
   function handleEventAdded(newEvent, updatedBatch) {
     setBatch(updatedBatch)

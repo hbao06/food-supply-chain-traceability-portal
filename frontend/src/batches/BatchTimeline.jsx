@@ -116,7 +116,7 @@ export function BatchTimeline({
 
   // Permission check for adding event
   const permission = canUserAddEvent(user, batch)
-  const canAdd = preview || user?.role === 'ADMIN' || permission.allowed
+  const canAdd = permission.allowed
 
   function handleEventAdded(newEvent, updatedBatch) {
     setEvents((prev) => [...prev, newEvent])

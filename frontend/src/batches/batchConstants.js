@@ -67,7 +67,7 @@ export const STATUS_META = {
 export const SUPPLY_CHAIN_STEPS = [
   { type: 'CREATED', label: 'Khởi tạo', role: 'FARMER', iconName: 'seedling' },
   { type: 'TRANSPORTED', label: 'Vận chuyển', role: 'DISTRIBUTOR', iconName: 'truck' },
-  { type: 'RECEIVED', label: 'Tiếp nhận', role: 'PROCESSOR', iconName: 'warehouse' },
+  { type: 'RECEIVED', label: 'Tiếp nhận', role: 'DISTRIBUTOR', iconName: 'warehouse' },
   { type: 'PROCESSED', label: 'Chế biến', role: 'PROCESSOR', iconName: 'cogs' },
   { type: 'PACKAGED', label: 'Đóng gói', role: 'PROCESSOR', iconName: 'box' },
   { type: 'SHIPPED', label: 'Xuất kho', role: 'DISTRIBUTOR', iconName: 'truck-fast' },
@@ -222,7 +222,7 @@ export const NEXT_EVENT_MAP = {
 
 export const EVENT_ROLE_MAP = {
   TRANSPORTED: ['DISTRIBUTOR'],
-  RECEIVED: ['DISTRIBUTOR', 'PROCESSOR'],
+  RECEIVED: ['DISTRIBUTOR'],
   PROCESSED: ['PROCESSOR'],
   PACKAGED: ['PROCESSOR'],
   SHIPPED: ['DISTRIBUTOR'],
@@ -244,7 +244,20 @@ export function canUserAddEvent(user, batch) {
     return { allowed: false, reason: 'Lô hàng đã ở giai đoạn cuối cùng.' }
   }
   if (!user) return { allowed: true, nextType }
-  if (user.role === 'ADMIN') return { allowed: true, nextType }
+  if (user.role === 'ADMIN') {
+    return {
+      allowed: false,
+      reason: 'Quản trị viên (Admin) chỉ xem và giám sát hệ thống, không trực tiếp ghi nhận sự kiện chuỗi cung ứng.',
+      nextType,
+    }
+  }
+  if (user.role === 'FARMER') {
+    return {
+      allowed: false,
+      reason: 'Nhà sản xuất (Farmer) chỉ khởi tạo lô hàng, các sự kiện chuỗi cung ứng do đơn vị vận chuyển hoặc chế biến ghi nhận.',
+      nextType,
+    }
+  }
 
   const allowedRoles = EVENT_ROLE_MAP[nextType] || []
   if (allowedRoles.includes(user.role)) {
@@ -327,9 +340,9 @@ export const PREVIEW_EVENTS = {
       eventId: 1006,
       batchId: 103,
       actorId: 3,
-      actorName: 'Đặng Đình Kiểm (KCS Kho)',
-      organizationName: 'Nhà máy Chế biến Trà Hương Việt',
-      role: 'PROCESSOR',
+      actorName: 'Đặng Đình Kiểm (KCS Kho vận)',
+      organizationName: 'Đội Vận tải Tây Bắc',
+      role: 'DISTRIBUTOR',
       eventType: 'RECEIVED',
       timestamp: '2026-11-02T07:15:00.000Z',
       location: 'Kho tiếp nhận nguyên liệu, KCN Thạch Thất, Hà Nội',
@@ -365,9 +378,9 @@ export const PREVIEW_EVENTS = {
       eventId: 1009,
       batchId: 104,
       actorId: 3,
-      actorName: 'Bùi Bích',
-      organizationName: 'Cơ sở Chế biến Phước Long',
-      role: 'PROCESSOR',
+      actorName: 'Bùi Bích (Điều phối giao nhận)',
+      organizationName: 'Vận tải Đông Nam Bộ',
+      role: 'DISTRIBUTOR',
       eventType: 'RECEIVED',
       timestamp: '2026-10-29T13:30:00.000Z',
       location: 'Xưởng chế biến số 3, TX. Phước Long, Bình Phước',
@@ -415,9 +428,9 @@ export const PREVIEW_EVENTS = {
       eventId: 1013,
       batchId: 105,
       actorId: 3,
-      actorName: 'Lê Thùy Dung',
-      organizationName: 'Nhà máy Đóng gói Rau quả Mekong',
-      role: 'PROCESSOR',
+      actorName: 'Lê Thùy Dung (Kiểm nhận kho bãi)',
+      organizationName: 'Logistics Đồng Bằng',
+      role: 'DISTRIBUTOR',
       eventType: 'RECEIVED',
       timestamp: '2026-10-26T10:30:00.000Z',
       location: 'Khu công nghiệp Tân Hương, Tiền Giang',
@@ -477,9 +490,9 @@ export const PREVIEW_EVENTS = {
       eventId: 1018,
       batchId: 106,
       actorId: 3,
-      actorName: 'Mai Tuyết Trinh',
-      organizationName: 'Tổng kho Chế biến Bến Tre Fruit',
-      role: 'PROCESSOR',
+      actorName: 'Mai Tuyết Trinh (Bộ phận tiếp nhận vận tải)',
+      organizationName: 'Vận chuyển Miền Tây Xanh',
+      role: 'DISTRIBUTOR',
       eventType: 'RECEIVED',
       timestamp: '2026-10-21T08:00:00.000Z',
       location: 'Kho tổng Châu Thành, Bến Tre',
