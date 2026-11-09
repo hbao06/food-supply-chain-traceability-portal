@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import QRCode from 'qrcode'
-import { IconMapPin, IconDownload } from '../components/Icons.jsx'
+import { IconMapPin, IconDownload, IconCheck } from '../components/Icons.jsx'
 
 export function BatchQrModal({ batch, onClose }) {
   const canvasRef = useRef(null)
@@ -141,7 +141,7 @@ export function BatchQrModal({ batch, onClose }) {
               onClick={handleCopy}
               title="Sao chép liên kết"
             >
-              {copied ? '✓ Đã sao chép' : 'Sao chép'}
+              {copied ? <><IconCheck /> Đã sao chép</> : 'Sao chép'}
             </button>
           </div>
 

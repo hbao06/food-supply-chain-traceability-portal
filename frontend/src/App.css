@@ -1528,15 +1528,22 @@ h1, h2 { letter-spacing: 0; }
   gap: 7px;
 }
 .demo-account-chip {
-  padding: 7px 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
   border: 1px solid #c2ded0;
-  border-radius: 4px;
+  border-radius: 6px;
   background: #ffffff;
   color: #155b42;
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.14s ease;
+}
+.demo-account-chip svg {
+  width: 14px;
+  height: 14px;
 }
 .demo-account-chip:hover {
   background: #155b42;
@@ -1560,3 +1567,641 @@ h1, h2 { letter-spacing: 0; }
 .demo-login-suggest button {
   white-space: nowrap;
 }
+
+/* ==========================================================================
+   W6-HOÀI BẢO: DETAIL TABS, TIMELINE & ADD EVENT FORM STYLES
+   ========================================================================== */
+
+/* Detail Tab Navigation */
+.detail-tab-nav {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid var(--line);
+  padding-bottom: 2px;
+}
+.detail-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -4px;
+  padding: 10px 18px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.16s ease;
+  border-radius: 4px 4px 0 0;
+}
+.detail-tab-btn:hover {
+  color: var(--ink);
+  background: rgba(21, 91, 66, 0.04);
+}
+.detail-tab-btn.active {
+  color: var(--green);
+  border-bottom-color: var(--green);
+  background: rgba(21, 91, 66, 0.06);
+}
+
+/* Timeline Section Wrapper */
+.timeline-section-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Timeline Header Card */
+.timeline-header-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(15, 73, 54, 0.03);
+}
+.timeline-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.timeline-headline {
+  flex: 1;
+  min-width: 280px;
+}
+.eyebrow-accent {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--green);
+  margin-bottom: 6px;
+}
+.timeline-main-title {
+  margin: 0 0 6px;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -0.3px;
+}
+.timeline-sub-desc {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.timeline-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Sort Pills */
+.sort-button-group {
+  display: inline-flex;
+  background: #f0f4f1;
+  border-radius: 6px;
+  padding: 3px;
+  border: 1px solid #d8e5dc;
+}
+.sort-pill {
+  background: transparent;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.14s ease;
+}
+.sort-pill.active {
+  background: var(--surface);
+  color: var(--green);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+/* Chain Progress Bar */
+.chain-progress-bar-wrap {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px dashed var(--line);
+}
+.chain-progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.progress-label {
+  color: var(--ink);
+}
+.progress-status-current {
+  color: var(--muted);
+}
+.progress-status-current strong {
+  color: var(--green);
+}
+.chain-progress-track {
+  width: 100%;
+  height: 8px;
+  background: #e8efe9;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.chain-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #155b42, #299e74);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+/* Timeline Content Layout */
+.timeline-content-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 24px;
+  align-items: start;
+}
+@media (max-width: 980px) {
+  .timeline-content-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Timeline Track Container */
+.timeline-track-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-left: 28px;
+}
+.timeline-stem-line {
+  position: absolute;
+  top: 24px;
+  bottom: 24px;
+  left: 14px;
+  width: 3px;
+  background: linear-gradient(180deg, #155b42 0%, #a7c5b6 85%, #dce8e1 100%);
+  border-radius: 2px;
+}
+
+/* Milestone Card */
+.timeline-milestone-card {
+  position: relative;
+  display: flex;
+  gap: 18px;
+}
+.milestone-marker {
+  position: absolute;
+  left: -28px;
+  top: 20px;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.marker-circle {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 3px solid var(--green);
+  color: var(--green);
+  font-weight: 850;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 4px var(--surface);
+}
+.is-current-stage .marker-circle {
+  background: var(--green);
+  color: #ffffff;
+  border-color: #278663;
+  box-shadow: 0 0 0 4px rgba(21, 91, 66, 0.2);
+}
+.marker-pulse-glow {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(21, 91, 66, 0.15);
+  animation: pulse-ring 2s infinite ease-out;
+  pointer-events: none;
+}
+@keyframes pulse-ring {
+  0% { transform: scale(0.7); opacity: 0.8; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+.milestone-card-inner {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 22px 24px;
+  box-shadow: 0 1px 3px rgba(15, 73, 54, 0.03);
+  transition: all 0.18s ease;
+}
+.timeline-milestone-card:hover .milestone-card-inner {
+  border-color: #9cbcae;
+  box-shadow: 0 4px 12px rgba(15, 73, 54, 0.06);
+}
+.is-current-stage .milestone-card-inner {
+  border-color: #79ad96;
+  border-left: 4px solid var(--green);
+  background: #fbfdfc;
+}
+
+/* Milestone Top Banner */
+.milestone-top-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #edf3ef;
+  flex-wrap: wrap;
+}
+.milestone-title-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.stage-tag-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.current-pulse-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #ebf6f0;
+  color: #17654a;
+  border: 1px solid #b8dfcb;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+.milestone-stage-name {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--ink);
+}
+.milestone-time-col {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.time-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  color: var(--ink);
+}
+.time-relative {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* 4-Factor Facts Matrix (Đơn vị, Địa điểm, Thời gian, Trạng thái) */
+.milestone-facts-matrix {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: #f8faf8;
+  border: 1px solid #e3ede6;
+  border-radius: 6px;
+}
+.milestone-fact-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.milestone-fact-cell .cell-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #3b6b55;
+}
+.milestone-fact-cell .cell-value {
+  font-size: 14.5px;
+  font-weight: 750;
+  color: var(--ink);
+}
+.cell-sub-actor {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+  font-size: 12px;
+}
+.actor-badge {
+  background: #e2ede5;
+  color: #155b42;
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+.actor-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.cell-sub-note {
+  font-size: 11.5px;
+  color: #799587;
+  font-style: italic;
+}
+
+/* Milestone Description Box */
+.milestone-description-box {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: #ffffff;
+  border: 1px solid #d5e5dc;
+  border-left: 3px solid #299e74;
+  border-radius: 4px;
+}
+.desc-heading {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.desc-text {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: #243d31;
+}
+
+/* Upcoming Stages Sidebar */
+.upcoming-card {
+  position: sticky;
+  top: 24px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 22px;
+  box-shadow: 0 1px 3px rgba(15, 73, 54, 0.02);
+}
+.upcoming-header h4 {
+  margin: 6px 0 4px;
+  font-size: 16px;
+  color: var(--ink);
+}
+.upcoming-header p {
+  margin: 0 0 14px;
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+.upcoming-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.upcoming-step-item {
+  display: flex;
+  gap: 12px;
+  padding: 10px;
+  background: #f7faf8;
+  border: 1px dashed #d1e2d7;
+  border-radius: 6px;
+}
+.upcoming-step-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  background: #eef6f1;
+  color: #155b42;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid #d0e3d7;
+}
+.upcoming-step-icon svg {
+  width: 17px;
+  height: 17px;
+}
+.upcoming-step-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.upcoming-step-info strong {
+  font-size: 13.5px;
+  color: var(--ink);
+}
+.upcoming-step-role {
+  font-size: 11px;
+  font-weight: 750;
+  color: #3f6e59;
+}
+.upcoming-step-desc {
+  font-size: 11.5px;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+/* Add Event Modal Styles */
+.add-event-dialog {
+  max-width: 680px;
+}
+.modal-batch-glance {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #f1f6f3;
+  border: 1px solid #d4e5db;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+.glance-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.glance-label {
+  color: var(--muted);
+  font-weight: 600;
+}
+.event-type-selector-card {
+  margin-top: 8px;
+}
+.stage-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 8px;
+}
+.stage-pick-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 10px 8px;
+  background: #ffffff;
+  border: 1.5px solid #d4e2da;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+.stage-pick-btn:hover {
+  border-color: #155b42;
+  background: #f7faf8;
+  transform: translateY(-1px);
+}
+.stage-pick-btn.active {
+  border-color: #155b42;
+  background: #ebf5ef;
+  box-shadow: 0 0 0 2px rgba(21, 91, 66, 0.2);
+}
+.stage-pick-btn.recommended {
+  border-color: #299e74;
+}
+.stage-pick-btn.role-dimmed {
+  opacity: 0.75;
+}
+.pick-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.pick-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  background: #f1f7f3;
+  color: #155b42;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+  border: 1px solid #d4e3da;
+  transition: all 0.14s ease;
+}
+.stage-pick-btn:hover .pick-icon {
+  background: #e4f1ea;
+  border-color: #bad3c5;
+}
+.stage-pick-btn.active .pick-icon {
+  background: #155b42;
+  color: #ffffff;
+  border-color: #155b42;
+}
+.pick-icon svg {
+  width: 17px;
+  height: 17px;
+}
+.pick-title {
+  font-size: 13px;
+  color: var(--ink);
+}
+.pick-chip-next {
+  display: inline-block;
+  background: #155b42;
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 4px;
+  border-radius: 3px;
+  margin-top: 2px;
+}
+.pick-role {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.event-type-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: #f7faf8;
+  border: 1px solid #dce8e0;
+  border-radius: 4px;
+  font-size: 12.5px;
+  color: #2c5442;
+}
+
+/* Quick Location Preset Chips */
+.quick-presets-box {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.presets-title {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.preset-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.preset-chip {
+  background: #f0f6f2;
+  border: 1px solid #cce0d4;
+  border-radius: 4px;
+  padding: 4px 9px;
+  font-size: 11.5px;
+  font-weight: 650;
+  color: #1a5e45;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  font-family: inherit;
+}
+.preset-chip:hover {
+  background: #155b42;
+  color: #ffffff;
+  border-color: #155b42;
+}
+
+.pulse-on-hover:hover {
+  box-shadow: 0 0 0 4px rgba(21, 91, 66, 0.2);
+}
+

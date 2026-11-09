@@ -17,6 +17,7 @@ import {
   IconPlus,
   IconMapPin,
   IconBatches,
+  IconAlertTriangle,
 } from '../components/Icons.jsx'
 
 export function BatchList({
@@ -268,7 +269,7 @@ export function BatchList({
           </div>
         ) : error ? (
           <div className="state-block" role="alert">
-            <span className="state-icon">⚠️</span>
+            <span className="state-icon"><IconAlertTriangle /></span>
             <h2>Không thể tải dữ liệu</h2>
             <p>{error}</p>
             <button

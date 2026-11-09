@@ -55,6 +55,14 @@ export const api = {
   createBatch: (token, body) => request('/batches', { method: 'POST', token, body: JSON.stringify(body) }),
   updateBatch: (token, batchId, body) => request(`/batches/${batchId}`, { method: 'PATCH', token, body: JSON.stringify(body) }),
   getBatchQr: (token, batchId) => request(`/batches/${batchId}/qr`, { token }),
+  listEvents: (token, batchId) => request(`/batches/${batchId}/events`, { token }),
+  createEvent: (token, batchId, body) =>
+    request(`/batches/${batchId}/events`, {
+      method: 'POST',
+      token,
+      body: JSON.stringify(body),
+    }),
+  getTimeline: (token, batchId) => request(`/batches/${batchId}/timeline`, { token }),
 }
 
 const messages = {
@@ -68,10 +76,12 @@ const messages = {
   TOKEN_EXPIRED: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
   INVALID_TOKEN: 'Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.',
   VALIDATION_ERROR: 'Thông tin chưa hợp lệ. Vui lòng kiểm tra lại.',
-  NO_ORGANIZATION: 'Tài khoản chưa thuộc đơn vị nào nên chưa thể tạo lô hàng.',
+  NO_ORGANIZATION: 'Tài khoản chưa thuộc đơn vị nào nên chưa thể thao tác.',
   BATCH_NOT_EDITABLE: 'Lô đã chuyển sang trạng thái tiếp theo trong chuỗi cung ứng, không thể chỉnh sửa.',
+  INVALID_SEQUENCE: 'Sự kiện không đúng thứ tự hợp lệ của chuỗi cung ứng.',
+  ALREADY_EXISTS: 'Sự kiện này đã được ghi nhận trước đó cho lô hàng.',
   NOT_FOUND: 'Không tìm thấy lô hàng hoặc bạn không có quyền truy cập.',
-  FORBIDDEN: 'Bạn không có quyền thực hiện thao tác này.',
+  FORBIDDEN: 'Bạn không có quyền thực hiện thao tác này đối với vai trò hiện tại.',
   TOO_MANY_REQUESTS: 'Bạn thao tác quá nhanh, vui lòng chờ giây lát rồi thử lại.',
 }
 

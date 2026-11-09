@@ -1,5 +1,5 @@
 -- =============================================================================
--- Kiểm tra ràng buộc CSDL (W3-TV3; W4-TV3 bảng roles; W5-TV3 bảng products, view farms)
+-- Kiểm tra ràng buộc CSDL (W3-TV3; W4 roles; W5 products, farms; W6 event_types, chuỗi băm, vai trò fsc_app)
 -- Chạy trên CSDL trống SAU KHI đã chạy migration (cd backend && npm run db:migrate):
 --   psql -U postgres -d food_traceability -v ON_ERROR_STOP=1 -f database/tests/schema-check.sql
 -- Mọi dữ liệu thử được ROLLBACK ở cuối, CSDL giữ nguyên.
@@ -232,6 +232,109 @@ BEGIN
     END IF;
     RAISE NOTICE 'PASS  view công khai chỉ có cột được phép';
 END $$;
+
+-- ---------- event_types (migration 004) ----------
+DO $$
+BEGIN
+    IF (SELECT string_agg(code || ':' || role_code || ':' || sendable, ',' ORDER BY seq_no) FROM event_types)
+       <> 'CREATED:FARMER:false,TRANSPORTED:DISTRIBUTOR:true,RECEIVED:DISTRIBUTOR:true,PROCESSED:PROCESSOR:true,PACKAGED:PROCESSOR:true,SHIPPED:DISTRIBUTOR:true' THEN
+        RAISE EXCEPTION 'FAIL  event_types sai thứ tự / vai trò';
+    END IF;
+    RAISE NOTICE 'PASS  event_types: 6 bước đúng thứ tự, vai trò; chỉ CREATED không gửi qua API';
+END $$;
+SELECT pg_temp.expect_fail('Không sửa event_types', $$UPDATE event_types SET role_code='PROCESSOR' WHERE code='SHIPPED'$$);
+SELECT pg_temp.expect_fail('Không xóa event_types', $$DELETE FROM event_types WHERE code='PACKAGED'$$);
+DO $$
+BEGIN
+    UPDATE batches SET current_status = 'LOST' WHERE batch_code = 'BATCH-2026-0050';
+    RAISE EXCEPTION 'FAIL  trạng thái không có trong event_types vẫn lưu được';
+EXCEPTION WHEN foreign_key_violation THEN
+    RAISE NOTICE 'PASS  Trạng thái lô không có trong event_types bị khóa ngoại chặn (%)', SQLERRM;
+END $$;
+
+-- ---------- Chuỗi băm lịch sử (migration 005) ----------
+DO $$
+DECLARE v record;
+BEGIN
+    SELECT * INTO v FROM verify_audit_chain();
+    IF v.first_broken_audit_id IS NOT NULL OR v.checked <> (SELECT count(*) FROM audit_logs) THEN
+        RAISE EXCEPTION 'FAIL  chuỗi audit báo hỏng: %', v.reason;
+    END IF;
+    SELECT * INTO v FROM verify_batch_events(1);
+    IF v.first_broken_event_id IS NOT NULL OR v.checked <> 6 THEN
+        RAISE EXCEPTION 'FAIL  chuỗi sự kiện lô 1: % / %', v.checked, v.reason;
+    END IF;
+    IF EXISTS (SELECT 1 FROM audit_logs a JOIN audit_logs b ON b.chain_seq = a.chain_seq + 1 WHERE b.prev_hash <> a.row_hash) THEN
+        RAISE EXCEPTION 'FAIL  prev_hash không nối với dòng trước';
+    END IF;
+    RAISE NOTICE 'PASS  Chuỗi băm audit và sự kiện toàn vẹn sau các thao tác hợp lệ';
+END $$;
+DO $$
+DECLARE r audit_logs%ROWTYPE; v_max bigint := (SELECT max(chain_seq) FROM audit_logs);
+BEGIN
+    -- Backend gửi giá trị giả cho các cột chuỗi băm: trigger phải bỏ qua và tự cấp giá trị đúng.
+    INSERT INTO audit_logs (action, entity_type, chain_seq, prev_hash, row_hash)
+    VALUES ('CREATE', 'USER', 1, repeat('a', 64), repeat('b', 64)) RETURNING * INTO r;
+    IF r.chain_seq <> v_max + 1 OR r.row_hash = repeat('b', 64)
+       OR r.prev_hash <> (SELECT row_hash FROM audit_logs WHERE chain_seq = v_max) THEN
+        RAISE EXCEPTION 'FAIL  trigger không tự cấp chain_seq / hash';
+    END IF;
+    RAISE NOTICE 'PASS  Cột chuỗi băm do trigger cấp, giá trị gửi từ ngoài bị bỏ qua';
+END $$;
+
+-- Mô phỏng quản trị viên tắt trigger rồi sửa / xóa lịch sử: chuỗi băm phải phát hiện (dữ liệu được ROLLBACK cuối file).
+ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_append_only;
+UPDATE audit_logs SET new_value = '{"batchCode":"BATCH-2026-9999"}' WHERE audit_id = (SELECT min(audit_id) FROM audit_logs);
+DO $$
+DECLARE v record;
+BEGIN
+    SELECT * INTO v FROM verify_audit_chain();
+    IF v.first_broken_audit_id IS DISTINCT FROM (SELECT min(audit_id) FROM audit_logs) OR v.reason NOT LIKE '%bị sửa%' THEN
+        RAISE EXCEPTION 'FAIL  sửa audit không bị phát hiện (%, %)', v.first_broken_audit_id, v.reason;
+    END IF;
+    RAISE NOTICE 'PASS  Sửa nội dung audit bị phát hiện ở đúng dòng';
+END $$;
+ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_append_only;
+
+ALTER TABLE supply_chain_events DISABLE TRIGGER trg_events_append_only;
+DELETE FROM supply_chain_events WHERE batch_id = 1 AND event_type = 'RECEIVED';
+UPDATE supply_chain_events SET location = 'Đổi địa điểm' WHERE batch_id = 1 AND event_type = 'TRANSPORTED';
+DO $$
+DECLARE v record;
+BEGIN
+    SELECT * INTO v FROM verify_batch_events(1);
+    IF v.first_broken_event_id IS NULL OR v.checked <> 1 THEN
+        RAISE EXCEPTION 'FAIL  sửa/xóa sự kiện không bị phát hiện (%, %)', v.checked, v.reason;
+    END IF;
+    RAISE NOTICE 'PASS  Sửa / xóa sự kiện bị phát hiện (%)', v.reason;
+END $$;
+ALTER TABLE supply_chain_events ENABLE TRIGGER trg_events_append_only;
+
+-- ---------- Vai trò CSDL fsc_app (migration 006) ----------
+CREATE FUNCTION pg_temp.as_app(label text, stmt text, should_fail boolean) RETURNS void
+LANGUAGE plpgsql AS $$
+BEGIN
+    BEGIN
+        EXECUTE 'SET LOCAL ROLE fsc_app';
+        EXECUTE stmt;
+        EXECUTE 'RESET ROLE';
+    EXCEPTION WHEN OTHERS THEN
+        IF should_fail AND SQLSTATE = '42501' THEN RAISE NOTICE 'PASS  fsc_app: %  (%)', label, SQLERRM; RETURN; END IF;
+        RAISE EXCEPTION 'FAIL  fsc_app: % – % (%)', label, SQLERRM, SQLSTATE;
+    END;
+    IF should_fail THEN RAISE EXCEPTION 'FAIL  fsc_app: % – lẽ ra bị từ chối', label; END IF;
+    RAISE NOTICE 'PASS  fsc_app: %', label;
+END $$;
+SELECT pg_temp.as_app('đọc lô và timeline công khai', $$SELECT count(*) FROM batches, public_event_trace$$, false);
+SELECT pg_temp.as_app('ghi audit (chuỗi băm vẫn chạy)',
+  $$INSERT INTO audit_logs (actor_id,action,entity_type,entity_id) VALUES (1,'UPDATE','USER',1)$$, false);
+SELECT pg_temp.as_app('UPDATE audit_logs bị từ chối',   $$UPDATE audit_logs SET action='LOCK'$$, true);
+SELECT pg_temp.as_app('DELETE audit_logs bị từ chối',   $$DELETE FROM audit_logs$$, true);
+SELECT pg_temp.as_app('UPDATE sự kiện bị từ chối',      $$UPDATE supply_chain_events SET location='X'$$, true);
+SELECT pg_temp.as_app('TRUNCATE sự kiện bị từ chối',    $$TRUNCATE supply_chain_events$$, true);
+SELECT pg_temp.as_app('DELETE lô bị từ chối',           $$DELETE FROM batches$$, true);
+SELECT pg_temp.as_app('sửa event_types bị từ chối',     $$UPDATE event_types SET name='X'$$, true);
+SELECT pg_temp.as_app('tắt trigger bị từ chối',         $$ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_append_only$$, true);
 
 SELECT 'ALL CHECKS PASSED' AS result;
 

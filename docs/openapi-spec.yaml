@@ -288,7 +288,9 @@ paths:
       description: |
         DISTRIBUTOR records TRANSPORTED, RECEIVED and SHIPPED.
         PROCESSOR records PROCESSED and PACKAGED. Another role gets 403; a batch outside the
-        caller's scope gets 404.
+        caller's scope gets 404. The server sets the actor (from the token) and the time of the event;
+        sending `timestamp`, `actorId` or `batchId` returns 400. A wrong order returns 409
+        INVALID_SEQUENCE. Every event writes two audit entries (the event and the batch status change).
         The event must follow the valid sequence
         CREATED, TRANSPORTED, RECEIVED, PROCESSED, PACKAGED, SHIPPED.
         The event and the new batch status are saved in one transaction.
@@ -309,7 +311,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SupplyChainEvent"
+                $ref: "#/components/schemas/TimelineEvent"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -324,6 +326,7 @@ paths:
     get:
       tags: [Events]
       summary: List events of a batch
+      description: Events ordered from oldest to newest. Same items as `events` in the timeline. A batch outside the caller's scope returns 404.
       operationId: listSupplyChainEvents
       security:
         - bearerAuth: []
@@ -337,7 +340,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/SupplyChainEvent"
+                  $ref: "#/components/schemas/TimelineEvent"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -347,7 +350,9 @@ paths:
     get:
       tags: [Trace]
       summary: Get the internal timeline of a batch
-      description: Batch information and all events ordered from oldest to newest.
+      description: |
+        Batch information and all events ordered from oldest to newest, each with the actor name and the
+        organization name for display. A batch outside the caller's scope returns 404.
       operationId: getTimeline
       security:
         - bearerAuth: []
@@ -669,6 +674,39 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
+
+  /audit-logs/verify:
+    get:
+      tags: [Admin]
+      summary: Verify the integrity of the audit log and of a batch's event history
+      description: >
+        audit_logs and supply_chain_events are append-only and hash-chained in the database
+        (row_hash = sha256(prev_hash | row)). This recomputes the chains and reports the first
+        broken entry. Without batchId only the audit log chain is checked.
+      operationId: verifyAuditIntegrity
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: batchId
+          in: query
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Result of the check (valid is false when anything was modified)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IntegrityReport"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   /trace/{qrToken}:
     get:
@@ -1051,6 +1089,7 @@ components:
     CreateEventRequest:
       type: object
       required: [eventType, location]
+      additionalProperties: false
       properties:
         eventType:
           type: string
@@ -1058,9 +1097,11 @@ components:
           enum: [TRANSPORTED, RECEIVED, PROCESSED, PACKAGED, SHIPPED]
         location:
           type: string
+          maxLength: 255
           example: Ho Chi Minh City
         description:
-          type: string
+          type: [string, "null"]
+          maxLength: 1000
           example: Batch transported to the distribution center.
 
     SupplyChainEvent:
@@ -1102,6 +1143,19 @@ components:
           type: string
           format: date-time
 
+    TimelineEvent:
+      description: A supply chain event with display fields for the actor and the actor's organization.
+      allOf:
+        - $ref: "#/components/schemas/SupplyChainEvent"
+        - type: object
+          properties:
+            actorName:
+              type: string
+              example: Nguyen Van A
+            organizationName:
+              type: [string, "null"]
+              example: Phan phoi Mien Nam
+
     Timeline:
       type: object
       properties:
@@ -1110,7 +1164,7 @@ components:
         events:
           type: array
           items:
-            $ref: "#/components/schemas/SupplyChainEvent"
+            $ref: "#/components/schemas/TimelineEvent"
 
     PublicTrace:
       type: object
@@ -1242,6 +1296,8 @@ components:
           type: [integer, "null"]
           format: int64
           description: Null when the user is unknown (for example a failed login with an unknown email)
+        actorName:
+          type: [string, "null"]
         action:
           $ref: "#/components/schemas/AuditAction"
         entityType:
@@ -1254,6 +1310,39 @@ components:
         newValue:
           type: [object, "null"]
         createdAt:
+          type: string
+          format: date-time
+
+    ChainStatus:
+      type: object
+      properties:
+        checked:
+          type: integer
+          description: Entries verified before the first broken one
+        valid:
+          type: boolean
+        firstBrokenId:
+          type: [integer, "null"]
+          format: int64
+        reason:
+          type: [string, "null"]
+
+    IntegrityReport:
+      type: object
+      properties:
+        auditLog:
+          $ref: "#/components/schemas/ChainStatus"
+        batchEvents:
+          allOf:
+            - $ref: "#/components/schemas/ChainStatus"
+            - type: object
+              properties:
+                batchId:
+                  type: integer
+                  format: int64
+        valid:
+          type: boolean
+        checkedAt:
           type: string
           format: date-time
 
