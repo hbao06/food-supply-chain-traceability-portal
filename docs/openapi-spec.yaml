@@ -675,6 +675,39 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
 
+  /audit-logs/verify:
+    get:
+      tags: [Admin]
+      summary: Verify the integrity of the audit log and of a batch's event history
+      description: >
+        audit_logs and supply_chain_events are append-only and hash-chained in the database
+        (row_hash = sha256(prev_hash | row)). This recomputes the chains and reports the first
+        broken entry. Without batchId only the audit log chain is checked.
+      operationId: verifyAuditIntegrity
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: batchId
+          in: query
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Result of the check (valid is false when anything was modified)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IntegrityReport"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
   /trace/{qrToken}:
     get:
       tags: [Trace]
@@ -1263,6 +1296,8 @@ components:
           type: [integer, "null"]
           format: int64
           description: Null when the user is unknown (for example a failed login with an unknown email)
+        actorName:
+          type: [string, "null"]
         action:
           $ref: "#/components/schemas/AuditAction"
         entityType:
@@ -1275,6 +1310,39 @@ components:
         newValue:
           type: [object, "null"]
         createdAt:
+          type: string
+          format: date-time
+
+    ChainStatus:
+      type: object
+      properties:
+        checked:
+          type: integer
+          description: Entries verified before the first broken one
+        valid:
+          type: boolean
+        firstBrokenId:
+          type: [integer, "null"]
+          format: int64
+        reason:
+          type: [string, "null"]
+
+    IntegrityReport:
+      type: object
+      properties:
+        auditLog:
+          $ref: "#/components/schemas/ChainStatus"
+        batchEvents:
+          allOf:
+            - $ref: "#/components/schemas/ChainStatus"
+            - type: object
+              properties:
+                batchId:
+                  type: integer
+                  format: int64
+        valid:
+          type: boolean
+        checkedAt:
           type: string
           format: date-time
 

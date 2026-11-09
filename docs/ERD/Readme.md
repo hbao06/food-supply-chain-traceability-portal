@@ -1,4 +1,4 @@
-# ERD v3.2 – Cơ sở dữ liệu (W3-TV3, cập nhật W4, W5)
+# ERD v3.3 – Cơ sở dữ liệu (W3-TV3, cập nhật W4, W5, W6)
 
 **Dự án:** Food Supply Chain Traceability & Provenance Portal – Nhóm 13
 **Người phụ trách:** Đặng Vĩnh Quang (TV3 - Database / Auth / Security)
@@ -7,6 +7,7 @@
 **Bàn giao tuần 3:** `docs/ERD/ERD-v3.pdf` (sơ đồ), `database/schema.sql` (schema v1), `database/tests/schema-check.sql`.
 **Cập nhật tuần 4 (v3.1):** thêm bảng `roles` (`database/migrations/002_roles_table.sql`); từ tuần 4 CSDL được tạo bằng migration (`database/migrations`), `schema.sql` chỉ giữ để tham chiếu.
 **Cập nhật tuần 5 (v3.2):** thêm bảng `products`, cột `batches.product_id`, view `farms` (`database/migrations/003_products_farms.sql`) và dữ liệu mẫu (`npm run db:seed:demo`).
+**Cập nhật tuần 6 (v3.3):** thêm bảng `event_types` (migration 004), chuỗi băm `prev_hash` / `row_hash` cho `audit_logs` và `supply_chain_events` (migration 005), vai trò CSDL `fsc_app` (migration 006).
 
 ERD v3 thay cho bản nháp v2 (`erd-draft.md`). Tên bảng và cột được thống nhất với Class Diagram (`docs/UML/class-diagram.dot`) và OpenAPI (`docs/openapi-spec.yaml`, bản W3-TV2): CSDL dùng `snake_case`, API dùng `camelCase` tương ứng.
 
@@ -15,6 +16,9 @@ ERD v3 thay cho bản nháp v2 (`erd-draft.md`). Tên bảng và cột được 
 ```mermaid
 erDiagram
     ROLES ||--o{ USERS : "gán cho"
+    ROLES ||--o{ EVENT_TYPES : "được ghi bởi"
+    EVENT_TYPES ||--o{ SUPPLY_CHAIN_EVENTS : "phân loại"
+    EVENT_TYPES ||--o{ BATCHES : "trạng thái"
     ORGANIZATIONS ||--o{ PRODUCTS : "có sản phẩm"
     PRODUCTS |o--o{ BATCHES : "được sản xuất thành"
     ORGANIZATIONS |o--o{ USERS : "có thành viên"
@@ -30,6 +34,15 @@ erDiagram
         varchar name "NOT NULL"
         varchar description "NOT NULL"
         boolean self_register "được tự đăng ký"
+    }
+
+    EVENT_TYPES {
+        varchar code PK "CREATED → SHIPPED"
+        smallint seq_no UK "thứ tự bước"
+        varchar role_code FK "vai trò được ghi"
+        varchar name
+        varchar description
+        boolean sendable "FALSE: hệ thống tự ghi"
     }
 
     ORGANIZATIONS {
@@ -72,7 +85,7 @@ erDiagram
         varchar origin "NOT NULL"
         numeric quantity "lớn hơn 0"
         timestamptz creation_date
-        varchar current_status "EventType, mặc định CREATED"
+        varchar current_status FK "event_types.code, mặc định CREATED"
         bigint created_by FK "Farmer tạo lô"
         bigint organization_id FK "đơn vị sở hữu"
         timestamptz updated_at
@@ -90,11 +103,13 @@ erDiagram
         bigint event_id PK
         bigint batch_id FK "UNIQUE cùng event_type"
         bigint actor_id FK "user ghi sự kiện"
-        varchar event_type "EventType"
+        varchar event_type FK "event_types.code"
         timestamptz timestamp "thời điểm xảy ra"
         varchar location "NOT NULL"
         text description
         timestamptz created_at "thời điểm ghi"
+        char prev_hash "băm sự kiện trước của lô"
+        char row_hash "sha256, kiểm tra bằng verify_batch_events"
     }
 
     AUDIT_LOGS {
@@ -106,6 +121,9 @@ erDiagram
         jsonb old_value
         jsonb new_value
         timestamptz created_at
+        bigint chain_seq UK "vị trí trong chuỗi"
+        char prev_hash
+        char row_hash "sha256, kiểm tra bằng verify_audit_chain"
     }
 ```
 
@@ -136,6 +154,20 @@ Dữ liệu cố định 4 dòng, trigger chặn UPDATE / DELETE (đổi mã vai
 | created_at, updated_at | TIMESTAMPTZ | NOT NULL | – |
 
 **Ánh xạ tên trong kế hoạch tuần 5:** *Product* → `products`; *Farm* → `organizations` có `type = 'FARM'` (xem bằng view `farms`: `farm_id`, `name`, `address`, `product_count`, `batch_count`); *ProductBatch* → `batches`.
+
+### 2.0c `event_types` (thêm ở W6, migration 004)
+| Cột | Kiểu | Ràng buộc | API |
+| --- | --- | --- | --- |
+| code | VARCHAR(20) | PK; CHECK `^[A-Z_]{3,20}$` | EventType (enum) |
+| seq_no | SMALLINT | NOT NULL, UNIQUE, ≥ 1 – sự kiện mới phải là `seq_no` hiện tại + 1 | – |
+| role_code | VARCHAR(20) | FK → roles – vai trò duy nhất được ghi | – |
+| name, description | VARCHAR | NOT NULL | – |
+| sendable | BOOLEAN | FALSE với CREATED (hệ thống tự ghi khi tạo lô) | – |
+
+6 dòng cố định (CREATED / FARMER, TRANSPORTED / DISTRIBUTOR, RECEIVED / DISTRIBUTOR, PROCESSED / PROCESSOR, PACKAGED / PROCESSOR, SHIPPED / DISTRIBUTOR); trigger chặn sửa / xóa. `batches.current_status` và `supply_chain_events.event_type` là khóa ngoại tới bảng này (thay CHECK của W3).
+
+**Chuỗi băm (W6, migration 005)** – thêm vào `audit_logs` (`chain_seq` UNIQUE, `prev_hash`, `row_hash`) và `supply_chain_events` (`prev_hash`, `row_hash`), đều CHAR(64) hex, do trigger cấp:
+`row_hash = sha256(prev_hash | các cột của dòng)`; dòng đầu dùng `prev_hash = 000…0`. Audit là một chuỗi chung theo `chain_seq`; sự kiện là một chuỗi cho mỗi lô theo `event_types.seq_no`. Kiểm tra: `verify_audit_chain()`, `verify_batch_events(batch_id)`.
 
 ### 2.1 `organizations`
 | Cột | Kiểu | Ràng buộc | API |
@@ -275,7 +307,7 @@ Các quy tắc dưới đây vẫn phải được kiểm tra ở backend để 
 # Tạo / cập nhật CSDL bằng migration (từ W4)
 cd backend && npm run db:migrate
 
-# Kiểm tra 53 ràng buộc trên CSDL trống sau khi migrate (dữ liệu thử được ROLLBACK, CSDL giữ nguyên)
+# Kiểm tra 70 ràng buộc trên CSDL trống sau khi migrate (dữ liệu thử được ROLLBACK, CSDL giữ nguyên)
 psql -h localhost -U postgres -d food_traceability -v ON_ERROR_STOP=1 -f database/tests/schema-check.sql
 ```
 

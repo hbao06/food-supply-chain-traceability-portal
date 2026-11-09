@@ -99,8 +99,11 @@ Không có endpoint sửa hoặc xóa sự kiện cho bất kỳ vai trò nào.
 | Endpoint | Admin | Farmer | Processor | Distributor | Consumer |
 | --- | :-: | :-: | :-: | :-: | :-: |
 | `GET /audit-logs` | ✔ | ✘ | ✘ | ✘ | ✘ |
+| `GET /audit-logs/verify` | ✔ | ✘ | ✘ | ✘ | ✘ |
 
 Không vai trò nào được ghi, sửa hoặc xóa audit log qua API. Hệ thống tự ghi.
+
+Ở mức CSDL (W6, migration 006), backend kết nối bằng vai trò `fsc_app`: `audit_logs`, `supply_chain_events`, `qr_codes` chỉ có quyền `SELECT`, `INSERT`; `roles`, `event_types` chỉ `SELECT`; không bảng nào có quyền `DELETE`. Lịch sử còn được nối chuỗi băm SHA-256 để phát hiện việc sửa trực tiếp trong CSDL.
 
 ## 4. Quy tắc kiểm tra quyền (cho middleware tuần 4)
 

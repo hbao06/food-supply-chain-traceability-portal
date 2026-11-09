@@ -37,13 +37,9 @@ async function updateName(db, userId, name) {
   return r.rows[0] || null;
 }
 
-// audit_logs chỉ INSERT. Không đưa mật khẩu/token vào old_value/new_value (CHECK chk_audit_no_secrets).
-async function insertAudit(db, { actorId = null, action, entityType, entityId = null, oldValue = null, newValue = null }) {
-  await db.query(
-    `INSERT INTO audit_logs (actor_id, action, entity_type, entity_id, old_value, new_value)
-     VALUES ($1, $2, $3, $4, $5, $6)`,
-    [actorId, action, entityType, entityId, oldValue, newValue]
-  );
-}
+// Ghi audit: dùng chung service audit (W6-TV3) – kiểm tra action/entityType, lọc bỏ khóa nhạy cảm
+// (mật khẩu, token, chữ ký...) trước khi ghi; chuỗi băm do CSDL tự cấp. Giữ tên insertAudit để các module
+// đang import từ đây (batches, events) không phải đổi.
+const { insertAudit } = require('../audit/audit.repository');
 
 module.exports = { findByEmail, findById, insertUser, updateName, insertAudit };
