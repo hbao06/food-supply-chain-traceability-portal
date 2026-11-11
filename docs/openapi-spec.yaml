@@ -27,8 +27,62 @@ tags:
     description: Internal timeline, QR code and public provenance
   - name: Admin
     description: Users, organizations and audit log (ADMIN only)
+  - name: System
+    description: Health checks (no login)
 
 paths:
+  /health:
+    get:
+      tags: [System]
+      summary: Check that the API process is running
+      operationId: getHealth
+      security: []
+      responses:
+        "200":
+          description: The API is running
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: OK
+                  message:
+                    type: string
+                    example: Food Traceability API is running
+
+  /health/ready:
+    get:
+      tags: [System]
+      summary: Check that the API can reach the database
+      description: Used by Docker or deployment health checks. Returns 503 when the database is unreachable.
+      operationId: getHealthReady
+      security: []
+      responses:
+        "200":
+          description: API and database are available
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: OK
+                  database:
+                    type: string
+                    example: OK
+        "503":
+          description: The database cannot be reached
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                code: DATABASE_UNAVAILABLE
+                message: Không kết nối được cơ sở dữ liệu
+
   /auth/register:
     post:
       tags: [Auth]
@@ -431,7 +485,10 @@ paths:
     patch:
       tags: [Admin]
       summary: Change the role of a user
-      description: The role must match the type of the user's organization (409 otherwise). The last active ADMIN cannot be demoted.
+      description: |
+        Only FARMER, PROCESSOR and DISTRIBUTOR can be assigned; the role of an ADMIN account cannot be changed
+        through the API (409 ROLE_CHANGE_NOT_ALLOWED). The role must match the type of the user's organization
+        (409 ORG_TYPE_MISMATCH): send `organizationId` in the same request to change both at once.
       operationId: changeUserRole
       security:
         - bearerAuth: []
@@ -449,7 +506,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
+                $ref: "#/components/schemas/AdminUser"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -483,7 +540,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
+                $ref: "#/components/schemas/AdminUser"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -520,7 +577,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
+                $ref: "#/components/schemas/AdminUser"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -544,15 +601,15 @@ paths:
           in: query
           schema:
             $ref: "#/components/schemas/OrganizationType"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
       responses:
         "200":
-          description: Organizations
+          description: Page of organizations ordered by name
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Organization"
+                $ref: "#/components/schemas/OrganizationPage"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -891,6 +948,9 @@ components:
             NOT_FOUND (404); EMAIL_EXISTS, CONFLICT, INVALID_SEQUENCE (409);
             PAYLOAD_TOO_LARGE (413); TOO_MANY_REQUESTS (429); INTERNAL_ERROR (500).
             Batch codes: NO_ORGANIZATION (403), BATCH_NOT_EDITABLE (409).
+            Admin codes (409): ORG_TYPE_MISMATCH, ORGANIZATION_REQUIRED, ORGANIZATION_EXISTS, ORGANIZATION_IN_USE,
+            ROLE_CHANGE_NOT_ALLOWED, ADMIN_HAS_NO_ORGANIZATION, CANNOT_MODIFY_SELF, LAST_ADMIN.
+            Health (503): DATABASE_UNAVAILABLE.
           example: VALIDATION_ERROR
         message:
           type: string
@@ -1193,10 +1253,24 @@ components:
         type:
           $ref: "#/components/schemas/OrganizationType"
         address:
-          type: string
+          type: [string, "null"]
         createdAt:
           type: string
           format: date-time
+
+    OrganizationPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Organization"
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
 
     CreateOrganizationRequest:
       type: object
@@ -1220,13 +1294,25 @@ components:
         address:
           type: string
 
+    AdminUser:
+      description: A user as seen by an Admin, with the organization name and creation time.
+      allOf:
+        - $ref: "#/components/schemas/User"
+        - type: object
+          properties:
+            organizationName:
+              type: [string, "null"]
+            createdAt:
+              type: string
+              format: date-time
+
     UserPage:
       type: object
       properties:
         items:
           type: array
           items:
-            $ref: "#/components/schemas/User"
+            $ref: "#/components/schemas/AdminUser"
         page:
           type: integer
         limit:
@@ -1237,9 +1323,15 @@ components:
     ChangeRoleRequest:
       type: object
       required: [role]
+      additionalProperties: false
       properties:
         role:
-          $ref: "#/components/schemas/Role"
+          type: string
+          enum: [FARMER, PROCESSOR, DISTRIBUTOR]
+        organizationId:
+          type: integer
+          format: int64
+          description: Optional. Set the organization in the same request when the new role needs another organization type.
 
     AssignOrganizationRequest:
       type: object
@@ -1275,6 +1367,8 @@ components:
           type: [integer, "null"]
           format: int64
           description: Null when the user is unknown (for example a failed login with an unknown email)
+        actorName:
+          type: [string, "null"]
         action:
           $ref: "#/components/schemas/AuditAction"
         entityType:

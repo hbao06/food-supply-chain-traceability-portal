@@ -7,7 +7,7 @@ const MAX_TOKEN_LENGTH = 200;
 
 // Mọi trường hợp "không có kết quả" dùng CÙNG một lỗi: token sai chữ ký, mã sai định dạng, mã không tồn tại.
 // Người ngoài không phân biệt được lô có tồn tại hay không.
-const NOT_FOUND = () => new NotFoundError('NOT_FOUND', 'Không tìm thấy thông tin truy xuất');
+const NOT_FOUND = () => new NotFoundError('NOT_FOUND', "Không tìm thấy thông tin truy xuất hợp lệ");
 
 // DANH SÁCH TRẮNG: chỉ những trường này được trả ra công khai (OpenAPI: PublicTrace). Thêm trường mới phải sửa ở đây.
 function toPublicTrace(batch, events) {
