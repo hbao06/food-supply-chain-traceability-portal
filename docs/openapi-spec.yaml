@@ -675,55 +675,25 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
 
-  /audit-logs/verify:
-    get:
-      tags: [Admin]
-      summary: Verify the integrity of the audit log and of a batch's event history
-      description: >
-        audit_logs and supply_chain_events are append-only and hash-chained in the database
-        (row_hash = sha256(prev_hash | row)). This recomputes the chains and reports the first
-        broken entry. Without batchId only the audit log chain is checked.
-      operationId: verifyAuditIntegrity
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: batchId
-          in: query
-          schema:
-            type: integer
-            format: int64
-      responses:
-        "200":
-          description: Result of the check (valid is false when anything was modified)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/IntegrityReport"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-
   /trace/{qrToken}:
     get:
       tags: [Trace]
       summary: Public provenance by QR token
       description: |
-        No login required. The server verifies the HMAC signature of the token
-        and returns only public data. An invalid or unknown token returns 404.
+        No login required. The server verifies the HMAC signature of the token (without touching the
+        database when the signature is wrong) and returns only the public fields listed in PublicTrace.
+        A token with a wrong signature, a batch that does not exist and a malformed token all return the
+        same 404, so the response never reveals whether a batch exists. Rate limited per IP (429).
       operationId: getPublicTrace
       security: []
       parameters:
         - name: qrToken
           in: path
           required: true
-          description: Signed token carried by the QR code
+          description: Signed token carried by the QR code, in the form `<batchCode>.<signature>`
           schema:
             type: string
+            maxLength: 200
       responses:
         "200":
           description: Public provenance
@@ -733,6 +703,8 @@ paths:
                 $ref: "#/components/schemas/PublicTrace"
         "404":
           $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
 
   /trace/code/{batchCode}:
     get:
@@ -741,7 +713,8 @@ paths:
       description: |
         No login required. Consumer types the batch code printed on the product
         instead of scanning the QR code. Returns the same public data as
-        GET /trace/{qrToken}. An unknown code returns 404.
+        GET /trace/{qrToken}. An unknown or malformed code returns 404 (same response for both).
+        Rate limited per IP (429).
       operationId: getPublicTraceByCode
       security: []
       parameters:
@@ -751,6 +724,7 @@ paths:
           description: Human-readable unique batch code
           schema:
             type: string
+            pattern: '^BATCH-[0-9]{4}-[0-9]{4,}$'
             example: BATCH-2026-0001
       responses:
         "200":
@@ -761,6 +735,8 @@ paths:
                 $ref: "#/components/schemas/PublicTrace"
         "404":
           $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
 
 components:
   securitySchemes:
@@ -1168,7 +1144,9 @@ components:
 
     PublicTrace:
       type: object
-      description: Public data only. No user ids, emails or internal fields.
+      description: |
+        Public data only (allow-list). It never contains ids, the creator or actor, emails, quantity,
+        event descriptions, the QR data or any internal field.
       properties:
         batchCode:
           type: string
@@ -1178,12 +1156,13 @@ components:
         origin:
           type: string
         organizationName:
-          type: string
+          type: [string, "null"]
           description: Name of the organization that created the batch
         currentStatus:
           $ref: "#/components/schemas/EventType"
         events:
           type: array
+          description: From oldest to newest
           items:
             type: object
             properties:
@@ -1192,7 +1171,7 @@ components:
               location:
                 type: string
               organizationName:
-                type: string
+                type: [string, "null"]
                 description: Name of the organization of the actor
               timestamp:
                 type: string
@@ -1296,8 +1275,6 @@ components:
           type: [integer, "null"]
           format: int64
           description: Null when the user is unknown (for example a failed login with an unknown email)
-        actorName:
-          type: [string, "null"]
         action:
           $ref: "#/components/schemas/AuditAction"
         entityType:
@@ -1310,39 +1287,6 @@ components:
         newValue:
           type: [object, "null"]
         createdAt:
-          type: string
-          format: date-time
-
-    ChainStatus:
-      type: object
-      properties:
-        checked:
-          type: integer
-          description: Entries verified before the first broken one
-        valid:
-          type: boolean
-        firstBrokenId:
-          type: [integer, "null"]
-          format: int64
-        reason:
-          type: [string, "null"]
-
-    IntegrityReport:
-      type: object
-      properties:
-        auditLog:
-          $ref: "#/components/schemas/ChainStatus"
-        batchEvents:
-          allOf:
-            - $ref: "#/components/schemas/ChainStatus"
-            - type: object
-              properties:
-                batchId:
-                  type: integer
-                  format: int64
-        valid:
-          type: boolean
-        checkedAt:
           type: string
           format: date-time
 
