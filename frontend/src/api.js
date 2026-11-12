@@ -1,11 +1,12 @@
 const baseUrl = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/$/, '')
 
 export class ApiError extends Error {
-  constructor(status, code, details) {
+  constructor(status, code, details, retryAfter) {
     super(code || 'API request failed')
     this.status = status
     this.code = code
     this.details = details
+    this.retryAfter = retryAfter
   }
 }
 
@@ -24,16 +25,19 @@ async function request(path, { token, ...options } = {}) {
     throw new ApiError(0, 'NETWORK_ERROR')
   }
 
+  const retryAfterHeader = response.headers?.get?.('Retry-After')
+  const retryAfter = retryAfterHeader ? Number(retryAfterHeader) || retryAfterHeader : undefined
+
   let data
   try {
     data = await response.json()
   } catch {
     if ([502, 503, 504].includes(response.status)) {
-      throw new ApiError(response.status, 'API_UNAVAILABLE')
+      throw new ApiError(response.status, 'API_UNAVAILABLE', undefined, retryAfter)
     }
-    throw new ApiError(response.status, 'INVALID_RESPONSE')
+    throw new ApiError(response.status, 'INVALID_RESPONSE', undefined, retryAfter)
   }
-  if (!response.ok) throw new ApiError(response.status, data?.code, data?.details)
+  if (!response.ok) throw new ApiError(response.status, data?.code, data?.details, retryAfter)
   return data
 }
 
@@ -63,6 +67,8 @@ export const api = {
       body: JSON.stringify(body),
     }),
   getTimeline: (token, batchId) => request(`/batches/${batchId}/timeline`, { token }),
+  traceByToken: (qrToken) => request(`/trace/${encodeURIComponent(qrToken)}`),
+  traceByCode: (batchCode) => request(`/trace/code/${encodeURIComponent(batchCode)}`),
 }
 
 const messages = {
@@ -82,7 +88,7 @@ const messages = {
   ALREADY_EXISTS: 'Sự kiện này đã được ghi nhận trước đó cho lô hàng.',
   NOT_FOUND: 'Không tìm thấy lô hàng hoặc bạn không có quyền truy cập.',
   FORBIDDEN: 'Bạn không có quyền thực hiện thao tác này đối với vai trò hiện tại.',
-  TOO_MANY_REQUESTS: 'Bạn thao tác quá nhanh, vui lòng chờ giây lát rồi thử lại.',
+  TOO_MANY_REQUESTS: 'Bạn thao tác quá nhanh, vui lòng thử lại sau ít phút.',
 }
 
 export function errorMessage(error) {

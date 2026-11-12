@@ -5,6 +5,9 @@ import { BatchList } from './batches/BatchList.jsx'
 import { BatchDetail } from './batches/BatchDetail.jsx'
 import { BatchForm } from './batches/BatchForm.jsx'
 import { BatchStatusBadge } from './batches/BatchStatusBadge.jsx'
+import { PublicTraceSearch } from './trace/PublicTraceSearch.jsx'
+import { PublicTraceResult } from './trace/PublicTraceResult.jsx'
+import { parseTraceRoute } from './trace/traceUtils.js'
 import {
   PREVIEW_BATCHES,
   formatDateOnly,
@@ -24,6 +27,7 @@ import {
   IconShield,
   IconSparkles,
   IconCheck,
+  IconSearch,
 } from './components/Icons.jsx'
 
 const TOKEN_KEY = 'food-trace-token'
@@ -43,24 +47,28 @@ const ROLE_LABELS = {
 }
 
 function parseRoute(path) {
-  if (path === '/batches/new') return { name: 'batch-new' }
-  const editMatch = path.match(/^\/batches\/(\d+)\/edit$/)
+  const cleanPath = String(path || '/').split('?')[0].split('#')[0]
+  const traceRoute = parseTraceRoute(cleanPath)
+  if (traceRoute) return traceRoute
+  if (cleanPath === '/batches/new') return { name: 'batch-new' }
+  const editMatch = cleanPath.match(/^\/batches\/(\d+)\/edit$/)
   if (editMatch) return { name: 'batch-edit', batchId: Number(editMatch[1]) }
-  const timelineMatch = path.match(/^\/batches\/(\d+)\/timeline$/)
+  const timelineMatch = cleanPath.match(/^\/batches\/(\d+)\/timeline$/)
   if (timelineMatch) return { name: 'batch-timeline', batchId: Number(timelineMatch[1]) }
-  const detailMatch = path.match(/^\/batches\/(\d+)$/)
+  const detailMatch = cleanPath.match(/^\/batches\/(\d+)$/)
   if (detailMatch) return { name: 'batch-detail', batchId: Number(detailMatch[1]) }
-  if (path === '/batches') return { name: 'batches' }
-  if (path === '/profile') return { name: 'profile' }
-  if (path === '/dashboard') return { name: 'dashboard' }
-  if (path === '/register') return { name: 'register' }
+  if (cleanPath === '/batches') return { name: 'batches' }
+  if (cleanPath === '/profile') return { name: 'profile' }
+  if (cleanPath === '/dashboard') return { name: 'dashboard' }
+  if (cleanPath === '/register') return { name: 'register' }
   return { name: 'login' }
 }
 
 function currentRoute() {
   const path = window.location.pathname
   const r = parseRoute(path)
-  return r.name === 'login' && path !== '/login' ? '/login' : path
+  if (r.name === 'login' && path !== '/login') return '/login'
+  return `${path}${window.location.search || ''}`
 }
 
 function validateEmail(email) {
@@ -255,6 +263,16 @@ function Login({ navigate, onLogin, flash }) {
     </div>
     <p className="auth-switch">Chưa có tài khoản? <button type="button" className="text-button"
       onClick={() => navigate('/register')}>Đăng ký</button></p>
+    <div className="auth-public-trace-cta">
+      <span>Người tiêu dùng kiểm tra sản phẩm?</span>
+      <button
+        type="button"
+        className="button secondary wide with-icon"
+        onClick={() => navigate('/trace')}
+      >
+        <IconSearch /> Tra cứu nguồn gốc công khai
+      </button>
+    </div>
   </AuthShell>
 }
 
@@ -464,6 +482,13 @@ function Workspace({
           >
             <IconBatches /> <span>Quản lý lô</span>
           </button>
+          <button
+            type="button"
+            className="nav-link"
+            onClick={() => navigate(preview ? '/trace?preview=1' : '/trace')}
+          >
+            <IconSearch /> <span>Tra cứu công khai</span>
+          </button>
         </nav>
 
         <div className="sidebar-bottom">
@@ -551,6 +576,12 @@ function Workspace({
             onClick={() => navigate('/profile')}
           >
             Hồ sơ
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate(preview ? '/trace?preview=1' : '/trace')}
+          >
+            Tra cứu QR
           </button>
         </nav>
 
@@ -848,6 +879,7 @@ function Workspace({
 
 function App() {
   const [route, setRoute] = useState(currentRoute)
+  const [navState, setNavState] = useState(null)
   const [token, setToken] = useState(() => sessionStorage.getItem(TOKEN_KEY))
   const [user, setUser] = useState(() => {
     try {
@@ -860,13 +892,17 @@ function App() {
   const [flash, setFlash] = useState('')
 
   useEffect(() => {
-    const onPop = () => setRoute(currentRoute())
+    const onPop = () => {
+      setNavState(null)
+      setRoute(currentRoute())
+    }
     window.addEventListener('popstate', onPop)
     return () => window.removeEventListener('popstate', onPop)
   }, [])
 
-  const navigate = useCallback((path) => {
+  const navigate = useCallback((path, state = null) => {
     window.history.pushState({}, '', path)
+    setNavState(state)
     setRoute(path)
     window.scrollTo(0, 0)
   }, [])
@@ -876,6 +912,7 @@ function App() {
     sessionStorage.removeItem('food-trace-user')
     setToken(null)
     setUser(null)
+    setNavState(null)
     window.history.replaceState({}, '', '/login')
     setRoute('/login')
     setFlash(message)
@@ -890,14 +927,50 @@ function App() {
   }, [navigate])
 
   const routeInfo = parseRoute(route)
-  const isProtected = routeInfo.name !== 'login' && routeInfo.name !== 'register'
+  const isPublicTrace = routeInfo.name === 'trace-search' || routeInfo.name === 'trace-result'
+  const isProtected = !isPublicTrace && routeInfo.name !== 'login' && routeInfo.name !== 'register'
   const isMockSession = Boolean(token && token.startsWith('mock-token-'))
-  const isPreview =
-    Boolean(
-      import.meta.env.DEV &&
-        new URLSearchParams(window.location.search).get('preview') === '1' &&
-        !token
-    ) || isMockSession
+  const hasPreviewParam =
+    route.includes('preview=1') ||
+    new URLSearchParams(window.location.search).get('preview') === '1'
+  const isPublicPreview = Boolean(hasPreviewParam || isMockSession)
+  const isPreview = Boolean(import.meta.env.DEV && hasPreviewParam && !token) || isMockSession
+
+  useEffect(() => {
+    if (routeInfo.name === 'trace-search') {
+      document.title = 'Food Trace | Tra cứu nguồn gốc công khai'
+    } else if (routeInfo.name === 'trace-result') {
+      document.title = 'Food Trace | Kết quả truy xuất nguồn gốc'
+    } else if (routeInfo.name === 'login' || routeInfo.name === 'register') {
+      document.title = 'Food Trace | Tài khoản'
+    } else {
+      document.title = 'Food Trace | Quản lý chuỗi cung ứng'
+    }
+  }, [routeInfo.name])
+
+  if (routeInfo.name === 'trace-search') {
+    return (
+      <PublicTraceSearch
+        navigate={navigate}
+        isAuthenticated={Boolean(token)}
+        preview={isPublicPreview}
+      />
+    )
+  }
+
+  if (routeInfo.name === 'trace-result') {
+    return (
+      <PublicTraceResult
+        key={`${routeInfo.mode}:${routeInfo.identifier}:${isPublicPreview}`}
+        mode={routeInfo.mode}
+        identifier={routeInfo.identifier}
+        prefetchedTrace={navState?.prefetchedTrace || null}
+        navigate={navigate}
+        isAuthenticated={Boolean(token)}
+        preview={isPublicPreview}
+      />
+    )
+  }
 
   if (isPreview && !token) {
     return (
@@ -918,7 +991,7 @@ function App() {
     return <Login navigate={navigate} onLogin={login} flash={flash} />
   }
 
-  if (token && (route === '/login' || route === '/register')) {
+  if (token && (routeInfo.name === 'login' || routeInfo.name === 'register')) {
     return (
       <Workspace
         route="/batches"
@@ -934,8 +1007,8 @@ function App() {
     )
   }
 
-  if (route === '/register') return <Register navigate={navigate} />
-  if (route === '/login') return <Login navigate={navigate} onLogin={login} flash={flash} />
+  if (routeInfo.name === 'register') return <Register navigate={navigate} />
+  if (routeInfo.name === 'login') return <Login navigate={navigate} onLogin={login} flash={flash} />
 
   return (
     <Workspace
