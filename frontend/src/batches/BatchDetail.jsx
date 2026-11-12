@@ -50,9 +50,7 @@ export function BatchDetail({
   const [showAddEventModal, setShowAddEventModal] = useState(false)
   const [copiedCode, setCopiedCode] = useState(false)
   const [copiedUrl, setCopiedUrl] = useState(false)
-  const [qrData, setQrData] = useState('')
-  const [qrLoading, setQrLoading] = useState(true)
-  const [qrError, setQrError] = useState('')
+  const [qrState, setQrState] = useState({ batchId: null, qrData: '', error: '' })
   const [flashMessage, setFlashMessage] = useState('')
   const qrCanvasRef = useRef(null)
 
@@ -86,18 +84,21 @@ export function BatchDetail({
   }, [batchId, initialBatch, token, preview])
 
   // Render inline QR code on the side card
+  const qrLoading = qrState.batchId !== batch?.batchId
+  const qrData = qrLoading ? '' : qrState.qrData
+  const qrError = qrLoading ? '' : qrState.error
   const traceUrl = qrData
+  const qrBatchId = batch?.batchId
   useEffect(() => {
-    if (!batch || preview || !token) return
+    if (!qrBatchId || !token) return
     let active = true
-    setQrLoading(true); setQrData(''); setQrError('')
-    api.getBatchQr(token, batch.batchId).then((data) => {
-      if (active) setQrData(typeof data.qrData === 'string' ? data.qrData : '')
+    api.getBatchQr(token, qrBatchId).then((data) => {
+      if (active) setQrState({ batchId: qrBatchId, qrData: typeof data.qrData === 'string' ? data.qrData : '', error: '' })
     }).catch((err) => {
-      if (active) setQrError(err instanceof ApiError ? errorMessage(err) : 'Không thể tải mã QR của lô hàng.')
-    }).finally(() => { if (active) setQrLoading(false) })
+      if (active) setQrState({ batchId: qrBatchId, qrData: '', error: err instanceof ApiError ? errorMessage(err) : 'Không thể tải mã QR của lô hàng.' })
+    })
     return () => { active = false }
-  }, [batch?.batchId, token, preview])
+  }, [token, qrBatchId])
 
   useEffect(() => {
     if (!qrCanvasRef.current || !traceUrl) return
