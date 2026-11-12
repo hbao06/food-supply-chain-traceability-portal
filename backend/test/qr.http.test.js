@@ -2,7 +2,7 @@
 
 // Test HTTP/API cho QR và truy xuất công khai (W7-TV4) — theo docs/test/test-plan.md:
 //   TC-QR-01, 02, 03, 09 chạy trên main hiện tại;
-//   TC-QR-04, 06, 07, 10, 11, 12, 13, 14, 15, 16, 17 chờ endpoint/format/rate limit W7-TV2;
+//   TC-QR-06, 07, 10 kiểm định dạng ảnh thuộc TV4; TC-QR-04 và 11–17 chờ PR #59 (W7-TV2) merge;
 //   TC-QR-05 và TC-QR-08 đã được kiểm thử trong batches.http.test.js.
 // Chạy bằng node --test với Express và CSDL giả trong bộ nhớ, không cần PostgreSQL.
 
@@ -167,11 +167,23 @@ test('TC-QR-01: Farmer tạo lô hợp lệ → 201, đúng một QR có token H
 
 test('TC-QR-02: Farmer cập nhật lô còn CREATED → qr_token không đổi', async () => {
   await request('POST', '/api/batches', { body: input, token: tokenFor(10) });
-  const originalToken = qrs[0].qr_data.split('/trace/')[1];
+  const before = await request('GET', '/api/batches/1/qr', { token: tokenFor(10) });
   const result = await request('PATCH', '/api/batches/1', { body: { origin: 'Lâm Đồng' }, token: tokenFor(10) });
   assert.equal(result.status, 200);
-  assert.equal(qrs.length, 1);
-  assert.equal(qrs[0].qr_data.split('/trace/')[1], originalToken);
+  const after = await request('GET', '/api/batches/1/qr', { token: tokenFor(10) });
+  assert.equal(qrs.length, 1, 'repo giả chỉ ghi đúng một QR khi tạo lô, không ghi thêm khi cập nhật');
+  assert.equal(after.body.qrData, before.body.qrData);
+});
+
+test('E2E-QR: tạo lô → lấy QR qua API → token xác minh về đúng mã lô', async () => {
+  const created = await request('POST', '/api/batches', { body: input, token: tokenFor(10) });
+  assert.equal(created.status, 201);
+  const qrResult = await request('GET', `/api/batches/${created.body.batchId}/qr`, { token: tokenFor(10) });
+  assert.equal(qrResult.status, 200);
+  const token = qrResult.body.qrData.split('/trace/')[1];
+  assert.match(token, /^BATCH-[0-9]{4}-[0-9]{4,}\.[A-Za-z0-9_-]+$/);
+  assert.ok(qrResult.body.qrData.endsWith(`/${created.body.batchCode}.${token.split('.')[1]}`));
+  assert.equal(qr.verify(token), created.body.batchCode);
 });
 
 test('TC-QR-03: thiếu QR_HMAC_SECRET → 500 và transaction rollback batch, QR, CREATED, audit', async () => {
@@ -206,16 +218,15 @@ test('TC-QR-09: GET QR không có token hoặc token hết hạn → 401', async
   expectError(await request('GET', '/api/batches/1/qr', { token: tokenFor(10, expired) }), 401, 'TOKEN_EXPIRED');
 });
 
-// Chờ W7-TV2: hiện chưa có endpoint /trace/{qrToken} để kiểm thử token sai chữ ký.
-test('TC-QR-04: sửa một ký tự token rồi truy xuất → 404', { skip: 'chờ W7-TV2: chưa có endpoint /trace/{qrToken} trong backend/src' }, async () => {
+// Chờ PR #59 (W7-TV2) merge: hiện chưa có endpoint /trace/{qrToken}.
+test('TC-QR-04: sửa một ký tự token rồi truy xuất → 404', { skip: 'chờ PR #59 (W7-TV2) merge: chưa có endpoint /trace' }, async () => {
   const { token } = await createBatch();
   const altered = `${token.slice(0, -1)}${token.endsWith('A') ? 'B' : 'A'}`;
   const result = await rawRequest('GET', `/trace/${encodeURIComponent(altered)}`);
   assert.equal(result.status, 404);
   assert.equal((await result.json()).message, 'Không tìm thấy thông tin truy xuất hợp lệ');
 });
-// Chờ W7-TV2: controller getQr hiện chỉ trả JSON, chưa hỗ trợ định dạng ảnh PNG.
-test('TC-QR-06: format=png trả PNG tối thiểu 512×512 với tên file theo mã lô', { skip: 'chờ W7-TV2: chưa có xử lý format=png trong luồng getQr' }, async () => {
+test('TC-QR-06: format=png trả PNG tối thiểu 512×512 với tên file theo mã lô', async () => {
   const { batch } = await createBatch();
   const response = await rawRequest('GET', `/api/batches/${batch.batchId}/qr?format=png`, { token: tokenFor(10) });
   assert.equal(response.status, 200);
@@ -226,8 +237,7 @@ test('TC-QR-06: format=png trả PNG tối thiểu 512×512 với tên file theo
   assert.ok(response.bytes.readUInt32BE(16) >= 512);
   assert.ok(response.bytes.readUInt32BE(20) >= 512);
 });
-// Chờ W7-TV2: controller getQr hiện chỉ trả JSON, chưa hỗ trợ định dạng SVG.
-test('TC-QR-07: format=svg trả SVG hợp lệ có phần tử vẽ', { skip: 'chờ W7-TV2: chưa có xử lý format=svg trong luồng getQr' }, async () => {
+test('TC-QR-07: format=svg trả SVG hợp lệ có phần tử vẽ', async () => {
   const { batch } = await createBatch();
   const response = await rawRequest('GET', `/api/batches/${batch.batchId}/qr?format=svg`, { token: tokenFor(10) });
   assert.equal(response.status, 200);
@@ -236,16 +246,15 @@ test('TC-QR-07: format=svg trả SVG hợp lệ có phần tử vẽ', { skip: '
   assert.match(svg, /^(?:<\?xml[^>]*>\s*)?<svg\b/i);
   assert.match(svg, /<(?:path|rect|g|use|polygon)\b/i);
 });
-// Chờ W7-TV2: chưa có xử lý format để từ chối định dạng không hỗ trợ.
-test('TC-QR-10: format=gif trả 400 và liệt kê png, svg', { skip: 'chờ W7-TV2: chưa có xử lý format=png|svg trong luồng getQr' }, async () => {
+test('TC-QR-10: format=gif trả 400 và liệt kê png, svg', async () => {
   const { batch } = await createBatch();
   const result = await request('GET', `/api/batches/${batch.batchId}/qr?format=gif`, { token: tokenFor(10) });
   assert.equal(result.status, 400);
   assert.match(result.body.message, /png/i);
   assert.match(result.body.message, /svg/i);
 });
-// Chờ W7-TV2: chưa có endpoint public trace để kiểm cấu trúc, timeline và NFR.
-test('TC-QR-11: trace token công khai trả thông tin lô và timeline dưới 3 giây', { skip: 'chờ W7-TV2: chưa có endpoint /trace/{qrToken}' }, async () => {
+// Chờ PR #59 (W7-TV2) merge: endpoint truy xuất công khai chưa có.
+test('TC-QR-11: trace token công khai trả thông tin lô và timeline dưới 3 giây', { skip: 'chờ PR #59 (W7-TV2) merge: chưa có endpoint /trace' }, async () => {
   const { token } = await createBatch();
   const started = performance.now();
   const result = await request('GET', `/trace/${encodeURIComponent(token)}`);
@@ -256,16 +265,14 @@ test('TC-QR-11: trace token công khai trả thông tin lô và timeline dưới
   // Đây là phép đo trong môi trường giả; NFR-01 chính thức được đo ở tuần 8 trên bản triển khai thật.
 });
 // NFR-01 chính thức đo trên bản triển khai thật ở tuần 8; harness giả chỉ đo thời gian cục bộ.
-// Chờ W7-TV2: chưa có endpoint public trace by code.
-test('TC-QR-12: trace theo mã lô công khai trả cùng cấu trúc và giới hạn trường', { skip: 'chờ W7-TV2: chưa có endpoint /trace/code/{batchCode}' }, async () => {
+test('TC-QR-12: trace theo mã lô công khai trả cùng cấu trúc và giới hạn trường', { skip: 'chờ PR #59 (W7-TV2) merge: chưa có endpoint /trace' }, async () => {
   const { batch } = await createBatch();
   const result = await request('GET', `/trace/code/${encodeURIComponent(batch.batchCode)}`);
   assert.equal(result.status, 200);
   assertPublicTrace(result.body);
   assert.equal(result.body.batchCode, batch.batchCode);
 });
-// Chờ W7-TV2: chưa có endpoint public trace để kiểm timeline CREATED.
-test('TC-QR-13: trace lô chỉ có CREATED trả timeline đúng một sự kiện', { skip: 'chờ W7-TV2: chưa có endpoint /trace/{qrToken}' }, async () => {
+test('TC-QR-13: trace lô chỉ có CREATED trả timeline đúng một sự kiện', { skip: 'chờ PR #59 (W7-TV2) merge: chưa có endpoint /trace' }, async () => {
   const { token } = await createBatch();
   const result = await request('GET', `/trace/${encodeURIComponent(token)}`);
   assert.equal(result.status, 200);
@@ -273,8 +280,8 @@ test('TC-QR-13: trace lô chỉ có CREATED trả timeline đúng một sự ki�
   assert.equal(result.body.events[0].eventType, 'CREATED');
 });
 // Các trường cấm được liệt kê theo hợp đồng: email, user_id, actor_id, created_by, createdBy, audit, audit_logs, auditLogs.
-// Chờ W7-TV2: chưa có DTO truy xuất công khai để khẳng định các trường này vắng mặt đệ quy.
-test('TC-QR-14: DTO công khai không lộ email, mã người dùng/người ghi hoặc audit', { skip: 'chờ W7-TV2: chưa có endpoint/DTO public trace' }, async () => {
+// Chờ PR #59 (W7-TV2) merge: chưa có DTO công khai để kiểm tra các trường cấm đệ quy.
+test('TC-QR-14: DTO công khai không lộ email, mã người dùng/người ghi hoặc audit', { skip: 'chờ PR #59 (W7-TV2) merge: chưa có endpoint /trace' }, async () => {
   const { token } = await createBatch();
   const result = await request('GET', `/trace/${encodeURIComponent(token)}`);
   assert.equal(result.status, 200);
@@ -291,8 +298,7 @@ test('TC-QR-14: DTO công khai không lộ email, mã người dùng/người gh
   }
   assertNoForbiddenFields(result.body);
 });
-// Chờ W7-TV2: chưa có endpoint public trace để xác nhận nội dung 404 thống nhất.
-test('TC-QR-15: token không tồn tại hoặc sai chữ ký trả 404 với thông báo chung', { skip: 'chờ W7-TV2: chưa có endpoint /trace/{qrToken}' }, async () => {
+test('TC-QR-15: token không tồn tại hoặc sai chữ ký trả 404 với thông báo chung', { skip: 'chờ PR #59 (W7-TV2) merge: chưa có endpoint /trace' }, async () => {
   const { token } = await createBatch();
   const badSignature = `${token.slice(0, -1)}${token.endsWith('A') ? 'B' : 'A'}`;
   for (const candidate of ['BATCH-2026-9999.invalid-signature', badSignature]) {
@@ -302,14 +308,12 @@ test('TC-QR-15: token không tồn tại hoặc sai chữ ký trả 404 với th
     assert.doesNotMatch(result.body.message, /signature|chữ ký|token|không hợp lệ/i);
   }
 });
-// Chờ W7-TV2: chưa có endpoint public trace by code để xác nhận nội dung 404 thống nhất.
-test('TC-QR-16: mã lô không tồn tại trả 404 với thông báo chung', { skip: 'chờ W7-TV2: chưa có endpoint /trace/code/{batchCode}' }, async () => {
+test('TC-QR-16: mã lô không tồn tại trả 404 với thông báo chung', { skip: 'chờ PR #59 (W7-TV2) merge: chưa có endpoint /trace' }, async () => {
   const result = await request('GET', '/trace/code/BATCH-2026-9999');
   assert.equal(result.status, 404);
   assert.equal(result.body.message, 'Không tìm thấy thông tin truy xuất hợp lệ');
 });
-// Chờ W7-TV2: route trace chưa tồn tại nên chưa thể xác minh limiter 60 request/phút.
-test('TC-QR-17: yêu cầu thứ 61 từ một IP trong một phút trả 429', { skip: 'chờ W7-TV2: chưa có route truy xuất công khai gắn rate limiter' }, async () => {
+test('TC-QR-17: yêu cầu thứ 61 từ một IP trong một phút trả 429', { skip: 'chờ PR #59 (W7-TV2) merge: chưa có endpoint /trace và limiter' }, async () => {
   const { token } = await createBatch();
   const results = await Promise.all(Array.from({ length: 61 }, () => rawRequest('GET', `/trace/${encodeURIComponent(token)}`)));
   assert.equal(results[60].status, 429);
