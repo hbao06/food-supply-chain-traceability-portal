@@ -14,12 +14,15 @@ async function lockBatchCodeSequence(db) {
 }
 
 // Mã lô: BATCH-<năm>-<số thứ tự 4 chữ số>, thứ tự tăng dần trong từng năm (CHECK chk_batches_batch_code_format).
+// Biểu thức split_part(...)::int phải giữ ĐÚNG như chỉ mục idx_batches_code_year_seq (migration 007) để
+// PostgreSQL đọc số lớn nhất từ chỉ mục (~0,1 ms) thay vì quét cả bảng (W7-TV3, docs/security/query-optimization.md).
 async function nextBatchCode(db) {
   const r = await db.query(
     `SELECT EXTRACT(YEAR FROM now())::int AS year,
-            COALESCE(MAX((substring(batch_code FROM '^BATCH-[0-9]{4}-([0-9]+)$'))::int), 0) AS max_seq
-     FROM batches
-     WHERE batch_code LIKE 'BATCH-' || EXTRACT(YEAR FROM now())::int::text || '-%'`
+            COALESCE((SELECT split_part(batch_code, '-', 3)::int FROM batches
+                      WHERE split_part(batch_code, '-', 2)::int = EXTRACT(YEAR FROM now())::int
+                      ORDER BY split_part(batch_code, '-', 3)::int DESC
+                      LIMIT 1), 0) AS max_seq`
   );
   const { year, max_seq: maxSeq } = r.rows[0];
   return `BATCH-${year}-${String(Number(maxSeq) + 1).padStart(4, '0')}`;
@@ -65,6 +68,7 @@ async function findVisibleBatch(db, auth, batchId, { forUpdate = false, includeA
 }
 
 const escapeLike = (s) => s.replace(/[\\%_]/g, '\\$&');
+const FULL_BATCH_CODE = /^BATCH-[0-9]{4}-[0-9]{4,}$/i; // giống CHECK chk_batches_batch_code_format
 
 async function listVisibleBatches(db, auth, { status, q, limit, offset }) {
   const params = [];
@@ -72,7 +76,13 @@ async function listVisibleBatches(db, auth, { status, q, limit, offset }) {
   params.push(...scope.params);
   const where = [scope.clause];
   if (status) { params.push(status); where.push(`b.current_status = $${params.length}`); }
-  if (q) {
+  if (q && FULL_BATCH_CODE.test(q)) {
+    // Gõ đủ một mã lô (thường gặp nhất: chép từ nhãn / QR): so khớp đúng mã qua chỉ mục UNIQUE.
+    // ILIKE '%BATCH-2026-0420%' thì mọi lô đều có các bộ ba "BAT", "TCH", "-20"... nên chỉ mục trigram
+    // không lọc được và PostgreSQL quét cả bảng (~90 ms / 60 000 lô -> ~6 ms, W7-TV3).
+    params.push(q.toUpperCase(), `%${escapeLike(q)}%`);
+    where.push(`(b.batch_code = $${params.length - 1} OR b.product_name ILIKE $${params.length})`);
+  } else if (q) {
     params.push(`%${escapeLike(q)}%`);
     where.push(`(b.product_name ILIKE $${params.length} OR b.batch_code ILIKE $${params.length})`);
   }
@@ -107,5 +117,5 @@ async function findQr(db, batchId) {
 
 module.exports = {
   lockBatchCodeSequence, nextBatchCode, insertBatch, insertQr, insertCreatedEvent,
-  findVisibleBatch, listVisibleBatches, updateBatch, findQr, escapeLike,
+  findVisibleBatch, listVisibleBatches, updateBatch, findQr, escapeLike, FULL_BATCH_CODE,
 };

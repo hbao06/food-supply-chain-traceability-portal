@@ -10,7 +10,8 @@ PostgreSQL 16 (service `database` trong `docker-compose.yml`, CSDL `food_traceab
 | `migrations/004_event_types.sql` | Bảng `event_types` (thứ tự bước, vai trò được ghi); trạng thái lô và loại sự kiện thành khóa ngoại (W6) |
 | `migrations/005_history_hash_chain.sql` | Chuỗi băm SHA-256 cho `audit_logs` và `supply_chain_events`; hàm `verify_audit_chain()`, `verify_batch_events(id)` (W6) |
 | `migrations/006_app_db_role.sql` | Vai trò CSDL `fsc_app` quyền tối thiểu cho backend (W6) |
-| `tests/schema-check.sql` | 70 ca kiểm tra ràng buộc; dữ liệu thử được ROLLBACK |
+| `migrations/007_query_indexes.sql` | Chỉ mục cấp mã lô, tìm kiếm trigram (`pg_trgm`), danh sách lô / audit theo thời gian (W7) |
+| `tests/schema-check.sql` | 78 ca kiểm tra ràng buộc và chỉ mục; dữ liệu thử được ROLLBACK |
 | `schema.sql` | Bản v1 của Tuần 3, giữ để tham chiếu (giống hệt `001`, có test chặn lệch). **Không dùng để tạo CSDL nữa** |
 
 Thiết kế và từ điển dữ liệu: [`docs/ERD/Readme.md`](../docs/ERD/Readme.md) · sơ đồ: [`docs/ERD/ERD-v3.pdf`](../docs/ERD/ERD-v3.pdf).
@@ -33,7 +34,7 @@ npm run db:seed:demo            # (tùy chọn) nạp dữ liệu mẫu cho phá
 
 - CSDL đã tạo tay từ `schema.sql` ở Tuần 3: lần đầu chạy `db:migrate` sẽ ghi nhận `001` là đã chạy (baseline) và chỉ chạy các file sau (`002`, `003`…). **Không cần xóa dữ liệu.**
 - Mỗi file chạy trong một transaction; lỗi thì không thay đổi gì. Có khóa để hai người không chạy cùng lúc.
-- **Không sửa file migration đã chạy.** Trình chạy lưu checksum và sẽ dừng nếu nội dung bị sửa. Muốn thay đổi CSDL thì thêm file mới `007_ten_thay_doi.sql` (không viết `BEGIN`/`COMMIT` trong file).
+- **Không sửa file migration đã chạy.** Trình chạy lưu checksum và sẽ dừng nếu nội dung bị sửa. Muốn thay đổi CSDL thì thêm file mới `008_ten_thay_doi.sql` (không viết `BEGIN`/`COMMIT` trong file).
 - Làm lại từ đầu: `docker compose down -v` (xóa volume `postgres_data`), rồi chạy lại các lệnh trên.
 
 Kiểm tra ràng buộc (CSDL trống, sau khi migrate):
@@ -94,6 +95,21 @@ docker compose exec database psql -U postgres -d food_traceability -c "ALTER ROL
 ```
 
 Đã kiểm tra trên CSDL thật: với `fsc_app`, các luồng tạo lô, QR, sự kiện, audit, sửa lô vẫn chạy; UPDATE / DELETE / TRUNCATE lịch sử, DELETE lô, sửa `event_types`, tắt trigger đều bị PostgreSQL từ chối.
+
+## Chỉ mục và tối ưu truy vấn (W7)
+
+Migration 007. Đo trên 60 000 lô / 143 000 sự kiện / 60 000 audit: [`docs/security/query-optimization.md`](../docs/security/query-optimization.md). Tự đo lại: `database/tests/perf/` (chỉ trên CSDL thử).
+
+| Truy vấn | Chỉ mục | Trước → sau |
+| --- | --- | --- |
+| Cấp mã lô `nextBatchCode` (đổi câu SQL) | `idx_batches_code_year_seq` trên `(năm, số thứ tự)` tách từ `batch_code` | 60 ms → 0,04 ms |
+| Tra cứu đúng một mã lô (QR) | `uq_batches_batch_code` (có từ 001) | 0,1 ms (giữ nguyên) |
+| Tìm kiếm `q` (ILIKE `%…%`) | `idx_batches_product_name_trgm`, `idx_batches_batch_code_trgm` (GIN, `pg_trgm`); gõ đủ mã lô thì so khớp đúng qua `uq_batches_batch_code` | 85–91 ms → 0,15–0,9 ms |
+| Danh sách lô / audit trang 1 | `(… , creation_date DESC, batch_id DESC)`, `(… , created_at DESC, audit_id DESC)` | 3–20 ms → < 0,1 ms |
+
+- Câu SQL cấp mã lô phải giữ **đúng** biểu thức `split_part(batch_code, '-', 2)::int` / `split_part(batch_code, '-', 3)::int` thì mới dùng được chỉ mục (test `SEC-06` trong `backend/test/security.test.js` chặn lệch).
+- Từ khóa tìm kiếm ngắn hơn 3 ký tự không dùng được chỉ mục trigram (PostgreSQL quét bảng, vẫn đúng kết quả).
+- `pg_trgm` có sẵn trong PostgreSQL (Docker `postgres:16-alpine` và bản cài trên Windows), là extension "trusted" nên tài khoản chủ CSDL tạo được.
 
 ## Lưu ý cho backend
 

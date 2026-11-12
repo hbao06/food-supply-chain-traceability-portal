@@ -44,6 +44,7 @@ test('đăng ký: tạo PENDING, mật khẩu được băm, không trả passwo
   assert.notEqual(state.users[0].password_hash, 'secret123');
   assert.equal(state.audits.length, 1);
   assert.equal(state.audits[0].action, 'REGISTER');
+  assert.equal('email' in state.audits[0].newValue, false, 'audit REGISTER không lưu email (W7-TV3)');
   assert.ok(!JSON.stringify(state.audits[0]).includes('secret123'), 'audit không được chứa mật khẩu');
   assert.ok(!JSON.stringify(state.audits[0]).includes('HASH('), 'audit không được chứa hash');
 });
@@ -89,6 +90,8 @@ test('đăng nhập sai: ghi audit LOGIN_FAILED, actor null nếu email không t
   assert.equal(state.audits[1].actorId, null);
   assert.ok(state.audits.every((a) => a.action === 'LOGIN_FAILED'));
   assert.ok(!JSON.stringify(state.audits).includes('sai-pass'));
+  // W7-TV3: không lưu nguyên email gõ vào nhật ký không xóa được, chỉ bản đã che.
+  assert.deepEqual(state.audits.map((a) => a.newValue), [{ email: 'fa***@example.com' }, { email: 'kh***@co.com' }]);
 });
 
 test('email không tồn tại vẫn so sánh mật khẩu với hash giả (chống dò email qua thời gian)', async () => {
