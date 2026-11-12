@@ -89,7 +89,7 @@ test('mọi trường hợp không tìm thấy trả cùng mã và thông báo (
     service.byToken('x.y').catch((e) => e), service.byToken(qr.token('BATCH-2026-0099')).catch((e) => e),
   ]);
   assert.equal(new Set(errs.map((e) => `${e.status}|${e.code}|${e.message}`)).size, 1);
-  assert.equal(errs[0].message, 'Không tìm thấy thông tin truy xuất');
+  assert.equal(errs[0].message, 'Không tìm thấy thông tin truy xuất hợp lệ');
 });
 
 test('thiếu QR_HMAC_SECRET: tra cứu theo token trả 404, tra cứu theo mã lô vẫn chạy', async () => {
