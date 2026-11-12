@@ -1,5 +1,6 @@
 -- =============================================================================
--- Kiểm tra ràng buộc CSDL (W3-TV3; W4 roles; W5 products, farms; W6 event_types, chuỗi băm, vai trò fsc_app)
+-- Kiểm tra ràng buộc CSDL (W3-TV3; W4 roles; W5 products, farms; W6 event_types, chuỗi băm, vai trò fsc_app;
+--                        W7 chỉ mục batch_code / danh sách)
 -- Chạy trên CSDL trống SAU KHI đã chạy migration (cd backend && npm run db:migrate):
 --   psql -U postgres -d food_traceability -v ON_ERROR_STOP=1 -f database/tests/schema-check.sql
 -- Mọi dữ liệu thử được ROLLBACK ở cuối, CSDL giữ nguyên.
@@ -309,6 +310,70 @@ BEGIN
     RAISE NOTICE 'PASS  Sửa / xóa sự kiện bị phát hiện (%)', v.reason;
 END $$;
 ALTER TABLE supply_chain_events ENABLE TRIGGER trg_events_append_only;
+
+-- ---------- Chỉ mục batch_code và truy vấn danh sách (migration 007, W7) ----------
+DO $$
+DECLARE missing text;
+BEGIN
+    SELECT string_agg(i, ', ') INTO missing
+    FROM unnest(ARRAY['idx_batches_code_year_seq','idx_batches_product_name_trgm','idx_batches_batch_code_trgm',
+                      'idx_batches_created_desc','idx_batches_org_created_desc','idx_batches_status_created',
+                      'idx_audit_created_desc','idx_audit_type_created','idx_audit_actor_created',
+                      'idx_events_actor_batch','uq_batches_batch_code']) AS i
+    WHERE to_regclass(i) IS NULL;
+    IF missing IS NOT NULL THEN RAISE EXCEPTION 'FAIL  thiếu chỉ mục: %', missing; END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_trgm') THEN
+        RAISE EXCEPTION 'FAIL  chưa cài extension pg_trgm';
+    END IF;
+    IF to_regclass('idx_batches_organization') IS NOT NULL OR to_regclass('idx_audit_created_at') IS NOT NULL THEN
+        RAISE EXCEPTION 'FAIL  chỉ mục cũ trùng chức năng chưa được xóa';
+    END IF;
+    RAISE NOTICE 'PASS  đủ chỉ mục của migration 007 và pg_trgm';
+END $$;
+
+-- Cấp mã lô theo SỐ, không theo chuỗi: ...-9999 < ...-10000 (câu SQL giống nextBatchCode trong batches.repository.js)
+INSERT INTO batches (batch_code, product_name, origin, quantity, created_by, organization_id)
+SELECT format('BATCH-%s-%s', EXTRACT(YEAR FROM now())::int, n), 'Gạo', 'Sóc Trăng', 1, 2, 1
+FROM unnest(ARRAY['9999','10000']) AS n;
+DO $$
+DECLARE max_seq int;
+BEGIN
+    SELECT COALESCE((SELECT split_part(batch_code, '-', 3)::int FROM batches
+                     WHERE split_part(batch_code, '-', 2)::int = EXTRACT(YEAR FROM now())::int
+                     ORDER BY split_part(batch_code, '-', 3)::int DESC LIMIT 1), 0) INTO max_seq;
+    IF max_seq <> 10000 THEN RAISE EXCEPTION 'FAIL  số thứ tự lớn nhất phải là 10000, nhận %', max_seq; END IF;
+    RAISE NOTICE 'PASS  cấp mã lô lấy số lớn nhất theo giá trị số (10000 > 9999)';
+END $$;
+
+-- Kế hoạch truy vấn: tắt quét tuần tự để chắc chắn PostgreSQL DÙNG ĐƯỢC chỉ mục với đúng biểu thức của backend
+-- (bảng thử nhỏ nên bình thường planner vẫn chọn quét tuần tự; số đo thật xem docs/security/query-optimization.md).
+CREATE FUNCTION pg_temp.expect_index(label text, query text, idx text) RETURNS void
+LANGUAGE plpgsql AS $$
+DECLARE line text; plan text := '';
+BEGIN
+    FOR line IN EXECUTE 'EXPLAIN (COSTS OFF) ' || query LOOP plan := plan || line || E'\n'; END LOOP;
+    IF position(idx IN plan) = 0 THEN
+        RAISE EXCEPTION 'FAIL  % – không dùng chỉ mục %:%', label, idx, E'\n' || plan;
+    END IF;
+    RAISE NOTICE 'PASS  % dùng %', label, idx;
+END $$;
+SET LOCAL enable_seqscan = off;
+SELECT pg_temp.expect_index('cấp mã lô (nextBatchCode)',
+  $$SELECT split_part(batch_code, '-', 3)::int FROM batches
+    WHERE split_part(batch_code, '-', 2)::int = 2026 ORDER BY split_part(batch_code, '-', 3)::int DESC LIMIT 1$$,
+  'idx_batches_code_year_seq');
+SELECT pg_temp.expect_index('tra cứu đúng một mã lô (QR)',
+  $$SELECT * FROM batches WHERE batch_code = 'BATCH-2026-0001'$$, 'uq_batches_batch_code');
+SELECT pg_temp.expect_index('tìm kiếm q trong mã lô',
+  $$SELECT batch_id FROM batches b WHERE b.batch_code ILIKE '%2026-00%'$$, 'idx_batches_batch_code_trgm');
+SELECT pg_temp.expect_index('tìm kiếm q trong tên sản phẩm',
+  $$SELECT batch_id FROM batches b WHERE b.product_name ILIKE '%cà phê%'$$, 'idx_batches_product_name_trgm');
+SELECT pg_temp.expect_index('danh sách lô của Farmer',
+  $$SELECT batch_id FROM batches b WHERE b.organization_id = 1 ORDER BY b.creation_date DESC, b.batch_id DESC LIMIT 20$$,
+  'idx_batches_org_created_desc');
+SELECT pg_temp.expect_index('danh sách audit mới nhất',
+  $$SELECT audit_id FROM audit_logs a ORDER BY a.created_at DESC, a.audit_id DESC LIMIT 20$$, 'idx_audit_created_desc');
+SET LOCAL enable_seqscan = on;
 
 -- ---------- Vai trò CSDL fsc_app (migration 006) ----------
 CREATE FUNCTION pg_temp.as_app(label text, stmt text, should_fail boolean) RETURNS void

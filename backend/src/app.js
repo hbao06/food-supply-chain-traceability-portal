@@ -14,6 +14,7 @@ const { authRouter, profileRouter } = require("./modules/auth/auth.routes");
 const { batchesRouter } = require("./modules/batches/batches.routes");
 const { auditRouter } = require("./modules/audit/audit.routes");
 const { securityHeaders } = require("./middleware/securityHeaders");
+const { buildCorsOptions } = require("./middleware/corsOptions");
 const { createRateLimiter, rateLimitEnabled, passThrough, clientIp } = require("./middleware/rateLimit");
 const { traceRouter } = require("./modules/trace/trace.routes");
 
@@ -22,7 +23,7 @@ const app = express();
 // Bảo mật chung (W4-TV3): không lộ "X-Powered-By: Express", thêm header bảo mật, giới hạn body 100 KB.
 app.disable("x-powered-by");
 app.use(securityHeaders);
-app.use(cors());
+app.use(cors(buildCorsOptions())); // W7-TV3: chỉ nguồn trong CORS_ORIGIN (mặc định frontend localhost:5173)
 app.use(express.json({ limit: "100kb" }));
 
 // Giới hạn tần suất (W4-TV3, SRS P6). Cấu hình bằng .env; tắt khi NODE_ENV=test hoặc RATE_LIMIT_DISABLED=true.
