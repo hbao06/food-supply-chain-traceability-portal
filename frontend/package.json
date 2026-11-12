@@ -7,10 +7,11 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "test": "node --test test/batch.test.js test/timeline.test.js",
+    "test": "node --test test/batch.test.js test/timeline.test.js test/trace.test.js",
     "preview": "vite preview"
   },
   "dependencies": {
+    "jsqr": "^1.4.0",
     "qrcode": "^1.5.4",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
