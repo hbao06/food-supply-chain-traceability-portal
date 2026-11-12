@@ -50,6 +50,9 @@ export function BatchDetail({
   const [showAddEventModal, setShowAddEventModal] = useState(false)
   const [copiedCode, setCopiedCode] = useState(false)
   const [copiedUrl, setCopiedUrl] = useState(false)
+  const [qrData, setQrData] = useState('')
+  const [qrLoading, setQrLoading] = useState(true)
+  const [qrError, setQrError] = useState('')
   const [flashMessage, setFlashMessage] = useState('')
   const qrCanvasRef = useRef(null)
 
@@ -83,11 +86,18 @@ export function BatchDetail({
   }, [batchId, initialBatch, token, preview])
 
   // Render inline QR code on the side card
-  const traceUrl =
-    batch?.qrData ||
-    (batch?.batchCode
-      ? `${window.location.origin}/trace/${batch.batchCode}`
-      : '')
+  const traceUrl = qrData
+  useEffect(() => {
+    if (!batch || preview || !token) return
+    let active = true
+    setQrLoading(true); setQrData(''); setQrError('')
+    api.getBatchQr(token, batch.batchId).then((data) => {
+      if (active) setQrData(typeof data.qrData === 'string' ? data.qrData : '')
+    }).catch((err) => {
+      if (active) setQrError(err instanceof ApiError ? errorMessage(err) : 'Không thể tải mã QR của lô hàng.')
+    }).finally(() => { if (active) setQrLoading(false) })
+    return () => { active = false }
+  }, [batch?.batchId, token, preview])
 
   useEffect(() => {
     if (!qrCanvasRef.current || !traceUrl) return
@@ -395,7 +405,9 @@ export function BatchDetail({
             </div>
 
             <div className="qr-display-box">
-              <canvas ref={qrCanvasRef} className="detail-qr-canvas" />
+              {qrLoading && <p role="status">Đang tải mã QR…</p>}
+              {qrError && <p role="alert">{qrError}</p>}
+              {!qrLoading && !qrError && traceUrl && <canvas ref={qrCanvasRef} className="detail-qr-canvas" />}
               <div className="qr-tag-label">
                 <code>{batch.batchCode}</code>
               </div>
@@ -403,12 +415,13 @@ export function BatchDetail({
 
             <div className="qr-url-compact">
               <span className="qr-url-truncate" title={traceUrl}>
-                {traceUrl}
+                {traceUrl || (qrLoading ? 'Đang tải liên kết…' : qrError)}
               </span>
               <button
                 type="button"
                 className="text-button copy-link-btn"
                 onClick={handleCopyUrl}
+                disabled={!traceUrl}
               >
                 {copiedUrl ? <><IconCheck /> Đã chép</> : 'Chép link'}
               </button>
@@ -447,7 +460,7 @@ export function BatchDetail({
 
       {/* QR Modal */}
       {showQrModal && (
-        <BatchQrModal batch={batch} onClose={() => setShowQrModal(false)} />
+        <BatchQrModal batch={batch} token={token} onClose={() => setShowQrModal(false)} />
       )}
 
       {/* Add Event Modal */}
