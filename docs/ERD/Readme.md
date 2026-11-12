@@ -1,4 +1,4 @@
-# ERD v3.3 – Cơ sở dữ liệu (W3-TV3, cập nhật W4, W5, W6)
+# ERD v3.3 – Cơ sở dữ liệu (W3-TV3, cập nhật W4, W5, W6, W7)
 
 **Dự án:** Food Supply Chain Traceability & Provenance Portal – Nhóm 13
 **Người phụ trách:** Đặng Vĩnh Quang (TV3 - Database / Auth / Security)
@@ -8,6 +8,7 @@
 **Cập nhật tuần 4 (v3.1):** thêm bảng `roles` (`database/migrations/002_roles_table.sql`); từ tuần 4 CSDL được tạo bằng migration (`database/migrations`), `schema.sql` chỉ giữ để tham chiếu.
 **Cập nhật tuần 5 (v3.2):** thêm bảng `products`, cột `batches.product_id`, view `farms` (`database/migrations/003_products_farms.sql`) và dữ liệu mẫu (`npm run db:seed:demo`).
 **Cập nhật tuần 6 (v3.3):** thêm bảng `event_types` (migration 004), chuỗi băm `prev_hash` / `row_hash` cho `audit_logs` và `supply_chain_events` (migration 005), vai trò CSDL `fsc_app` (migration 006).
+**Cập nhật tuần 7:** chỉ thêm / thay chỉ mục (migration 007), không đổi bảng hay cột nên sơ đồ giữ nguyên v3.3. Rà soát bảo mật: [`docs/security/security-checklist.md`](../security/security-checklist.md).
 
 ERD v3 thay cho bản nháp v2 (`erd-draft.md`). Tên bảng và cột được thống nhất với Class Diagram (`docs/UML/class-diagram.dot`) và OpenAPI (`docs/openapi-spec.yaml`, bản W3-TV2): CSDL dùng `snake_case`, API dùng `camelCase` tương ứng.
 
@@ -194,7 +195,7 @@ Dữ liệu cố định 4 dòng, trigger chặn UPDATE / DELETE (đổi mã vai
 | Cột | Kiểu | Ràng buộc | API |
 | --- | --- | --- | --- |
 | batch_id | BIGINT IDENTITY | PK | batchId |
-| batch_code | VARCHAR(30) | NOT NULL, UNIQUE (có chỉ mục), CHECK `^BATCH-[0-9]{4}-[0-9]{4,}$` | batchCode |
+| batch_code | VARCHAR(30) | NOT NULL, UNIQUE (có chỉ mục), CHECK `^BATCH-[0-9]{4}-[0-9]{4,}$`; chỉ mục `(năm, số thứ tự)` cho cấp mã và trigram cho tìm kiếm (W7) | batchCode |
 | product_id | BIGINT | FK → products, RESTRICT; không bắt buộc; sản phẩm phải thuộc đúng nông trại của lô; chỉ đổi khi lô còn CREATED | productId (W5, tùy chọn) |
 | product_name | VARCHAR(150) | NOT NULL, không rỗng; nếu chỉ gửi `product_id` thì CSDL tự lấy tên từ `products` (ảnh chụp tên lúc tạo lô) | productName |
 | origin | VARCHAR(255) | NOT NULL, không rỗng | origin |
@@ -228,7 +229,7 @@ Dữ liệu cố định 4 dòng, trigger chặn UPDATE / DELETE (đổi mã vai
 | description | TEXT | | description |
 | created_at | TIMESTAMPTZ | NOT NULL | – |
 
-Chỉ mục `(batch_id, timestamp)` phục vụ lấy timeline.
+Chỉ mục `(batch_id, timestamp)` phục vụ lấy timeline; `(actor_id, batch_id)` phục vụ phạm vi đọc của Processor / Distributor (W7).
 
 ### 2.6 `audit_logs` (append-only)
 | Cột | Kiểu | Ràng buộc | API |
@@ -241,7 +242,7 @@ Chỉ mục `(batch_id, timestamp)` phục vụ lấy timeline.
 | old_value, new_value | JSONB | CHECK không chứa khóa password / token / signature | oldValue, newValue |
 | created_at | TIMESTAMPTZ | NOT NULL | createdAt |
 
-Chỉ mục `(entity_type, entity_id)`, `(actor_id)`, `(created_at DESC)` phục vụ `GET /audit-logs` có lọc.
+Chỉ mục `(entity_type, entity_id)`, `(entity_type, created_at DESC, audit_id DESC)`, `(actor_id, created_at DESC, audit_id DESC)`, `(created_at DESC, audit_id DESC)` phục vụ `GET /audit-logs` có lọc và sắp xếp (W7 thay `(actor_id)`, `(created_at DESC)`).
 
 ## 3. Trạng thái lô và loại sự kiện (đã chốt)
 
@@ -307,7 +308,7 @@ Các quy tắc dưới đây vẫn phải được kiểm tra ở backend để 
 # Tạo / cập nhật CSDL bằng migration (từ W4)
 cd backend && npm run db:migrate
 
-# Kiểm tra 70 ràng buộc trên CSDL trống sau khi migrate (dữ liệu thử được ROLLBACK, CSDL giữ nguyên)
+# Kiểm tra 78 ràng buộc / chỉ mục trên CSDL trống sau khi migrate (dữ liệu thử được ROLLBACK, CSDL giữ nguyên)
 psql -h localhost -U postgres -d food_traceability -v ON_ERROR_STOP=1 -f database/tests/schema-check.sql
 ```
 

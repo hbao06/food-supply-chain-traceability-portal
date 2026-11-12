@@ -36,13 +36,20 @@ test("unknown API routes return 404", async () => {
   assert.equal(response.status, 404);
 });
 
-test("health endpoint allows browser cross-origin requests", async () => {
-  const response = await fetch(`${baseUrl}/api/health`, {
+test("CORS chỉ cho frontend được cấu hình, không cho website lạ (W7-TV3)", async () => {
+  const allowed = await fetch(`${baseUrl}/api/health`, {
     headers: { Origin: "http://localhost:5173" },
   });
-  assert.equal(response.status, 200);
-  assert.equal(response.headers.get("access-control-allow-origin"), "*");
-  await response.text();
+  assert.equal(allowed.status, 200);
+  assert.equal(allowed.headers.get("access-control-allow-origin"), "http://localhost:5173");
+  await allowed.text();
+
+  const other = await fetch(`${baseUrl}/api/health`, {
+    headers: { Origin: "https://evil.example" },
+  });
+  assert.equal(other.status, 200); // máy chủ vẫn trả lời, nhưng trình duyệt không cho trang lạ đọc phản hồi
+  assert.equal(other.headers.get("access-control-allow-origin"), null);
+  await other.text();
 });
 
 test("responses carry security headers and hide the framework (W4-TV3)", async () => {

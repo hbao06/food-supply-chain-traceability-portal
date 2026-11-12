@@ -42,6 +42,19 @@ function sanitizeAuditValue(value) {
   return obj;
 }
 
+// Che email trước khi lưu vào nhật ký không xóa được (W7-TV3, giới hạn dữ liệu cá nhân):
+// "nguyenvana@gmail.com" -> "ng***@gmail.com". Giữ tên miền và 2 ký tự đầu để Admin vẫn nhận ra
+// một đợt dò mật khẩu nhắm vào cùng tài khoản / cùng tên miền, nhưng không lưu nguyên địa chỉ
+// (email gõ sai, hoặc người dùng lỡ gõ mật khẩu vào ô email).
+function maskEmail(email) {
+  const s = String(email ?? '').trim().toLowerCase();
+  const at = s.lastIndexOf('@');
+  if (at < 1 || at === s.length - 1) return '***';
+  const local = s.slice(0, at);
+  const domain = s.slice(at + 1).slice(0, 100);
+  return `${local.slice(0, local.length > 2 ? 2 : 1)}***@${domain}`;
+}
+
 const isId = (v) => v === null || v === undefined || (Number.isSafeInteger(Number(v)) && Number(v) > 0);
 
 // Kiểm tra một mục audit trước khi ghi. Sai ở đây là lỗi lập trình (500), không phải lỗi người dùng.
@@ -60,4 +73,4 @@ function normalizeAuditEntry({ actorId = null, action, entityType, entityId = nu
   };
 }
 
-module.exports = { sanitizeAuditValue, normalizeAuditEntry, ACTIONS, ENTITY_TYPES, SENSITIVE_KEY, MAX_JSON_BYTES };
+module.exports = { sanitizeAuditValue, normalizeAuditEntry, maskEmail, ACTIONS, ENTITY_TYPES, SENSITIVE_KEY, MAX_JSON_BYTES };

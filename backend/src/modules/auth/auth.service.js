@@ -1,6 +1,7 @@
 'use strict';
 
 const { ConflictError, ForbiddenError, UnauthorizedError } = require('../../common/errors');
+const { maskEmail } = require('../audit/audit.sanitize');
 
 // Hàng CSDL -> JSON của API (camelCase, KHÔNG có password_hash). BIGINT của pg là chuỗi nên đổi sang số.
 function toUserDto(row) {
@@ -47,7 +48,8 @@ function createAuthService({ db, withTransaction, repo, hasher, tokens, logger =
         action: 'REGISTER',
         entityType: 'USER',
         entityId: Number(row.user_id),
-        newValue: { name: row.name, email: row.email, role: row.role, status: row.status },
+        // Không ghi email (W7-TV3): audit không xóa được, còn email đã nằm trong bảng users (entityId trỏ tới).
+        newValue: { name: row.name, role: row.role, status: row.status },
       });
       return toUserDto(row);
     });
@@ -60,7 +62,7 @@ function createAuthService({ db, withTransaction, repo, hasher, tokens, logger =
         action: 'LOGIN_FAILED',
         entityType: 'USER',
         entityId: row ? Number(row.user_id) : null,
-        newValue: { email },
+        newValue: { email: maskEmail(email) }, // không lưu nguyên email gõ vào (W7-TV3)
       });
     } catch (err) {
       logger.error('[auth] không ghi được audit LOGIN_FAILED', err); // không làm hỏng phản hồi 401

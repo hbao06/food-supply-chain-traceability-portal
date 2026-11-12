@@ -7,8 +7,6 @@ services:
       - "5173:5173"
     environment:
       VITE_API_PROXY_TARGET: http://backend:3000
-      QR_HMAC_SECRET: ${QR_HMAC_SECRET}
-      TRACE_BASE_URL: ${TRACE_BASE_URL:-http://localhost:5173}
     depends_on:
       - backend
 
@@ -28,6 +26,11 @@ services:
       JWT_SECRET: ${JWT_SECRET} # đặt trong .env ở thư mục gốc (>= 32 ký tự), thiếu thì backend dừng ngay
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1h}
       BCRYPT_COST: ${BCRYPT_COST:-10}
+      # W7-TV3: khóa ký QR là bí mật của backend (trước đây đặt nhầm ở service frontend nên backend
+      # trong Docker không có khóa -> tạo lô lỗi 500, còn container frontend lại giữ bí mật không dùng tới)
+      QR_HMAC_SECRET: ${QR_HMAC_SECRET}
+      TRACE_BASE_URL: ${TRACE_BASE_URL:-http://localhost:5173}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
     depends_on:
       - database
 
@@ -38,7 +41,9 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - "5432:5432"
+      # W7-TV3: chỉ mở cho chính máy này (127.0.0.1). "5432:5432" mở cho mọi máy cùng mạng (Wi-Fi trường)
+      # trong khi mật khẩu postgres là "postgres". Container backend vẫn kết nối qua mạng nội bộ của Docker.
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
