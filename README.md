@@ -15,9 +15,9 @@ Hệ thống truy xuất nguồn gốc thực phẩm, ghi nhận lịch sử lô
 
 | Thành phần | Công nghệ |
 |---|---|
-| Frontend | React / Next.js |
-| Backend | Node.js + Express / NestJS, REST API |
-| Database | PostgreSQL |
+| Frontend | React 19 + Vite |
+| Backend | Node.js + Express 5, REST API |
+| Database | PostgreSQL 16 |
 | Xác thực | JWT, RBAC |
 | Triển khai | Docker, Docker Compose |
 
@@ -93,3 +93,5 @@ docker compose up --build
 ## Tài liệu
 
 Các tài liệu SRS, UML, ERD và đặc tả REST API được lưu trong thư mục `docs/`.
+
+- [Kiến trúc hệ thống](docs/architecture.md)
