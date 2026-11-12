@@ -19,7 +19,9 @@ flowchart TB
     PUB["Trang truy xuất công khai — quét QR, không cần tài khoản"]
   end
   subgraph API["Backend Express 5 — Modular Monolith"]
-    MW["Middleware: securityHeaders → authenticate (JWT) → currentUser → rbac → rateLimit"]
+    MW["Ứng dụng: securityHeaders → cors → express.json"]
+    AUTHN["Router được bảo vệ: authenticate (JWT) → currentUser → rbac"]
+    RL["Rate limit: chỉ /api/auth/login và /api/auth/register"]
     AUTH["Module Auth"]
     BATCH["Module Batches + QR (HMAC)"]
     EVT["Module Events — máy trạng thái chuỗi sự kiện"]
@@ -28,10 +30,12 @@ flowchart TB
   DB[("PostgreSQL 16")]
   FE --> MW
   PUB --> MW
-  MW --> AUTH
-  MW --> BATCH
-  MW --> EVT
-  MW --> AUD
+  MW --> AUTHN
+  AUTHN --> AUTH
+  AUTHN --> BATCH
+  AUTHN --> EVT
+  AUTHN --> AUD
+  MW --> RL
   AUTH --> DB
   BATCH --> DB
   EVT --> DB
@@ -43,26 +47,27 @@ flowchart TB
 | Tầng / thành phần | Công nghệ | Chức năng đảm nhiệm | Nơi trong mã nguồn |
 |---|---|---|---|
 | Trình diễn — ứng dụng nội bộ | React 19 SPA (Vite) | Đăng nhập/đăng ký, quản lý lô hàng, ghi sự kiện, xem timeline, dashboard theo vai trò | `frontend/src/` |
-| Trình diễn — trang truy xuất công khai | React (route công khai) + thư viện qrcode | Hiển thị mã QR; người tiêu dùng xem nguồn gốc và dòng thời gian của lô | `frontend/src/batches/BatchQrModal.jsx`, trang trace |
-| Ứng dụng — lớp middleware | Express middleware | Header bảo mật → xác thực JWT (`authenticate`) → nạp người dùng hiện tại (`currentUser`) → phân quyền (`rbac`) → giới hạn tần suất (`rateLimit`) | `backend/src/middleware/`, `backend/src/app.js` |
+| Trình diễn — trang truy xuất công khai (dự kiến, chờ PR #59) | React route trace + thư viện qrcode | Kế hoạch tuần 7: người tiêu dùng xem nguồn gốc và timeline qua QR | `frontend/src/trace/` (phần giao diện đã có); endpoint backend chờ PR #59 |
+| Ứng dụng — middleware toàn cục | Express middleware | `securityHeaders` → `cors` → `express.json` | `backend/src/app.js` |
+| Ứng dụng — middleware theo router và rate limit | Express middleware | Router bảo vệ dùng JWT, nạp user hiện tại và RBAC; rate limit chỉ áp dụng cho `/api/auth/login` và `/api/auth/register` | `backend/src/middleware/`, các `*.routes.js` |
 | Ứng dụng — Module Auth | Express (routes/controller/service/repository) | Đăng ký, đăng nhập, hồ sơ cá nhân, vai trò và trạng thái tài khoản (PENDING/ACTIVE/LOCKED) | `backend/src/modules/auth/` |
 | Ứng dụng — Module Batches | Express (routes/controller/service/repository) | Tạo lô (mã lô tự sinh BATCH-YYYY-NNNN), sửa lô khi còn CREATED, phạm vi xem theo đơn vị, sinh token QR ký HMAC | `backend/src/modules/batches/`, `backend/src/common/qrToken.js` |
 | Ứng dụng — Module Events | Express (routes/controller/service/repository) | Ghi sự kiện chuỗi cung ứng, kiểm tra máy trạng thái thứ tự (sai thứ tự → 409 INVALID_SEQUENCE), timeline của lô | `backend/src/modules/events/` |
 | Ứng dụng — Module Audit | Express (routes/controller/service/repository) | Nhật ký kiểm toán chỉ-thêm-mới cho mọi thao tác, chuỗi băm chống sửa đổi, tra cứu nhật ký cho Admin | `backend/src/modules/audit/` |
-| Dữ liệu | PostgreSQL 16, pg Pool | 6 migration (001–006): schema, bảng vai trò, sản phẩm/nông trại, loại sự kiện, chuỗi băm lịch sử, vai trò CSDL tối thiểu fsc_app | `database/migrations/`, `backend/src/db/` |
+| Dữ liệu | PostgreSQL 16, pg Pool | 7 migration (001–007): schema, bảng vai trò, sản phẩm/nông trại, loại sự kiện, chuỗi băm lịch sử, vai trò CSDL tối thiểu fsc_app và chỉ mục truy vấn (007) | `database/migrations/`, `backend/src/db/` |
 
 Mỗi module của backend đều tổ chức 4 lớp `routes → controller → service → repository`: routes gắn đường dẫn và middleware, controller điều phối HTTP, service thực thi quy tắc nghiệp vụ, repository là nơi duy nhất chạm vào CSDL.
 
 ## 4. Cơ chế vận hành
 
-Luồng xử lý một yêu cầu (request): Trình duyệt gửi HTTP request kèm JWT (trừ trang truy xuất công khai) → request đi qua chuỗi middleware (header bảo mật, xác thực token, nạp trạng thái tài khoản mới nhất từ CSDL, kiểm tra quyền theo ma trận phân quyền, giới hạn tần suất) → routes chuyển tới controller → service thực thi quy tắc nghiệp vụ → repository truy vấn PostgreSQL → kết quả trả về dạng JSON; mọi thao tác thay đổi dữ liệu đồng thời ghi một dòng nhật ký qua Module Audit.
+Luồng xử lý request: HTTP request đi qua middleware toàn cục `securityHeaders` → `cors` → `express.json`; các router cần xác thực tiếp tục qua JWT, nạp trạng thái tài khoản và RBAC. Rate limit hiện chỉ gắn cho `/api/auth/login` và `/api/auth/register`. Sau đó routes chuyển tới controller → service → repository truy vấn PostgreSQL; các thao tác thay đổi dữ liệu đồng thời ghi nhật ký qua Module Audit. Endpoint `/trace` là kế hoạch tuần 7, đang chờ PR #59 merge.
 
 Bốn cơ chế đặc thù của hệ thống:
 
 1. **Xác thực không trạng thái (stateless) bằng JWT + phân quyền RBAC:** sau đăng nhập, server cấp JWT; mỗi request tự mang theo token nên server không lưu session. Quyền được kiểm hai lớp: theo vai trò (permission như `batch:create`, `event:create`, `qr:read`) và theo phạm vi đơn vị (người dùng chỉ thấy lô của tổ chức mình; ngoài phạm vi trả 404 thay vì 403 để không lộ sự tồn tại của dữ liệu).
 2. **Máy trạng thái (state machine) cho chuỗi sự kiện:** trạng thái lô hàng chỉ được chuyển theo đúng thứ tự CREATED → TRANSPORTED → RECEIVED → PROCESSED → PACKAGED → SHIPPED, mỗi loại sự kiện chỉ do đúng vai trò ghi (TRANSPORTED/RECEIVED/SHIPPED — Distributor; PROCESSED/PACKAGED — Processor). Ghi sai thứ tự bị từ chối bằng lỗi 409 INVALID_SEQUENCE và không làm thay đổi dữ liệu.
 3. **Lịch sử chỉ-thêm-mới + chuỗi băm (hash chain):** sự kiện và nhật ký kiểm toán không có đường sửa/xóa (trigger ở tầng CSDL + vai trò fsc_app bị tước quyền UPDATE/DELETE trên bảng lịch sử); mỗi dòng nhật ký chứa mã băm liên kết với dòng trước, nên sửa đổi một dòng trong quá khứ sẽ làm đứt toàn bộ chuỗi phía sau và bị phát hiện khi kiểm chứng.
-4. **Mã QR ký HMAC cho truy xuất công khai:** token trong mã QR có dạng mã lô + `.` + chữ ký HMAC-SHA256 (khóa bí mật `QR_HMAC_SECRET` chỉ nằm trong cấu hình server, tối thiểu 32 ký tự); người tiêu dùng không cần tài khoản vẫn xem được nguồn gốc lô hàng, nhưng không thể đoán hoặc giả mạo token của lô khác. Chữ ký được kiểm bằng phép so sánh an toàn theo thời gian (`timingSafeEqual`). Endpoint công khai còn được giới hạn tần suất để chống quét dữ liệu hàng loạt, và chỉ trả các trường công khai (không lộ email, mã người dùng hay dữ liệu audit).
+4. **Mã QR ký HMAC và truy xuất công khai dự kiến:** token QR có dạng mã lô + `.` + chữ ký HMAC-SHA256 (`QR_HMAC_SECRET` tối thiểu 32 ký tự); chữ ký kiểm bằng `timingSafeEqual`. Endpoint `/trace`, giới hạn tần suất và DTO công khai đang chờ PR #59 (W7-TV2) merge.
 
 ## 5. Nền tảng và công cụ
 
@@ -70,9 +75,9 @@ Bốn cơ chế đặc thù của hệ thống:
 |---|---|---|
 | Frontend | React 19, Vite, thư viện qrcode | SPA thuần, không dùng Next.js |
 | Backend | Node.js, Express 5, REST API | Kiểm thử bằng `node --test` |
-| Cơ sở dữ liệu | PostgreSQL 16, thư viện pg | Quản lý thay đổi bằng migration 001–006 |
+| Cơ sở dữ liệu | PostgreSQL 16, thư viện pg | Quản lý thay đổi bằng migration 001–007; 007 thêm chỉ mục truy vấn |
 | Xác thực / bảo mật | JWT (jsonwebtoken), bcryptjs, HMAC-SHA256 | RBAC theo ma trận quyền `docs/permission-matrix.md` |
 | Đặc tả API | OpenAPI (`docs/openapi-spec.yaml`) | Là hợp đồng API giữa frontend và backend |
 | Triển khai | Docker, Docker Compose (3 service: frontend, backend, database) | `docker-compose.yml` + Dockerfile từng phần |
-| Quản lý mã nguồn / CI | GitHub, GitHub Actions (CI: cài đặt → lint → test → build ở mỗi PR) | Merge chỉ khi có review + CI xanh |
+| Quản lý mã nguồn / CI | GitHub, GitHub Actions (CI: cài đặt → lint → test → build ở mỗi PR) | Quy ước nhóm là chờ review và CI xanh; branch protection cho main hiện chưa bật |
 | Quản lý công việc | GitHub Issues/Projects, tài liệu trong `docs/` (SRS, UML, ERD) | Theo kế hoạch 8 tuần của nhóm |
