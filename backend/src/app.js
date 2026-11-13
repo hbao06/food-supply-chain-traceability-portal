@@ -16,6 +16,7 @@ const { auditRouter } = require("./modules/audit/audit.routes");
 const { securityHeaders } = require("./middleware/securityHeaders");
 const { buildCorsOptions } = require("./middleware/corsOptions");
 const { createRateLimiter, rateLimitEnabled, passThrough, clientIp } = require("./middleware/rateLimit");
+const { traceRouter } = require("./modules/trace/trace.routes");
 
 const app = express();
 
@@ -59,9 +60,11 @@ app.use("/api/auth/register", registerLimiter);
 app.use("/api/auth", authRouter);
 app.use("/api/users", profileRouter);
 app.use("/api/batches", batchesRouter);
+app.use("/api/trace", traceRouter);
 app.use("/api/batches/:batchId/events", eventsRouter);
 app.use("/api/batches/:batchId/timeline", timelineRouter);
 app.use("/api/audit-logs", auditRouter);
+
 
 // Router của các module khác (batches, events, trace) đặt TRƯỚC notFound.
 app.use(notFound); // đường dẫn không tồn tại -> 404 { code, message }

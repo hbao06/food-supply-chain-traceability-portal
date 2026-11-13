@@ -23,7 +23,12 @@ const read = (p) => fs.readFileSync(p, 'utf8').replace(/\r\n/g, '\n');
 // ---------------------------------------------------------------------------
 // Route công khai được phép (không cần đăng nhập). Thêm route công khai mới (ví dụ /trace) thì phải ghi vào đây
 // và vào mục 2 của security-checklist.md – để việc mở một đường dẫn ra ngoài luôn là quyết định có chủ đích.
-const PUBLIC_ROUTES = new Set(['authRouter POST /register', 'authRouter POST /login']);
+const PUBLIC_ROUTES = new Set([
+  'authRouter POST /register',
+  'authRouter POST /login',
+  'traceRouter GET /code/:batchCode',
+  'traceRouter GET /:qrToken',
+]);
 
 function routeFiles() {
   const dir = path.join(SRC, 'modules');
