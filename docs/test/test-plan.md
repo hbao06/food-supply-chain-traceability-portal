@@ -124,6 +124,8 @@ Công cụ ở bảng trên là **đề xuất**, nhóm có thể thay bằng c�
 | TC-QR-16 | `GET /trace/code/BATCH-2026-9999` | 404 cùng thông báo như TC-QR-15 | AC-QR-03-E2 | API | M |
 | TC-QR-17 | Một IP gửi 61 yêu cầu trong 1 phút tới endpoint truy xuất | Yêu cầu thứ 61 trả 429 | AC-QR-03-E3 | API | S |
 
+**Trạng thái sau đợt sửa PR #62:** TC-QR-01, 02, 03, 05, 06, 07, 08, 09, 10 — Đạt (chạy tự động); TC-QR-04, 11–17 — Chờ PR #59 (W7-TV2) merge. E2E-QR (tạo lô → lấy QR → xác minh token) — Đạt.
+
 ### 5.2 CI/CD và Docker (TV4)
 | Mã | Ca kiểm thử | Kết quả mong đợi | AC | Loại | Ưu tiên |
 |---|---|---|---|---|---|

@@ -1,6 +1,7 @@
 'use strict';
 
 const { ForbiddenError, NotFoundError, ConflictError } = require('../../common/errors');
+const QRCode = require('qrcode');
 
 // Hàng CSDL -> JSON của API (camelCase). BIGINT/NUMERIC của pg là chuỗi nên đổi sang số.
 function toBatchDto(row) {
@@ -80,12 +81,15 @@ function createBatchService({ db, withTransaction, repo, qr, insertAudit }) {
     });
   }
 
-  async function getQr(auth, batchId) {
+  async function getQr(auth, batchId, format = 'json') {
     const row = await repo.findVisibleBatch(db, auth, batchId, { includeAwaiting: true });
     if (!row) throw NOT_FOUND();
     const qrRow = await repo.findQr(db, batchId);
     if (!qrRow) throw NOT_FOUND();
-    return { qrId: Number(qrRow.qr_id), batchId: Number(qrRow.batch_id), qrData: qrRow.qr_data, createdAt: qrRow.created_at };
+    const dto = { qrId: Number(qrRow.qr_id), batchId: Number(qrRow.batch_id), qrData: qrRow.qr_data, createdAt: qrRow.created_at };
+    if (format === 'png') return { ...dto, batchCode: row.batch_code, image: await QRCode.toBuffer(qrRow.qr_data, { type: 'png', width: 1024 }) };
+    if (format === 'svg') return { ...dto, batchCode: row.batch_code, image: await QRCode.toString(qrRow.qr_data, { type: 'svg', width: 1024 }) };
+    return dto;
   }
 
   return { create, list, get, update, getQr };
