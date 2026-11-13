@@ -110,70 +110,6 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
 
-    /trace/code/{batchCode}:
-      get:
-        tags: [Public Trace]
-        summary: Truy xuất nguồn gốc công khai theo mã lô (FR-QR-02)
-        parameters:
-        - in: path
-          name: batchCode
-          required: true
-          schema:
-            type: string
-            pattern: '^BATCH-\d{4}-\d{4,}$'
-            example: BATCH-2026-0001
-      responses:
-        '200':
-          description: Thông tin công khai của lô hàng và chuỗi sự kiện
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PublicTrace'
-        '404':
-          description: Không tìm thấy thông tin truy xuất hợp lệ
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '429':
-          description: Quá nhiều yêu cầu (mặc định 60 lượt/phút/IP)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /trace/{qrToken}:
-    get:
-      tags: [Public Trace]
-      summary: Truy xuất nguồn gốc công khai theo mã QR (FR-QR-01)
-      parameters:
-        - in: path
-          name: qrToken
-          required: true
-          schema:
-            type: string
-            minLength: 10
-            maxLength: 512
-      responses:
-        '200':
-          description: Thông tin công khai của lô hàng và chuỗi sự kiện
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PublicTrace'
-        '404':
-          description: Không tìm thấy thông tin truy xuất hợp lệ (token sai chữ ký hoặc lô không tồn tại)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '429':
-          description: Quá nhiều yêu cầu (mặc định 60 lượt/phút/IP)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
     patch:
       tags: [Auth]
       summary: Update the current user's profile
@@ -790,6 +726,7 @@ paths:
           description: Signed token carried by the QR code
           schema:
             type: string
+            maxLength: 200
       responses:
         "200":
           description: Public provenance
@@ -799,6 +736,8 @@ paths:
                 $ref: "#/components/schemas/PublicTrace"
         "404":
           $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
 
   /trace/code/{batchCode}:
     get:
@@ -818,6 +757,7 @@ paths:
           schema:
             type: string
             example: BATCH-2026-0001
+            pattern: '^BATCH-[0-9]{4}-[0-9]{4,}$'
       responses:
         "200":
           description: Public provenance
@@ -827,6 +767,8 @@ paths:
                 $ref: "#/components/schemas/PublicTrace"
         "404":
           $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
 
 components:
   securitySchemes:
@@ -1244,7 +1186,7 @@ components:
         origin:
           type: string
         organizationName:
-          type: string
+          type: [string, "null"]
           description: Name of the organization that created the batch
         currentStatus:
           $ref: "#/components/schemas/EventType"
@@ -1258,8 +1200,8 @@ components:
               location:
                 type: string
               organizationName:
-                type: string
-                description: Name of the organization of the actor
+              type: [string, "null"]
+              description: Name of the organization of the actor
               timestamp:
                 type: string
                 format: date-time
