@@ -28,6 +28,7 @@ const PUBLIC_ROUTES = new Set([
   'authRouter POST /login',
   'traceRouter GET /code/:batchCode',
   'traceRouter GET /:qrToken',
+  'healthRouter GET /ready',
 ]);
 
 function routeFiles() {

@@ -17,6 +17,8 @@ const { securityHeaders } = require("./middleware/securityHeaders");
 const { buildCorsOptions } = require("./middleware/corsOptions");
 const { createRateLimiter, rateLimitEnabled, passThrough, clientIp } = require("./middleware/rateLimit");
 const { traceRouter } = require("./modules/trace/trace.routes");
+const { adminRouter } = require("./modules/admin/admin.routes");
+const { healthRouter } = require("./modules/health/health.routes");
 
 const app = express();
 
@@ -59,6 +61,8 @@ app.use("/api/auth/login", loginLimiter);
 app.use("/api/auth/register", registerLimiter);
 app.use("/api/auth", authRouter);
 app.use("/api/users", profileRouter);
+app.use("/api", adminRouter);
+app.use("/api/health", healthRouter);
 app.use("/api/batches", batchesRouter);
 app.use("/api/trace", traceRouter);
 app.use("/api/batches/:batchId/events", eventsRouter);
