@@ -14,7 +14,9 @@
     "db:seed:admin": "node scripts/seed-admin.js",
     "smoke:batches": "node scripts/smoke-batches.js",
     "smoke:events": "node scripts/smoke-events.js",
-    "smoke:trace": "node scripts/smoke-trace.js"
+    "smoke:trace": "node scripts/smoke-trace.js",
+    "smoke:admin": "node scripts/smoke-admin.js",
+    "check:openapi": "node scripts/check-openapi.js"
   },
   "keywords": [
     "food-traceability",
