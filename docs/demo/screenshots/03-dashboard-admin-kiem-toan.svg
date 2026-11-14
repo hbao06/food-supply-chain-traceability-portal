@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 750" width="1200" height="750" style="background:#f4f7f5;font-family:system-ui,-apple-system,sans-serif">
+  <!-- Sidebar -->
+  <rect x="0" y="0" width="240" height="750" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+  <rect x="24" y="24" width="28" height="28" rx="6" fill="#1b5e3f"/>
+  <text x="30" y="43" fill="#ffffff" font-size="13" font-weight="900">FT</text>
+  <text x="60" y="43" fill="#111827" font-size="15" font-weight="800">Food Trace</text>
+
+  <text x="24" y="90" fill="#94a3b8" font-size="11" font-weight="700">KHÔNG GIAN LÀM VIỆC</text>
+  <text x="48" y="130" fill="#475569" font-size="13.5" font-weight="600">📊 Tổng quan</text>
+  <text x="48" y="175" fill="#475569" font-size="13.5" font-weight="600">📦 Quản lý lô</text>
+
+  <!-- Active Admin Tab -->
+  <rect x="16" y="195" width="208" height="40" rx="6" fill="#e8f5ee"/>
+  <text x="48" y="220" fill="#1b5e3f" font-size="13.5" font-weight="750">🛡️ Nhật ký kiểm toán</text>
+
+  <text x="48" y="265" fill="#475569" font-size="13.5" font-weight="600">🔍 Tra cứu công khai</text>
+
+  <!-- Topbar -->
+  <rect x="240" y="0" width="960" height="64" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="264" y="36" fill="#64748b" font-size="12" font-weight="700">QUẢN TRỊ</text>
+  <text x="325" y="36" fill="#94a3b8" font-size="12">/</text>
+  <text x="340" y="36" fill="#0f172a" font-size="13" font-weight="750">Nhật ký kiểm toán &amp; Chuỗi băm mật mã</text>
+
+  <!-- Header Banner -->
+  <text x="264" y="105" fill="#15803d" font-size="11" font-weight="800" letter-spacing="1">🛡️ QUẢN TRỊ HỆ THỐNG</text>
+  <text x="264" y="135" fill="#0f172a" font-size="24" font-weight="800">Nhật ký kiểm toán &amp; Xác thực chuỗi băm</text>
+  <text x="264" y="160" fill="#64748b" font-size="13.5">Hệ thống lưu vết bất biến (Append-only) mọi hoạt động thay đổi, liên kết chuỗi băm SHA-256 bảo đảm tính toàn vẹn.</text>
+
+  <!-- Verify Button -->
+  <rect x="940" y="110" width="230" height="44" rx="6" fill="#15803d"/>
+  <text x="1055" y="137" fill="#fff" font-size="13" font-weight="750" text-anchor="middle">✨ Xác thực chuỗi băm mật mã</text>
+
+  <!-- Verification Result Card -->
+  <rect x="264" y="180" width="910" height="90" rx="8" fill="#eef8f2" stroke="#22c55e" stroke-width="1.5"/>
+  <circle cx="295" cy="225" r="16" fill="#dcfce7"/>
+  <text x="288" y="231" fill="#16a34a" font-size="16">✓</text>
+  <rect x="325" y="195" width="160" height="22" rx="4" fill="#16a34a"/>
+  <text x="335" y="210" fill="#fff" font-size="10.5" font-weight="800">CHUỖI BĂM HỢP LỆ 100%</text>
+  <text x="500" y="210" fill="#64748b" font-size="12">Thuật toán: SHA-256 + HMAC-Chaining</text>
+  <text x="325" y="235" fill="#14532d" font-size="14.5" font-weight="750">Toàn vẹn dữ liệu được chứng minh bằng mật mã học</text>
+  <text x="325" y="255" fill="#166534" font-size="12.5">Toàn bộ chuỗi băm kiểm toán (Audit Logs) và sự kiện chuỗi cung ứng đều khớp tuyệt đối. Không phát hiện can thiệp trái phép.</text>
+
+  <!-- 4 KPI Cards -->
+  <g transform="translate(264, 285)">
+    <rect x="0" y="0" width="215" height="70" rx="6" fill="#ffffff" stroke="#e2e8f0"/>
+    <text x="14" y="22" fill="#64748b" font-size="10.5" font-weight="750">TỔNG BẢN GHI</text>
+    <text x="14" y="50" fill="#0f172a" font-size="22" font-weight="800">5</text>
+    <text x="45" y="48" fill="#15803d" font-size="11">lưu vết bất biến</text>
+
+    <rect x="230" y="0" width="215" height="70" rx="6" fill="#ffffff" stroke="#e2e8f0"/>
+    <text x="244" y="22" fill="#64748b" font-size="10.5" font-weight="750">TOÀN VẸN CHUỖI</text>
+    <text x="244" y="50" fill="#16a34a" font-size="22" font-weight="800">100%</text>
+    <text x="310" y="48" fill="#64748b" font-size="11">hash chain verified</text>
+
+    <rect x="460" y="0" width="215" height="70" rx="6" fill="#ffffff" stroke="#e2e8f0"/>
+    <text x="474" y="22" fill="#64748b" font-size="10.5" font-weight="750">THUẬT TOÁN BĂM</text>
+    <text x="474" y="50" fill="#0f172a" font-size="22" font-weight="800">SHA-256</text>
+    <text x="580" y="48" fill="#64748b" font-size="11">NIST FIPS 180-4</text>
+
+    <rect x="690" y="0" width="220" height="70" rx="6" fill="#ffffff" stroke="#e2e8f0"/>
+    <text x="704" y="22" fill="#64748b" font-size="10.5" font-weight="750">CẤP QUYỀN GIÁM SÁT</text>
+    <text x="704" y="50" fill="#1e40af" font-size="18" font-weight="800">ADMIN ONLY</text>
+    <text x="704" y="64" fill="#64748b" font-size="10">quyền audit:read</text>
+  </g>
+
+  <!-- Table -->
+  <rect x="264" y="375" width="910" height="350" rx="8" fill="#ffffff" stroke="#e2e8f0"/>
+  <rect x="264" y="375" width="910" height="40" fill="#f8fafc" rx="8"/>
+  <text x="284" y="400" fill="#475569" font-size="12" font-weight="700">ID</text>
+  <text x="340" y="400" fill="#475569" font-size="12" font-weight="700">Thời gian</text>
+  <text x="490" y="400" fill="#475569" font-size="12" font-weight="700">Hành động</text>
+  <text x="590" y="400" fill="#475569" font-size="12" font-weight="700">Đối tượng / Mã lô</text>
+  <text x="760" y="400" fill="#475569" font-size="12" font-weight="700">Người thực hiện</text>
+  <text x="930" y="400" fill="#475569" font-size="12" font-weight="700">Mã băm SHA-256 (Hash)</text>
+  <text x="1150" y="400" fill="#475569" font-size="12" font-weight="700" text-anchor="end">Toàn vẹn</text>
+
+  <!-- Row 1 -->
+  <line x1="264" y1="415" x2="1174" y2="415" stroke="#f1f5f9"/>
+  <text x="284" y="445" fill="#166534" font-size="12" font-weight="700">#501</text>
+  <text x="340" y="445" fill="#0f172a" font-size="12.5">04/11/2026 15:30</text>
+  <rect x="490" y="432" width="65" height="20" rx="3" fill="#dcfce7"/>
+  <text x="498" y="446" fill="#15803d" font-size="10.5" font-weight="700">CREATE</text>
+  <text x="590" y="445" fill="#1e40af" font-size="12" font-weight="650">BATCH-2026-0001</text>
+  <text x="760" y="445" fill="#334155" font-size="12.5">Nguyễn Văn An (Farmer)</text>
+  <rect x="930" y="432" width="130" height="20" rx="4" fill="#f1f5f9"/>
+  <text x="936" y="446" fill="#475569" font-size="11" font-family="monospace">a718b9c2...47e812d</text>
+  <text x="1150" y="445" fill="#16a34a" font-size="12" font-weight="750" text-anchor="end">✓ Hợp lệ</text>
+
+  <!-- Row 2 -->
+  <line x1="264" y1="470" x2="1174" y2="470" stroke="#f1f5f9"/>
+  <text x="284" y="500" fill="#166534" font-size="12" font-weight="700">#502</text>
+  <text x="340" y="500" fill="#0f172a" font-size="12.5">04/11/2026 15:30</text>
+  <rect x="490" y="487" width="55" height="20" rx="3" fill="#dbeafe"/>
+  <text x="500" y="501" fill="#1d4ed8" font-size="10.5" font-weight="700">EVENT</text>
+  <text x="590" y="500" fill="#1e40af" font-size="12" font-weight="650">BATCH-2026-0001</text>
+  <text x="760" y="500" fill="#334155" font-size="12.5">Nguyễn Văn An (Farmer)</text>
+  <rect x="930" y="487" width="130" height="20" rx="4" fill="#f1f5f9"/>
+  <text x="936" y="501" fill="#475569" font-size="11" font-family="monospace">c829e1fa...c281df74</text>
+  <text x="1150" y="500" fill="#16a34a" font-size="12" font-weight="750" text-anchor="end">✓ Hợp lệ</text>
+
+  <!-- Row 3 -->
+  <line x1="264" y1="525" x2="1174" y2="525" stroke="#f1f5f9"/>
+  <text x="284" y="555" fill="#166534" font-size="12" font-weight="700">#503</text>
+  <text x="340" y="555" fill="#0f172a" font-size="12.5">04/11/2026 16:00</text>
+  <rect x="490" y="542" width="55" height="20" rx="3" fill="#dbeafe"/>
+  <text x="500" y="556" fill="#1d4ed8" font-size="10.5" font-weight="700">EVENT</text>
+  <text x="590" y="555" fill="#1e40af" font-size="12" font-weight="650">BATCH-2026-0002</text>
+  <text x="760" y="555" fill="#334155" font-size="12.5">Trần Hữu Vận (Distributor)</text>
+  <rect x="930" y="542" width="130" height="20" rx="4" fill="#f1f5f9"/>
+  <text x="936" y="556" fill="#475569" font-size="11" font-family="monospace">e921d749...1928374a</text>
+  <text x="1150" y="555" fill="#16a34a" font-size="12" font-weight="750" text-anchor="end">✓ Hợp lệ</text>
+
+  <!-- Row 4 -->
+  <line x1="264" y1="580" x2="1174" y2="580" stroke="#f1f5f9"/>
+  <text x="284" y="610" fill="#166534" font-size="12" font-weight="700">#504</text>
+  <text x="340" y="610" fill="#0f172a" font-size="12.5">04/11/2026 17:15</text>
+  <rect x="490" y="597" width="55" height="20" rx="3" fill="#dbeafe"/>
+  <text x="500" y="611" fill="#1d4ed8" font-size="10.5" font-weight="700">EVENT</text>
+  <text x="590" y="610" fill="#1e40af" font-size="12" font-weight="650">BATCH-2026-0004</text>
+  <text x="760" y="610" fill="#334155" font-size="12.5">Trần Văn Chế Biến (Processor)</text>
+  <rect x="930" y="597" width="130" height="20" rx="4" fill="#f1f5f9"/>
+  <text x="936" y="611" fill="#475569" font-size="11" font-family="monospace">b192847a...019283</text>
+  <text x="1150" y="610" fill="#16a34a" font-size="12" font-weight="750" text-anchor="end">✓ Hợp lệ</text>
+
+  <!-- Row 5 -->
+  <line x1="264" y1="635" x2="1174" y2="635" stroke="#f1f5f9"/>
+  <text x="284" y="665" fill="#166534" font-size="12" font-weight="700">#505</text>
+  <text x="340" y="665" fill="#0f172a" font-size="12.5">04/11/2026 18:45</text>
+  <rect x="490" y="652" width="55" height="20" rx="3" fill="#dbeafe"/>
+  <text x="500" y="666" fill="#1d4ed8" font-size="10.5" font-weight="700">EVENT</text>
+  <text x="590" y="665" fill="#1e40af" font-size="12" font-weight="650">BATCH-2026-0006</text>
+  <text x="760" y="665" fill="#334155" font-size="12.5">Đỗ Quốc Thắng (Distributor)</text>
+  <rect x="930" y="652" width="130" height="20" rx="4" fill="#f1f5f9"/>
+  <text x="936" y="666" fill="#475569" font-size="11" font-family="monospace">f029384b...bca019</text>
+  <text x="1150" y="665" fill="#16a34a" font-size="12" font-weight="750" text-anchor="end">✓ Hợp lệ</text>
+</svg>

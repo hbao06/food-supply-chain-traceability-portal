@@ -1,4 +1,4 @@
-const baseUrl = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/$/, '')
+const baseUrl = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL || '/api').replace(/\/$/, '')
 
 export class ApiError extends Error {
   constructor(status, code, details, retryAfter) {
@@ -69,6 +69,21 @@ export const api = {
   getTimeline: (token, batchId) => request(`/batches/${batchId}/timeline`, { token }),
   traceByToken: (qrToken) => request(`/trace/${encodeURIComponent(qrToken)}`),
   traceByCode: (batchCode) => request(`/trace/code/${encodeURIComponent(batchCode)}`),
+  listAuditLogs: (token, { batchId, actorId, entityType, action, page = 1, limit = 20 } = {}) => {
+    const params = new URLSearchParams()
+    if (batchId) params.set('batchId', String(batchId))
+    if (actorId) params.set('actorId', String(actorId))
+    if (entityType) params.set('entityType', entityType)
+    if (action) params.set('action', action)
+    if (page) params.set('page', String(page))
+    if (limit) params.set('limit', String(limit))
+    const query = params.toString()
+    return request(`/audit-logs${query ? `?${query}` : ''}`, { token })
+  },
+  verifyAuditChain: (token, batchId) => {
+    const query = batchId ? `?batchId=${encodeURIComponent(batchId)}` : ''
+    return request(`/audit-logs/verify${query}`, { token })
+  },
 }
 
 const messages = {
@@ -89,6 +104,10 @@ const messages = {
   NOT_FOUND: 'Không tìm thấy lô hàng hoặc bạn không có quyền truy cập.',
   FORBIDDEN: 'Bạn không có quyền thực hiện thao tác này đối với vai trò hiện tại.',
   TOO_MANY_REQUESTS: 'Bạn thao tác quá nhanh, vui lòng thử lại sau ít phút.',
+  HASH_MISMATCH: 'Cảnh báo: Phát hiện sai lệch chuỗi băm dữ liệu kiểm toán.',
+  HASH_CHAIN_BROKEN: 'Cảnh báo tính toàn vẹn: Chuỗi băm lịch sử sự kiện bị gián đoạn.',
+  INVALID_CODE: 'Mã lô hàng không đúng định dạng.',
+  UNAUTHORIZED: 'Phiên làm việc không hợp lệ hoặc đã hết hạn.',
 }
 
 export function errorMessage(error) {

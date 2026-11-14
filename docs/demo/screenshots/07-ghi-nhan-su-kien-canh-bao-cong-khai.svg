@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 750" width="1200" height="750" style="background:rgba(15,23,42,0.6);font-family:system-ui,-apple-system,sans-serif">
+  <!-- Modal Backdrop is the SVG background -->
+
+  <!-- Modal Box -->
+  <rect x="250" y="40" width="700" height="670" rx="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="drop-shadow(0 20px 30px rgba(0,0,0,0.3))"/>
+
+  <!-- Modal Header -->
+  <rect x="250" y="40" width="700" height="60" rx="12" fill="#f8fafc"/>
+  <rect x="275" y="55" width="28" height="28" rx="6" fill="#1b5e3f"/>
+  <text x="281" y="74" fill="#ffffff" font-size="14" font-weight="900">✚</text>
+  <text x="315" y="74" fill="#0f172a" font-size="17" font-weight="800">Ghi nhận sự kiện chuỗi cung ứng</text>
+  <text x="920" y="74" fill="#94a3b8" font-size="18" font-weight="700">✕</text>
+
+  <!-- Step Selection: Locked vs Recommended Next -->
+  <text x="275" y="130" fill="#334155" font-size="13" font-weight="750">1. Chọn giai đoạn chuỗi cung ứng (Thực hiện tuần tự):</text>
+
+  <!-- Stage Buttons Row -->
+  <g transform="translate(275, 142)">
+    <!-- Stage 1 (Passed) -->
+    <rect x="0" y="0" width="120" height="48" rx="6" fill="#f1f5f9" stroke="#e2e8f0"/>
+    <text x="12" y="24" fill="#64748b" font-size="11" font-weight="700">1. Khởi tạo</text>
+    <text x="12" y="38" fill="#94a3b8" font-size="9.5">Đã hoàn thành</text>
+
+    <!-- Stage 2 (Next - Selected) -->
+    <rect x="130" y="0" width="130" height="48" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+    <text x="142" y="24" fill="#1d4ed8" font-size="11" font-weight="800">2. Vận chuyển</text>
+    <rect x="142" y="28" width="65" height="15" rx="3" fill="#2563eb"/>
+    <text x="146" y="39" fill="#ffffff" font-size="9" font-weight="800">BƯỚC TIẾP</text>
+
+    <!-- Stage 3 (Locked) -->
+    <rect x="270" y="0" width="115" height="48" rx="6" fill="#f8fafc" stroke="#e2e8f0" opacity="0.6"/>
+    <text x="282" y="24" fill="#94a3b8" font-size="11" font-weight="600">3. Tiếp nhận</text>
+    <text x="282" y="38" fill="#cbd5e1" font-size="9.5">🔒 Đã khóa</text>
+
+    <!-- Stage 4 (Locked) -->
+    <rect x="395" y="0" width="115" height="48" rx="6" fill="#f8fafc" stroke="#e2e8f0" opacity="0.6"/>
+    <text x="407" y="24" fill="#94a3b8" font-size="11" font-weight="600">4. Chế biến</text>
+    <text x="407" y="38" fill="#cbd5e1" font-size="9.5">🔒 Đã khóa</text>
+
+    <!-- Stage 5 (Locked) -->
+    <rect x="520" y="0" width="125" height="48" rx="6" fill="#f8fafc" stroke="#e2e8f0" opacity="0.6"/>
+    <text x="532" y="24" fill="#94a3b8" font-size="11" font-weight="600">5. Đóng gói</text>
+    <text x="532" y="38" fill="#cbd5e1" font-size="9.5">🔒 Đã khóa</text>
+  </g>
+
+  <!-- 2 Columns: Org and Time -->
+  <text x="275" y="225" fill="#334155" font-size="13" font-weight="700">2. Đơn vị phụ trách thực hiện *</text>
+  <rect x="275" y="235" width="310" height="42" rx="6" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="290" y="261" fill="#0f172a" font-size="13.5">Vận tải Lạnh Miền Nam</text>
+
+  <text x="610" y="225" fill="#334155" font-size="13" font-weight="700">3. Thời gian diễn ra *</text>
+  <rect x="610" y="235" width="315" height="42" rx="6" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="625" y="261" fill="#0f172a" font-size="13.5">24/11/2026 14:30 (Hiện tại)</text>
+
+  <!-- Location Field -->
+  <text x="275" y="310" fill="#334155" font-size="13" font-weight="700">4. Địa điểm cụ thể *</text>
+  <rect x="275" y="320" width="650" height="42" rx="6" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="290" y="346" fill="#0f172a" font-size="13.5">Trạm Logistics Cầu Đất, TP. Đà Lạt, Lâm Đồng</text>
+
+  <!-- SECURITY CHECKLIST P-05 NOTICE (Under Location) -->
+  <rect x="275" y="370" width="650" height="30" rx="4" fill="#f0f7f3" stroke="#86efac"/>
+  <rect x="282" y="375" width="65" height="20" rx="3" fill="#15803d"/>
+  <text x="288" y="389" fill="#ffffff" font-size="9.5" font-weight="800">CÔNG KHAI</text>
+  <text x="355" y="389" fill="#14532d" font-size="11.5" font-weight="600">Địa điểm này sẽ hiển thị trên Cổng tra cứu nguồn gốc cho người tiêu dùng.</text>
+
+  <!-- Description Field -->
+  <text x="275" y="430" fill="#334155" font-size="13" font-weight="700">5. Mô tả chi tiết &amp; Ghi chú nghiệp vụ (Tùy chọn)</text>
+  <rect x="275" y="440" width="650" height="75" rx="6" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="290" y="465" fill="#0f172a" font-size="13">Xe tải thùng lạnh chuyên dụng 49C-129.55 duy trì nhiệt độ 4-6°C.</text>
+  <text x="290" y="485" fill="#0f172a" font-size="13">Biên bản kiểm định vệ sinh ATTP số 248/KCS-2026 đạt chuẩn.</text>
+
+  <!-- SECURITY CHECKLIST P-05 NOTICE (Under Description) -->
+  <rect x="275" y="523" width="650" height="30" rx="4" fill="#f0f7f3" stroke="#86efac"/>
+  <rect x="282" y="528" width="65" height="20" rx="3" fill="#15803d"/>
+  <text x="288" y="542" fill="#ffffff" font-size="9.5" font-weight="800">CÔNG KHAI</text>
+  <text x="355" y="542" fill="#14532d" font-size="11.5" font-weight="600">Mô tả và thông số kiểm định sẽ hiển thị công khai. Vui lòng không ghi bí mật nội bộ.</text>
+
+  <!-- Modal Footer Actions -->
+  <line x1="250" y1="580" x2="950" y2="580" stroke="#e2e8f0"/>
+  <rect x="680" y="600" width="100" height="42" rx="6" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="730" y="626" fill="#475569" font-size="13" font-weight="650" text-anchor="middle">Hủy bỏ</text>
+
+  <rect x="795" y="600" width="210" height="42" rx="6" fill="#16a34a"/>
+  <text x="900" y="626" fill="#ffffff" font-size="13" font-weight="750" text-anchor="middle">✓ Xác nhận ghi nhận sự kiện</text>
+</svg>

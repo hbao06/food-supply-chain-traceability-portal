@@ -5,6 +5,7 @@ import { BatchList } from './batches/BatchList.jsx'
 import { BatchDetail } from './batches/BatchDetail.jsx'
 import { BatchForm } from './batches/BatchForm.jsx'
 import { BatchStatusBadge } from './batches/BatchStatusBadge.jsx'
+import { AuditLogView } from './admin/AuditLogView.jsx'
 import { PublicTraceSearch } from './trace/PublicTraceSearch.jsx'
 import { PublicTraceResult } from './trace/PublicTraceResult.jsx'
 import { parseTraceRoute } from './trace/traceUtils.js'
@@ -58,6 +59,7 @@ function parseRoute(path) {
   const detailMatch = cleanPath.match(/^\/batches\/(\d+)$/)
   if (detailMatch) return { name: 'batch-detail', batchId: Number(detailMatch[1]) }
   if (cleanPath === '/batches') return { name: 'batches' }
+  if (cleanPath === '/audit-logs') return { name: 'audit-logs' }
   if (cleanPath === '/profile') return { name: 'profile' }
   if (cleanPath === '/dashboard') return { name: 'dashboard' }
   if (cleanPath === '/register') return { name: 'register' }
@@ -450,14 +452,45 @@ function Workspace({
     }
   }
 
+  const [showNotifications, setShowNotifications] = useState(false)
+  const [notifications, setNotifications] = useState([
+    {
+      id: 1,
+      title: 'Lô BATCH-2026-0006 hoàn tất chuỗi',
+      desc: 'Đã hoàn tất khâu Xuất kho (SHIPPED) phân phối ra chuỗi siêu thị.',
+      time: '10 phút trước',
+      unread: true,
+    },
+    {
+      id: 2,
+      title: 'Kiểm toán mật mã tự động',
+      desc: 'Chuỗi băm SHA-256 toàn vẹn 100%, không phát hiện can thiệp CSDL.',
+      time: '1 giờ trước',
+      unread: true,
+    },
+    {
+      id: 3,
+      title: 'Lô BATCH-2026-0002 đang vận chuyển',
+      desc: 'Xe thùng kín 65C-142.88 đang di chuyển từ Hậu Giang đến kho tiếp nhận.',
+      time: '3 giờ trước',
+      unread: false,
+    },
+  ])
+  const unreadCount = notifications.filter((n) => n.unread).length
+
+  function markAllNotificationsRead() {
+    setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })))
+  }
+
   // Topbar labels helper
   const topbarMeta = {
-    dashboard: { section: 'TRANG CHỦ', title: 'Tổng quan không gian làm việc' },
-    batches: { section: 'QUẢN LÝ LÔ', title: 'Danh sách lô hàng thực phẩm' },
-    'batch-new': { section: 'QUẢN LÝ LÔ', title: 'Khởi tạo lô mới' },
-    'batch-detail': { section: 'QUẢN LÝ LÔ', title: `Chi tiết lô #${routeInfo.batchId || ''}` },
-    'batch-edit': { section: 'QUẢN LÝ LÔ', title: `Hiệu chỉnh lô #${routeInfo.batchId || ''}` },
-    profile: { section: 'TÀI KHOẢN', title: 'Hồ sơ cá nhân' },
+    dashboard: { section: lang === 'EN' ? 'HOME' : 'TRANG CHỦ', title: lang === 'EN' ? 'Workspace Overview' : 'Tổng quan không gian làm việc' },
+    batches: { section: lang === 'EN' ? 'BATCHES' : 'QUẢN LÝ LÔ', title: lang === 'EN' ? 'Food Supply Batches' : 'Danh sách lô hàng thực phẩm' },
+    'batch-new': { section: lang === 'EN' ? 'BATCHES' : 'QUẢN LÝ LÔ', title: lang === 'EN' ? 'Create New Batch' : 'Khởi tạo lô mới' },
+    'batch-detail': { section: lang === 'EN' ? 'BATCHES' : 'QUẢN LÝ LÔ', title: lang === 'EN' ? `Batch Details #${routeInfo.batchId || ''}` : `Chi tiết lô #${routeInfo.batchId || ''}` },
+    'batch-edit': { section: lang === 'EN' ? 'BATCHES' : 'QUẢN LÝ LÔ', title: lang === 'EN' ? `Edit Batch #${routeInfo.batchId || ''}` : `Hiệu chỉnh lô #${routeInfo.batchId || ''}` },
+    'audit-logs': { section: lang === 'EN' ? 'ADMINISTRATION' : 'QUẢN TRỊ', title: lang === 'EN' ? 'Audit Log & Hash Verification' : 'Nhật ký kiểm toán & Chuỗi băm' },
+    profile: { section: lang === 'EN' ? 'ACCOUNT' : 'TÀI KHOẢN', title: lang === 'EN' ? 'User Profile' : 'Hồ sơ cá nhân' },
   }[routeInfo.name] || { section: 'HỆ THỐNG', title: 'Truy xuất nguồn gốc' }
 
   const isBatchesActive = route.startsWith('/batches')
@@ -473,27 +506,36 @@ function Workspace({
             className={`nav-link ${routeInfo.name === 'dashboard' ? 'active' : ''}`}
             onClick={() => navigate('/dashboard')}
           >
-            <IconDashboard /> <span>Tổng quan</span>
+            <IconDashboard /> <span>{lang === 'EN' ? 'Overview' : 'Tổng quan'}</span>
           </button>
           <button
             type="button"
             className={`nav-link ${isBatchesActive ? 'active' : ''}`}
             onClick={() => navigate('/batches')}
           >
-            <IconBatches /> <span>Quản lý lô</span>
+            <IconBatches /> <span>{lang === 'EN' ? 'Batches' : 'Quản lý lô'}</span>
           </button>
+          {profile?.role === 'ADMIN' && (
+            <button
+              type="button"
+              className={`nav-link ${routeInfo.name === 'audit-logs' ? 'active' : ''}`}
+              onClick={() => navigate('/audit-logs')}
+            >
+              <IconShield /> <span>{lang === 'EN' ? 'Audit Logs' : 'Nhật ký kiểm toán'}</span>
+            </button>
+          )}
           <button
             type="button"
             className="nav-link"
             onClick={() => navigate(preview ? '/trace?preview=1' : '/trace')}
           >
-            <IconSearch /> <span>Tra cứu công khai</span>
+            <IconSearch /> <span>{lang === 'EN' ? 'Public Trace' : 'Tra cứu công khai'}</span>
           </button>
         </nav>
 
         <div className="sidebar-bottom">
           <button className="logout-button with-icon" type="button" onClick={() => onLogout()}>
-            <IconLogout /> <span>Đăng xuất</span>
+            <IconLogout /> <span>{lang === 'EN' ? 'Sign out' : 'Đăng xuất'}</span>
           </button>
         </div>
       </aside>
@@ -508,16 +550,55 @@ function Workspace({
 
           <div className="topbar-right">
             {/* 1. Chuông thông báo */}
-            <button
-              type="button"
-              className="topbar-tool-btn"
-              title="Thông báo hệ thống"
-              aria-label="Thông báo"
-              onClick={() => alert('Không có thông báo mới')}
-            >
-              <IconBell />
-              <span className="tool-badge-dot" />
-            </button>
+            <div className="notification-wrapper">
+              <button
+                type="button"
+                className={`topbar-tool-btn ${showNotifications ? 'active' : ''}`}
+                title="Thông báo hệ thống"
+                aria-label="Thông báo"
+                onClick={() => setShowNotifications((prev) => !prev)}
+              >
+                <IconBell />
+                {unreadCount > 0 && <span className="tool-badge-dot" />}
+              </button>
+
+              {showNotifications && (
+                <div className="notifications-dropdown" role="dialog" aria-label="Thông báo hệ thống">
+                  <div className="notif-header">
+                    <strong>Thông báo hệ thống ({unreadCount})</strong>
+                    {unreadCount > 0 && (
+                      <button
+                        type="button"
+                        className="notif-read-all-btn"
+                        onClick={markAllNotificationsRead}
+                      >
+                        Đã đọc tất cả
+                      </button>
+                    )}
+                  </div>
+                  <div className="notif-list">
+                    {notifications.map((n) => (
+                      <div key={n.id} className={`notif-item ${n.unread ? 'unread' : ''}`}>
+                        <div className="notif-title-row">
+                          <strong className="notif-title">{n.title}</strong>
+                          <span className="notif-time">{n.time}</span>
+                        </div>
+                        <p className="notif-desc">{n.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="notif-footer">
+                    <button
+                      type="button"
+                      className="text-button"
+                      onClick={() => setShowNotifications(false)}
+                    >
+                      Đóng
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* 2. Tùy chọn ngôn ngữ VN / EN */}
             <button
@@ -550,9 +631,18 @@ function Workspace({
 
         <header className="mobile-header">
           <Brand />
-          <button className="text-button" type="button" onClick={() => onLogout()}>
-            Đăng xuất
-          </button>
+          <div className="mobile-header-actions">
+            <button
+              type="button"
+              className="topbar-tool-btn sm"
+              onClick={() => setLang((curr) => (curr === 'VN' ? 'EN' : 'VN'))}
+            >
+              <span className="lang-label">{lang}</span>
+            </button>
+            <button className="text-button" type="button" onClick={() => onLogout()}>
+              Đăng xuất
+            </button>
+          </div>
         </header>
 
         <nav className="mobile-nav" aria-label="Điều hướng di động">
@@ -570,6 +660,15 @@ function Workspace({
           >
             Lô hàng
           </button>
+          {profile?.role === 'ADMIN' && (
+            <button
+              type="button"
+              className={routeInfo.name === 'audit-logs' ? 'active' : ''}
+              onClick={() => navigate('/audit-logs')}
+            >
+              Kiểm toán
+            </button>
+          )}
           <button
             type="button"
             className={routeInfo.name === 'profile' ? 'active' : ''}
@@ -588,7 +687,7 @@ function Workspace({
         <div className="workspace-content">
           {preview && (
             <div className="preview-banner" role="status">
-              <strong><IconSparkles /> Bản xem trước giao diện Quản lý lô & Timeline (W6-Hoài Bảo)</strong> — Dữ liệu minh họa sẵn sàng để kiểm tra quy trình ghi nhận sự kiện chuỗi cung ứng, hiển thị timeline (đơn vị, địa điểm, thời gian, trạng thái) và cập nhật lô.
+              <strong><IconSparkles /> Bản hoàn thiện giao diện Quản lý chuỗi cung ứng & Kiểm toán (W8-Hoài Bảo)</strong> — Đầy đủ giao diện theo vai trò (Farmer, Processor, Distributor, Admin), responsive đa thiết bị, nhật ký kiểm toán và xác thực chuỗi băm mật mã.
             </div>
           )}
 
@@ -658,6 +757,12 @@ function Workspace({
               onOpenBatch={(id) => navigate(`/batches/${id}`)}
               onCreateBatch={() => navigate('/batches/new')}
               onEditBatch={(b) => navigate(`/batches/${b.batchId}/edit`)}
+            />
+          ) : routeInfo.name === 'audit-logs' ? (
+            <AuditLogView
+              token={token}
+              preview={preview}
+              onOpenBatch={(id) => navigate(`/batches/${id}`)}
             />
           ) : routeInfo.name === 'profile' ? (
             <>
@@ -770,14 +875,144 @@ function Workspace({
                 </div>
               </div>
 
+              {/* Role-Specific Metric KPIs */}
+              <div className="dashboard-kpi-grid">
+                {profile.role === 'FARMER' && (
+                  <>
+                    <div className="kpi-card-metric">
+                      <span className="metric-tag">NÔNG TRẠI</span>
+                      <strong className="metric-num">6</strong>
+                      <span className="metric-title">Tổng số lô nông sản</span>
+                      <span className="metric-desc">Được canh tác theo tiêu chuẩn sạch</span>
+                    </div>
+                    <div className="kpi-card-metric highlight-orange">
+                      <span className="metric-tag">SẴN SÀNG</span>
+                      <strong className="metric-num">1</strong>
+                      <span className="metric-title">Chờ thu gom / Vận chuyển</span>
+                      <span className="metric-desc">Trạng thái mới tạo (CREATED)</span>
+                    </div>
+                    <div className="kpi-card-metric highlight-green">
+                      <span className="metric-tag">THÀNH PHẨM</span>
+                      <strong className="metric-num">1</strong>
+                      <span className="metric-title">Đã xuất bán ra thị trường</span>
+                      <span className="metric-desc">Đã giao chuỗi siêu thị (SHIPPED)</span>
+                    </div>
+                    <div className="kpi-card-metric highlight-teal">
+                      <span className="metric-tag">CHỨNG NHẬN</span>
+                      <strong className="metric-num">100%</strong>
+                      <span className="metric-title">Chứng nhận canh tác VietGAP</span>
+                      <span className="metric-desc">Có mã QR truy xuất từng lô</span>
+                    </div>
+                  </>
+                )}
+                {profile.role === 'PROCESSOR' && (
+                  <>
+                    <div className="kpi-card-metric highlight-blue">
+                      <span className="metric-tag">ĐẾN NƠI</span>
+                      <strong className="metric-num">1</strong>
+                      <span className="metric-title">Chờ tiếp nhận nguyên liệu</span>
+                      <span className="metric-desc">Đang trên đường chuyển đến (TRANSPORTED)</span>
+                    </div>
+                    <div className="kpi-card-metric highlight-orange">
+                      <span className="metric-tag">GIA CÔNG</span>
+                      <strong className="metric-num">2</strong>
+                      <span className="metric-title">Đang sơ chế & Chế biến</span>
+                      <span className="metric-desc">Quy trình rang sấy, đóng gói vô trùng</span>
+                    </div>
+                    <div className="kpi-card-metric highlight-purple">
+                      <span className="metric-tag">ĐÓNG GÓI</span>
+                      <strong className="metric-num">1</strong>
+                      <span className="metric-title">Hoàn tất dán tem mã QR</span>
+                      <span className="metric-desc">Sẵn sàng xuất kho sang nhà bán lẻ</span>
+                    </div>
+                    <div className="kpi-card-metric highlight-teal">
+                      <span className="metric-tag">TIÊU CHUẨN</span>
+                      <strong className="metric-num">ISO 22K</strong>
+                      <span className="metric-title">Chuẩn HACCP & ISO 22000</span>
+                      <span className="metric-desc">100% đạt kiểm nghiệm an toàn</span>
+                    </div>
+                  </>
+                )}
+                {profile.role === 'DISTRIBUTOR' && (
+                  <>
+                    <div className="kpi-card-metric highlight-blue">
+                      <span className="metric-tag">LOGISTICS</span>
+                      <strong className="metric-num">1</strong>
+                      <span className="metric-title">Lô đang trên đường vận chuyển</span>
+                      <span className="metric-desc">Container lạnh kiểm soát hành trình</span>
+                    </div>
+                    <div className="kpi-card-metric highlight-green">
+                      <span className="metric-tag">ĐÃ GIAO</span>
+                      <strong className="metric-num">1</strong>
+                      <span className="metric-title">Đã giao siêu thị / Điểm bán</span>
+                      <span className="metric-desc">Đã bàn giao đại lý (SHIPPED)</span>
+                    </div>
+                    <div className="kpi-card-metric highlight-teal">
+                      <span className="metric-tag">NHIỆT ĐỘ</span>
+                      <strong className="metric-num">4.8°C</strong>
+                      <span className="metric-title">Nhiệt độ thùng lạnh trung bình</span>
+                      <span className="metric-desc">Dải nhiệt tối ưu 2°C - 6°C</span>
+                    </div>
+                    <div className="kpi-card-metric highlight-purple">
+                      <span className="metric-tag">ĐÚNG HẠN</span>
+                      <strong className="metric-num">99.4%</strong>
+                      <span className="metric-title">Tỷ lệ giao hàng đúng hẹn</span>
+                      <span className="metric-desc">Thời gian vận chuyển cam kết</span>
+                    </div>
+                  </>
+                )}
+                {profile.role === 'ADMIN' && (
+                  <>
+                    <div className="kpi-card-metric">
+                      <span className="metric-tag">TOÀN MẠNG</span>
+                      <strong className="metric-num">6</strong>
+                      <span className="metric-title">Tổng số lô nông sản hệ thống</span>
+                      <span className="metric-desc">Theo dõi toàn diện các đơn vị</span>
+                    </div>
+                    <div className="kpi-card-metric highlight-blue">
+                      <span className="metric-tag">SỰ KIỆN</span>
+                      <strong className="metric-num">21</strong>
+                      <span className="metric-title">Sự kiện chuỗi cung ứng</span>
+                      <span className="metric-desc">Ghi nhận mốc luân chuyển hàng</span>
+                    </div>
+                    <div className="kpi-card-metric highlight-green">
+                      <span className="metric-tag">BẢO MẬT</span>
+                      <strong className="metric-num">100%</strong>
+                      <span className="metric-title">Toàn vẹn chuỗi băm SHA-256</span>
+                      <span className="metric-desc">Hash-chained không thể sửa đổi</span>
+                    </div>
+                    <div className="kpi-card-metric highlight-teal">
+                      <span className="metric-tag">KIỂM TOÁN</span>
+                      <strong className="metric-num">5</strong>
+                      <span className="metric-title">Bản ghi nhật ký kiểm toán</span>
+                      <span className="metric-desc">Lưu vết mọi thao tác thay đổi</span>
+                    </div>
+                  </>
+                )}
+              </div>
+
               {/* Fast Actions Banner */}
               <div className="overview-band" style={{ marginTop: 24 }}>
                 <div>
-                  <span className="eyebrow">QUẢN LÝ LÔ HÀNG</span>
-                  <h2>Trung tâm điều hành lô nông sản</h2>
-                  <p>Tra cứu danh sách lô, kiểm tra mã QR truy xuất và theo dõi tiến trình luân chuyển.</p>
+                  <span className="eyebrow">
+                    {profile.role === 'ADMIN' ? 'GIÁM SÁT HỆ THỐNG' : 'QUẢN LÝ LÔ HÀNG'}
+                  </span>
+                  <h2>
+                    {profile.role === 'ADMIN'
+                      ? 'Trung tâm giám sát tính toàn vẹn chuỗi cung ứng'
+                      : profile.role === 'FARMER'
+                      ? 'Trung tâm điều hành lô nông sản nông trại'
+                      : profile.role === 'PROCESSOR'
+                      ? 'Điều hành chế biến & Kiểm soát chất lượng'
+                      : 'Điều hành vận chuyển & Phân phối nông sản'}
+                  </h2>
+                  <p>
+                    {profile.role === 'ADMIN'
+                      ? 'Kiểm toán hệ thống, kiểm tra tính toàn vẹn chuỗi băm mật mã và quản lý tài nguyên.'
+                      : 'Tra cứu danh sách lô, kiểm tra mã QR truy xuất và theo dõi tiến trình luân chuyển.'}
+                  </p>
                 </div>
-                <div style={{ display: 'flex', gap: 10 }}>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                   {(profile.role === 'FARMER' || preview) && (
                     <button
                       className="button primary"
@@ -788,12 +1023,29 @@ function Workspace({
                       <IconPlus /> Khởi tạo lô mới
                     </button>
                   )}
+                  {profile.role === 'ADMIN' && (
+                    <button
+                      className="button primary"
+                      type="button"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                      onClick={() => navigate('/audit-logs')}
+                    >
+                      <IconShield /> Nhật ký kiểm toán & Chuỗi băm
+                    </button>
+                  )}
                   <button
                     className="button secondary"
                     type="button"
                     onClick={() => navigate('/batches')}
                   >
                     Xem tất cả lô →
+                  </button>
+                  <button
+                    className="button secondary with-icon"
+                    type="button"
+                    onClick={() => navigate(preview ? '/trace?preview=1' : '/trace')}
+                  >
+                    <IconSearch /> Tra cứu QR công khai
                   </button>
                 </div>
               </div>

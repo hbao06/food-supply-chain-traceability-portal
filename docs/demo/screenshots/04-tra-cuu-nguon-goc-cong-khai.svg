@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 750" width="1200" height="750" style="background:#f4f7f5;font-family:system-ui,-apple-system,sans-serif">
+  <!-- Public Header -->
+  <rect x="0" y="0" width="1200" height="64" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+  <rect x="40" y="18" width="28" height="28" rx="6" fill="#1b5e3f"/>
+  <text x="46" y="37" fill="#ffffff" font-size="13" font-weight="900">FT</text>
+  <text x="76" y="37" fill="#111827" font-size="15" font-weight="800">Food Trace</text>
+  <rect x="165" y="21" width="145" height="22" rx="4" fill="#e8f5ee"/>
+  <text x="175" y="36" fill="#166534" font-size="11" font-weight="750">CỔNG NGUỒN GỐC NÔNG SẢN</text>
+
+  <rect x="1040" y="16" width="120" height="32" rx="6" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="1100" y="36" fill="#334155" font-size="12.5" font-weight="650" text-anchor="middle">Đăng nhập</text>
+
+  <!-- Hero Content -->
+  <text x="600" y="130" fill="#15803d" font-size="11.5" font-weight="800" letter-spacing="1.5" text-anchor="middle">TRUY XUẤT MINH BẠCH · AN TOÀN VỆ SINH THỰC PHẨM</text>
+  <text x="600" y="170" fill="#0f172a" font-size="32" font-weight="800" text-anchor="middle">Kiểm tra nguồn gốc nông sản của bạn</text>
+  <text x="600" y="200" fill="#64748b" font-size="15" text-anchor="middle">Nhập mã định danh lô hàng hoặc quét mã QR in trên bao bì tem nhãn để tra cứu đầy đủ hành trình.</text>
+
+  <!-- Search Card -->
+  <rect x="250" y="235" width="700" height="380" rx="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="drop-shadow(0 10px 25px rgba(0,0,0,0.05))"/>
+
+  <!-- Tabs: Code vs QR -->
+  <rect x="280" y="260" width="640" height="42" rx="6" fill="#f1f5f9"/>
+  <rect x="282" y="262" width="318" height="38" rx="5" fill="#ffffff"/>
+  <text x="441" y="286" fill="#15803d" font-size="13" font-weight="750" text-anchor="middle">⌨️ Tra cứu bằng mã lô</text>
+
+  <text x="760" y="286" fill="#64748b" font-size="13" font-weight="650" text-anchor="middle">📷 Quét mã QR camera</text>
+
+  <!-- Input Field -->
+  <text x="280" y="335" fill="#334155" font-size="13.5" font-weight="700">Mã lô hàng (In trên tem nhãn nông sản)</text>
+  <rect x="280" y="348" width="460" height="50" rx="6" fill="#ffffff" stroke="#15803d" stroke-width="2"/>
+  <text x="295" y="379" fill="#0f172a" font-size="16" font-weight="650">BATCH-2026-0006</text>
+
+  <!-- Submit Button -->
+  <rect x="750" y="348" width="170" height="50" rx="6" fill="#15803d"/>
+  <text x="835" y="378" fill="#ffffff" font-size="14.5" font-weight="750" text-anchor="middle">🔍 Tra cứu ngay</text>
+
+  <!-- Suggestions / Seed Samples -->
+  <text x="280" y="430" fill="#64748b" font-size="12.5" font-weight="700">Gợi ý mã thử nghiệm hoàn chỉnh 6 bước chuỗi cung ứng:</text>
+
+  <rect x="280" y="445" width="190" height="32" rx="16" fill="#e8f5ee" stroke="#bbf7d0"/>
+  <text x="375" y="465" fill="#166534" font-size="12" font-weight="700" text-anchor="middle">BATCH-2026-0006 (Bưởi Da Xanh)</text>
+
+  <rect x="480" y="445" width="180" height="32" rx="16" fill="#f1f5f9"/>
+  <text x="570" y="465" fill="#475569" font-size="12" font-weight="650" text-anchor="middle">BATCH-2026-0001 (Cà phê)</text>
+
+  <rect x="670" y="445" width="170" height="32" rx="16" fill="#f1f5f9"/>
+  <text x="755" y="465" fill="#475569" font-size="12" font-weight="650" text-anchor="middle">BATCH-2026-0002 (Gạo ST25)</text>
+
+  <!-- Trust Badges -->
+  <rect x="280" y="505" width="640" height="85" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+  <circle cx="310" cy="547" r="14" fill="#dcfce7"/>
+  <text x="304" y="552" fill="#16a34a" font-size="14">🛡️</text>
+  <text x="335" y="540" fill="#0f172a" font-size="13" font-weight="750">Chống hàng giả &amp; Khẳng định thương hiệu</text>
+  <text x="335" y="558" fill="#64748b" font-size="12">Mã QR được ký mật mã HMAC và chuỗi băm bất biến, loại bỏ hoàn toàn nguy cơ tem nhãn giả mạo.</text>
+
+  <!-- Footer -->
+  <text x="600" y="660" fill="#94a3b8" font-size="12.5" text-anchor="middle">Hệ thống áp dụng chuẩn mã hóa GS1 và Chuỗi băm bất biến (Hash-Chain Ledger)</text>
+</svg>
