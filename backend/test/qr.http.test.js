@@ -1,8 +1,11 @@
 'use strict';
 
-// Test HTTP/API cho QR và truy xuất công khai (W7-TV4) — theo docs/test/test-plan.md:
-//   TC-QR-01, 02, 03, 09 chạy trên main hiện tại;
-//   TC-QR-06, 07, 10 kiểm định dạng ảnh thuộc TV4; TC-QR-04 và 11–17 chờ PR #59 (W7-TV2) merge;
+// Test HTTP/API cho QR và truy xuất công khai (W7-TV4; hoàn thiện W8-TV4) — theo docs/test/test-plan.md:
+//   TC-QR-01, 02, 03, 09 chạy trên main từ tuần 7;
+//   TC-QR-06, 07, 10 kiểm định dạng ảnh thuộc TV4;
+//   TC-QR-04 và 11–17 chạy thật từ tuần 8, sau khi PR #59 (W7-TV2) merge endpoint /trace:
+//   harness nối module trace (service + controller thật) với repo giả cùng dữ liệu trong bộ nhớ,
+//   kèm rate limiter cấu hình như bản thật (60 yêu cầu/phút/IP, đặt lại sau mỗi ca kiểm thử).
 //   TC-QR-05 và TC-QR-08 đã được kiểm thử trong batches.http.test.js.
 // Chạy bằng node --test với Express và CSDL giả trong bộ nhớ, không cần PostgreSQL.
 
@@ -17,6 +20,9 @@ const { createTokenService } = require('../src/modules/auth/auth.tokens');
 const { createQrTokenService } = require('../src/common/qrToken');
 const { createBatchService } = require('../src/modules/batches/batches.service');
 const { createBatchController } = require('../src/modules/batches/batches.controller');
+const { createTraceService } = require('../src/modules/trace/trace.service');
+const { createTraceController } = require('../src/modules/trace/trace.controller');
+const { createRateLimiter } = require('../src/middleware/rateLimit');
 
 const jwtSecret = process.env.JWT_SECRET || 'test-only-secret-at-least-32-characters-long';
 const tokens = createTokenService({ secret: jwtSecret });
@@ -82,6 +88,34 @@ const withTransaction = (callback) => {
 const service = createBatchService({ db: {}, withTransaction, repo, qr,
   insertAudit: async (_db, entry) => { audits.push(entry); } });
 const controller = createBatchController(service);
+
+// Repo giả cho module trace (W8): đọc cùng dữ liệu trong bộ nhớ với repo lô ở trên và
+// trả đúng hình dạng hàng mà trace.repository thật lấy từ hai view public_batch_trace /
+// public_event_trace (chỉ các trường công khai, không id nội bộ, email hay audit).
+const orgNames = { 1: 'Hợp tác xã Cà phê Đắk Lắk', 2: 'Hợp tác xã Chè Thái Nguyên' };
+const traceRepo = {
+  async findPublicBatch(_db, batchCode) {
+    const row = rows.find((batch) => batch.batch_code === batchCode);
+    if (!row) return null;
+    return { batch_code: row.batch_code, product_name: row.product_name, origin: row.origin,
+      organization_name: orgNames[Number(row.organization_id)] ?? null, current_status: row.current_status };
+  },
+  async listPublicEvents(_db, batchCode) {
+    const batch = rows.find((item) => item.batch_code === batchCode);
+    if (!batch) return [];
+    return events
+      .filter((event) => Number(event.batch_id) === Number(batch.batch_id))
+      .map((event) => ({ event_type: event.event_type, location: event.location ?? '',
+        organization_name: orgNames[Number(batch.organization_id)] ?? null,
+        timestamp: event.created_at ?? new Date().toISOString() }));
+  },
+};
+const traceController = createTraceController(createTraceService({ db: {}, repo: traceRepo, qr }));
+// Limiter dựng trực tiếp (không qua rateLimitEnabled) theo đúng cấu hình bản thật:
+// 60 yêu cầu/phút/IP trên endpoint truy xuất; beforeEach gọi reset() để các ca độc lập.
+const traceLimiter = createRateLimiter({ windowMs: 60 * 1000, max: 60,
+  message: 'Bạn tra cứu quá nhanh, vui lòng thử lại sau ít phút' });
+
 const app = express();
 app.use(express.json());
 const auth = [createAuthenticate(tokens), createLoadCurrentUser({ db: {
@@ -90,6 +124,10 @@ const auth = [createAuthenticate(tokens), createLoadCurrentUser({ db: {
 app.post('/api/batches', auth, requirePermission('batch:create'), controller.create);
 app.patch('/api/batches/:batchId', auth, requirePermission('batch:update'), controller.update);
 app.get('/api/batches/:batchId/qr', auth, requirePermission('qr:read'), controller.getQr);
+// Harness gắn module trace tại /trace (bản thật gắn tại /api/trace trong src/app.js);
+// thứ tự route /code trước /:qrToken giữ như trace.routes.js.
+app.get('/trace/code/:batchCode', traceLimiter, traceController.byCode);
+app.get('/trace/:qrToken', traceLimiter, traceController.byToken);
 app.use(notFound);
 app.use(errorHandler);
 
@@ -149,7 +187,7 @@ after(async () => {
     server.closeAllConnections();
   });
 });
-beforeEach(() => { rows = []; qrs = []; events = []; audits = []; queue = Promise.resolve(); });
+beforeEach(() => { rows = []; qrs = []; events = []; audits = []; queue = Promise.resolve(); traceLimiter.reset(); });
 
 test('TC-QR-01: Farmer tạo lô hợp lệ → 201, đúng một QR có token HMAC hợp lệ và URL truy xuất', async () => {
   const result = await request('POST', '/api/batches', { body: input, token: tokenFor(10) });
@@ -218,8 +256,7 @@ test('TC-QR-09: GET QR không có token hoặc token hết hạn → 401', async
   expectError(await request('GET', '/api/batches/1/qr', { token: tokenFor(10, expired) }), 401, 'TOKEN_EXPIRED');
 });
 
-// Chờ PR #59 (W7-TV2) merge: hiện chưa có endpoint /trace/{qrToken}.
-test('TC-QR-04: sửa một ký tự token rồi truy xuất → 404', { skip: 'chờ PR #59 (W7-TV2) merge: chưa có endpoint /trace' }, async () => {
+test('TC-QR-04: sửa một ký tự token rồi truy xuất → 404', async () => {
   const { token } = await createBatch();
   const altered = `${token.slice(0, -1)}${token.endsWith('A') ? 'B' : 'A'}`;
   const result = await rawRequest('GET', `/trace/${encodeURIComponent(altered)}`);
@@ -253,8 +290,7 @@ test('TC-QR-10: format=gif trả 400 và liệt kê png, svg', async () => {
   assert.match(result.body.message, /png/i);
   assert.match(result.body.message, /svg/i);
 });
-// Chờ PR #59 (W7-TV2) merge: endpoint truy xuất công khai chưa có.
-test('TC-QR-11: trace token công khai trả thông tin lô và timeline dưới 3 giây', { skip: 'chờ PR #59 (W7-TV2) merge: chưa có endpoint /trace' }, async () => {
+test('TC-QR-11: trace token công khai trả thông tin lô và timeline dưới 3 giây', async () => {
   const { token } = await createBatch();
   const started = performance.now();
   const result = await request('GET', `/trace/${encodeURIComponent(token)}`);
@@ -265,14 +301,14 @@ test('TC-QR-11: trace token công khai trả thông tin lô và timeline dưới
   // Đây là phép đo trong môi trường giả; NFR-01 chính thức được đo ở tuần 8 trên bản triển khai thật.
 });
 // NFR-01 chính thức đo trên bản triển khai thật ở tuần 8; harness giả chỉ đo thời gian cục bộ.
-test('TC-QR-12: trace theo mã lô công khai trả cùng cấu trúc và giới hạn trường', { skip: 'chờ PR #59 (W7-TV2) merge: chưa có endpoint /trace' }, async () => {
+test('TC-QR-12: trace theo mã lô công khai trả cùng cấu trúc và giới hạn trường', async () => {
   const { batch } = await createBatch();
   const result = await request('GET', `/trace/code/${encodeURIComponent(batch.batchCode)}`);
   assert.equal(result.status, 200);
   assertPublicTrace(result.body);
   assert.equal(result.body.batchCode, batch.batchCode);
 });
-test('TC-QR-13: trace lô chỉ có CREATED trả timeline đúng một sự kiện', { skip: 'chờ PR #59 (W7-TV2) merge: chưa có endpoint /trace' }, async () => {
+test('TC-QR-13: trace lô chỉ có CREATED trả timeline đúng một sự kiện', async () => {
   const { token } = await createBatch();
   const result = await request('GET', `/trace/${encodeURIComponent(token)}`);
   assert.equal(result.status, 200);
@@ -280,8 +316,7 @@ test('TC-QR-13: trace lô chỉ có CREATED trả timeline đúng một sự ki�
   assert.equal(result.body.events[0].eventType, 'CREATED');
 });
 // Các trường cấm được liệt kê theo hợp đồng: email, user_id, actor_id, created_by, createdBy, audit, audit_logs, auditLogs.
-// Chờ PR #59 (W7-TV2) merge: chưa có DTO công khai để kiểm tra các trường cấm đệ quy.
-test('TC-QR-14: DTO công khai không lộ email, mã người dùng/người ghi hoặc audit', { skip: 'chờ PR #59 (W7-TV2) merge: chưa có endpoint /trace' }, async () => {
+test('TC-QR-14: DTO công khai không lộ email, mã người dùng/người ghi hoặc audit', async () => {
   const { token } = await createBatch();
   const result = await request('GET', `/trace/${encodeURIComponent(token)}`);
   assert.equal(result.status, 200);
@@ -298,7 +333,7 @@ test('TC-QR-14: DTO công khai không lộ email, mã người dùng/người gh
   }
   assertNoForbiddenFields(result.body);
 });
-test('TC-QR-15: token không tồn tại hoặc sai chữ ký trả 404 với thông báo chung', { skip: 'chờ PR #59 (W7-TV2) merge: chưa có endpoint /trace' }, async () => {
+test('TC-QR-15: token không tồn tại hoặc sai chữ ký trả 404 với thông báo chung', async () => {
   const { token } = await createBatch();
   const badSignature = `${token.slice(0, -1)}${token.endsWith('A') ? 'B' : 'A'}`;
   for (const candidate of ['BATCH-2026-9999.invalid-signature', badSignature]) {
@@ -308,12 +343,12 @@ test('TC-QR-15: token không tồn tại hoặc sai chữ ký trả 404 với th
     assert.doesNotMatch(result.body.message, /signature|chữ ký|token|không hợp lệ/i);
   }
 });
-test('TC-QR-16: mã lô không tồn tại trả 404 với thông báo chung', { skip: 'chờ PR #59 (W7-TV2) merge: chưa có endpoint /trace' }, async () => {
+test('TC-QR-16: mã lô không tồn tại trả 404 với thông báo chung', async () => {
   const result = await request('GET', '/trace/code/BATCH-2026-9999');
   assert.equal(result.status, 404);
   assert.equal(result.body.message, 'Không tìm thấy thông tin truy xuất hợp lệ');
 });
-test('TC-QR-17: yêu cầu thứ 61 từ một IP trong một phút trả 429', { skip: 'chờ PR #59 (W7-TV2) merge: chưa có endpoint /trace và limiter' }, async () => {
+test('TC-QR-17: yêu cầu thứ 61 từ một IP trong một phút trả 429', async () => {
   const { token } = await createBatch();
   const results = await Promise.all(Array.from({ length: 61 }, () => rawRequest('GET', `/trace/${encodeURIComponent(token)}`)));
   assert.equal(results[60].status, 429);
