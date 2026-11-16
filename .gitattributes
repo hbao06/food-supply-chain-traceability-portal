@@ -1,0 +1,4 @@
+# Script shell phải giữ xuống dòng LF kể cả khi clone trên Windows (CRLF làm bash báo lỗi "\r") – W8-TV3
+*.sh   text eol=lf
+# Script PowerShell dùng CRLF cho Windows PowerShell 5.1
+*.ps1  text eol=crlf

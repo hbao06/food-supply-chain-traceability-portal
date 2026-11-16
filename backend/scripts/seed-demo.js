@@ -4,7 +4,7 @@
 //   cd backend && npm run db:seed:demo
 // Cần trong .env: QR_HMAC_SECRET (giống backend, để QR của lô mẫu quét được), TRACE_BASE_URL (tùy chọn).
 // Mật khẩu chung của tài khoản mẫu: SEED_USER_PASSWORD (mặc định Demo12345).
-// Chạy lại an toàn: đã có dữ liệu mẫu thì bỏ qua.
+// Chạy lại an toàn: đã có dữ liệu mẫu thì chỉ thêm các lô mẫu còn thiếu (W8), không tạo trùng.
 
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
@@ -28,7 +28,15 @@ async function main() {
   const result = await withTransaction((tx) => seedDemo(tx, { passwordHash, qr }));
 
   if (!result.created) {
-    console.log('Dữ liệu mẫu đã có, không tạo thêm.');
+    if (!result.added || !result.added.length) {
+      console.log('Dữ liệu mẫu đã có đủ, không tạo thêm.');
+      return;
+    }
+    // CSDL đã seed bản cũ (W5): chỉ thêm các lô mẫu mới (W8).
+    console.log(`Dữ liệu mẫu đã có; đã thêm ${result.added.length} lô mẫu còn thiếu:`);
+    for (const b of result.added) console.log(`  ${b.code}  ${b.farm.padEnd(6)} ${b.status}`);
+    console.log('Lưu ý: dữ liệu mẫu cũ (mô tả sự kiện, audit) không được sửa vì lịch sử chỉ ghi thêm.');
+    console.log('Muốn CSDL demo sạch hoàn toàn: tạo lại CSDL theo database/Readme.md, mục "Chuẩn bị CSDL sạch để demo".');
     return;
   }
   console.log(`Đã tạo ${result.organizations} đơn vị, ${result.users.length} tài khoản, ${result.products} sản phẩm, ${result.batches.length} lô.`);
