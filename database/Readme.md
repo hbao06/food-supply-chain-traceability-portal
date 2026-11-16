@@ -64,7 +64,8 @@ Kết quả mong đợi: mọi dòng `PASS ...` và dòng cuối `ALL CHECKS PAS
 
 - Cần `QR_HMAC_SECRET` trong `.env` **giống với backend**, để QR của lô mẫu quét được ở trang truy xuất. `TRACE_BASE_URL` tùy chọn (mặc định `http://localhost:5173`).
 - Mật khẩu chung của mọi tài khoản mẫu: `SEED_USER_PASSWORD` trong `.env`, không đặt thì là `Demo12345`.
-- Chạy lại an toàn: đã có dữ liệu mẫu thì bỏ qua. Cần CSDL chưa có các mã lô `BATCH-2026-0001…0102` và email `@demo.local` bên dưới (nếu đã có thì dừng và báo rõ).
+- Chạy lại an toàn: đã có đủ dữ liệu mẫu thì bỏ qua. Lần đầu cần CSDL chưa có các mã lô và email `@demo.local` bên dưới (nếu đã có thì dừng và báo rõ).
+- **CSDL đã seed bản W5** (chưa có lô 0004, 0005): chạy lại `npm run db:seed:demo` sẽ **chỉ thêm các lô còn thiếu**, dùng lại đơn vị / tài khoản / sản phẩm mẫu đã có (đã thử trên CSDL thật). Dữ liệu cũ không được sửa (lịch sử chỉ ghi thêm), nên mô tả sự kiện có biển số xe của bản W5 vẫn còn – `demo-check.sql` sẽ báo WARN; muốn sạch hoàn toàn thì tạo lại CSDL (mục "Chuẩn bị CSDL sạch để demo"). Nếu tài khoản / đơn vị / sản phẩm mẫu đã bị xóa, đổi tên hoặc bị khóa, lệnh dừng và hướng dẫn tạo lại CSDL.
 - Toàn bộ chạy trong một transaction và đi qua đủ ràng buộc / trigger của CSDL; mỗi dòng tạo ra có audit (`source: "seed"`, không chứa email).
 - Không có dữ liệu cá nhân thật: email `@demo.local`, mô tả sự kiện không có biển số xe / số điện thoại (test `seedDemo.test.js` chặn).
 - Chạy được cả khi backend dùng vai trò `fsc_app` (đã thử trên CSDL thật).
@@ -138,10 +139,10 @@ bash database/scripts/restore.sh backups/fsc-food_traceability-20261116-140000.d
 ```
 
 - Định dạng `pg_dump -Fc` (nén). File tạo **trong container** rồi chép ra bằng `docker compose cp`, không dùng `>` vì PowerShell làm hỏng file nhị phân.
-- Khôi phục không xóa CSDL đang dùng cho tới khi bản sao lưu đã khôi phục **thành công** vào CSDL tạm `food_traceability_restore`; file hỏng thì CSDL cũ giữ nguyên.
+- Khôi phục không xóa CSDL đang dùng cho tới khi bản sao lưu đã khôi phục **thành công** vào CSDL tạm `food_traceability_restore` **và qua `demo-check.sql` trên CSDL tạm** (chuỗi băm, QR, bộ đếm id…). File hỏng hoặc bản sao lưu có lịch sử bị sửa → xóa CSDL tạm, CSDL cũ giữ nguyên. `--skip-check` / `-SkipCheck` bỏ qua kiểm tra (chỉ khi biết rõ bản sao lưu hợp lệ nhưng chưa "sạch", ví dụ chưa có Admin).
 - Tự tạo vai trò `fsc_app` nếu chưa có (pg_dump không chứa vai trò; thiếu thì lệnh GRANT trong bản sao lưu lỗi). Mật khẩu đăng nhập của `fsc_app` không nằm trong bản sao lưu: khôi phục sang máy mới thì đặt lại.
-- Sau khi khôi phục tự chạy `demo-check.sql`: chuỗi băm, QR, bộ đếm id… vẫn đúng. Trigger được tạo sau khi nạp dữ liệu nên trigger append-only không chặn việc khôi phục, và chuỗi băm giữ nguyên.
-- Đã thử (CSDL demo, cụm PostgreSQL mới chưa có `fsc_app`): khôi phục thành công, `CSDL SẠCH: 0 FAIL`, sau đó ghi audit mới bằng `fsc_app` nối tiếp đúng chuỗi.
+- Trigger được tạo sau khi nạp dữ liệu nên trigger append-only không chặn việc khôi phục, và chuỗi băm giữ nguyên.
+- Đã thử: cụm PostgreSQL mới chưa có `fsc_app` → khôi phục thành công, `CSDL SẠCH: 0 FAIL`, ghi audit mới bằng `fsc_app` nối tiếp đúng chuỗi; bản sao lưu có 1 sự kiện bị sửa lén → dừng ở bước 4, CSDL đang dùng còn nguyên, không sót CSDL tạm.
 - **Bản sao lưu chứa hash mật khẩu, email, họ tên**: `backups/` và `*.dump` đã có trong `.gitignore` (test SEC-07); không gửi lên nhóm chat / Drive công khai.
 
 ## Lịch sử chỉ ghi thêm và phân quyền CSDL (W6)

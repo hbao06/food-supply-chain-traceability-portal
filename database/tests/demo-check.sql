@@ -4,7 +4,7 @@
 -- CHỈ ĐỌC: không thêm / sửa / xóa dữ liệu, chạy được trên CSDL dev, demo hoặc bản vừa khôi phục.
 --   docker compose cp database/tests/demo-check.sql database:/tmp/demo-check.sql
 --   docker compose exec database psql -U postgres -d food_traceability -v ON_ERROR_STOP=1 -f /tmp/demo-check.sql
--- (restore.sh / restore.ps1 tự chạy file này sau khi khôi phục.)
+-- (restore.sh / restore.ps1 tự chạy file này trên CSDL tạm, TRƯỚC khi thay CSDL đang dùng.)
 --
 -- Kết quả: mỗi mục in PASS / WARN / FAIL. Có FAIL thì lệnh kết thúc bằng lỗi (mã thoát khác 0).
 --   FAIL = dữ liệu hoặc quyền sai, phải sửa trước khi demo.

@@ -1,16 +1,18 @@
 #!/usr/bin/env bash
 # =============================================================================
 # Khôi phục CSDL từ bản sao lưu của backup.sh (W8-TV3).
-#   bash database/scripts/restore.sh backups/fsc-food_traceability-20261116-140000.dump --yes
+#   bash database/scripts/restore.sh backups/fsc-food_traceability-20261116-140000.dump --yes [--skip-check]
 # Chạy ở thư mục gốc repo. Windows PowerShell: database\scripts\restore.ps1.
 #
-# Các bước (CSDL hiện tại chỉ bị thay khi bản sao lưu đã khôi phục thành công):
+# Các bước – CSDL hiện tại CHỈ bị thay khi bản sao lưu đã khôi phục thành công VÀ qua kiểm tra toàn vẹn:
 #   1. Kiểm tra file sao lưu đọc được.
 #   2. Tạo vai trò fsc_app nếu chưa có (vai trò là của cả máy chủ PostgreSQL, pg_dump không chứa;
 #      thiếu thì các lệnh GRANT trong bản sao lưu lỗi).
 #   3. Khôi phục vào CSDL tạm <DB_NAME>_restore.
-#   4. Dừng backend, xóa CSDL cũ, đổi tên CSDL tạm thành <DB_NAME>, bật lại backend.
-#   5. Chạy database/tests/demo-check.sql (chuỗi băm, QR, quyền, bộ đếm id...).
+#   4. Chạy database/tests/demo-check.sql TRÊN CSDL TẠM (chuỗi băm, QR, quyền, bộ đếm id...).
+#      Có FAIL thì xóa CSDL tạm và dừng: CSDL hiện tại giữ nguyên (W8, theo review của TV2).
+#      --skip-check: bỏ qua bước này (chỉ dùng khi biết rõ bản sao lưu hợp lệ nhưng chưa "sạch", ví dụ chưa có Admin).
+#   5. Dừng backend, xóa CSDL cũ, đổi tên CSDL tạm thành <DB_NAME>, bật lại backend.
 # Mật khẩu đăng nhập của fsc_app (nếu đã bật) không nằm trong bản sao lưu: khôi phục sang máy mới thì
 # đặt lại theo docs/deployment.md.
 # =============================================================================
@@ -22,9 +24,11 @@ TMP_DB="${DB_NAME}_restore"
 FILE="${1:-}"
 
 if [ -z "$FILE" ] || [ ! -f "$FILE" ]; then
-  echo "Cách dùng: bash database/scripts/restore.sh <file .dump> --yes" >&2
+  echo "Cách dùng: bash database/scripts/restore.sh <file .dump> --yes [--skip-check]" >&2
   exit 2
 fi
+SKIP_CHECK=0
+[ "${3:-}" = "--skip-check" ] && SKIP_CHECK=1
 if [ "${2:-}" != "--yes" ]; then
   echo "Khôi phục sẽ THAY TOÀN BỘ CSDL $DB_NAME bằng nội dung của $FILE." >&2
   echo "Nếu chắc chắn, chạy lại với --yes ở cuối lệnh." >&2
@@ -51,18 +55,21 @@ if ! exec_db pg_restore -U postgres -d "$TMP_DB" --no-owner --exit-on-error /tmp
   exit 1
 fi
 
-echo "4/5 Thay CSDL $DB_NAME"
+echo "4/5 Kiểm tra toàn vẹn trên CSDL tạm $TMP_DB"
+if [ "$SKIP_CHECK" = 1 ]; then
+  echo "    Bỏ qua (--skip-check)."
+elif ! exec_db psql -U postgres -d "$TMP_DB" -v ON_ERROR_STOP=1 -q -f /tmp/demo-check.sql; then
+  exec_db dropdb -U postgres --if-exists "$TMP_DB"
+  exec_db rm -f /tmp/fsc-restore.dump /tmp/demo-check.sql
+  echo "LỖI: bản sao lưu không qua kiểm tra (FAIL ở trên). CSDL $DB_NAME giữ nguyên, CSDL tạm đã xóa." >&2
+  echo "     Nếu chắc chắn muốn dùng bản này, chạy lại với --yes --skip-check." >&2
+  exit 1
+fi
+
+echo "5/5 Thay CSDL $DB_NAME"
 docker compose stop backend > /dev/null 2>&1 || true
 exec_db dropdb -U postgres --if-exists --force "$DB_NAME"
 psql_admin "ALTER DATABASE \"$TMP_DB\" RENAME TO \"$DB_NAME\";"
 docker compose start backend > /dev/null 2>&1 || true
-
-echo "5/5 Kiểm tra CSDL sau khôi phục"
-status=0
-exec_db psql -U postgres -d "$DB_NAME" -v ON_ERROR_STOP=1 -q -f /tmp/demo-check.sql || status=$?
 exec_db rm -f /tmp/fsc-restore.dump /tmp/demo-check.sql
-if [ "$status" -ne 0 ]; then
-  echo "Đã khôi phục, nhưng demo-check báo FAIL ở trên – xem và sửa trước khi demo." >&2
-  exit "$status"
-fi
 echo "Khôi phục xong: $DB_NAME"

@@ -225,5 +225,9 @@ test('SEC-07: bản sao lưu CSDL không thể lỡ commit; script sao lưu khô
     assert.match(src, /CREATE ROLE fsc_app/, `${f}: phải tạo fsc_app trước khi khôi phục`);
     assert.match(src, /_restore/, `${f}: phải khôi phục vào CSDL tạm trước khi thay CSDL thật`);
     assert.ok(src.indexOf('pg_restore -U') < src.indexOf('--force'), `${f}: chỉ xóa CSDL cũ SAU khi khôi phục thành công`);
+    // Review TV2 (W8): kiểm tra toàn vẹn chạy trên CSDL TẠM và TRƯỚC khi xóa CSDL đang dùng.
+    const check = src.search(/psql[^\n]*-d "?\$(TMP_DB|tmpDb)"?[^\n]*demo-check\.sql/);
+    assert.ok(check > 0, `${f}: phải chạy demo-check.sql trên CSDL tạm`);
+    assert.ok(check < src.indexOf('--force'), `${f}: kiểm tra toàn vẹn phải chạy trước khi xóa CSDL cũ`);
   }
 });
