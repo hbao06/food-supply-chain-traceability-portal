@@ -26,7 +26,7 @@ Bảng: `roles`, `event_types`, `organizations`, `products`, `users`, `batches`,
 
 ## Tạo / cập nhật CSDL (từ Tuần 4)
 
-Cần `.env` ở thư mục gốc repo có `DB_HOST=localhost`, `DB_PASSWORD=postgres` (khi dùng Docker Compose).
+Cần `.env` ở thư mục gốc repo có `DB_HOST=localhost`, `DB_PASSWORD=postgres` và `DB_PORT=15432` (khi dùng Docker Compose; cổng phía host của service database). `DB_PORT=5432` chỉ dành cho PostgreSQL cài trực tiếp trên máy. Để sai cổng có thể báo `ECONNREFUSED` hoặc chạy migration nhầm vào CSDL khác đang nghe ở cổng 5432.
 
 ```bash
 docker compose up -d database
