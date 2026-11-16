@@ -328,6 +328,10 @@ export function AddEventModal({
               />
             </div>
             {errors.location && <span className="field-error">{errors.location}</span>}
+            <div className="field-public-notice">
+              <span className="public-notice-pill">Nội dung công khai</span>
+              <span className="public-notice-text">Địa điểm này sẽ hiển thị trên Cổng tra cứu nguồn gốc cho người tiêu dùng.</span>
+            </div>
 
             {/* Gợi ý địa điểm nhanh */}
             {presets.length > 0 && (
@@ -370,6 +374,10 @@ export function AddEventModal({
               aria-invalid={Boolean(errors.description)}
             />
             {errors.description && <span className="field-error">{errors.description}</span>}
+            <div className="field-public-notice">
+              <span className="public-notice-pill">Nội dung công khai</span>
+              <span className="public-notice-text">Mô tả và thông số kiểm định sẽ hiển thị công khai trên Cổng tra cứu. Vui lòng không ghi thông tin bí mật nội bộ.</span>
+            </div>
           </div>
 
           {/* Footer Actions */}

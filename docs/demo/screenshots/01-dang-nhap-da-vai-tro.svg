@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 750" width="1200" height="750" style="background:#f4f7f5;font-family:system-ui,-apple-system,sans-serif">
+  <!-- Left Side: Banner / Photo -->
+  <defs>
+    <linearGradient id="photoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0e3f2d"/>
+      <stop offset="100%" stop-color="#1b5e3f"/>
+    </linearGradient>
+    <linearGradient id="btnGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#196744"/>
+      <stop offset="100%" stop-color="#124f33"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="0" y="0" width="480" height="750" fill="url(#photoGrad)"/>
+  <circle cx="240" cy="300" r="160" fill="#23744e" opacity="0.4"/>
+  <circle cx="340" cy="200" r="100" fill="#2fa16c" opacity="0.2"/>
+  
+  <rect x="40" y="50" width="40" height="4" fill="#6ee7b7" rx="2"/>
+  <text x="90" y="55" fill="#a7f3d0" font-size="12" font-weight="700" letter-spacing="1">TRUY XUẤT NGUỒN GỐC THỰC PHẨM</text>
+
+  <text x="40" y="420" fill="#86efac" font-size="13" font-weight="800" letter-spacing="1.5">FOOD TRACE / SUPPLY CHAIN</text>
+  <text x="40" y="470" fill="#ffffff" font-size="34" font-weight="800" line-height="1.2">Minh bạch</text>
+  <text x="40" y="515" fill="#ffffff" font-size="34" font-weight="800">từ nông trại.</text>
+  <text x="40" y="560" fill="#cbd5e1" font-size="15">Mỗi lô hàng, một hành trình có thể kiểm chứng.</text>
+
+  <!-- Right Side: Login Form -->
+  <rect x="480" y="0" width="720" height="750" fill="#ffffff"/>
+
+  <!-- Brand Topline -->
+  <rect x="540" y="45" width="28" height="28" rx="6" fill="#1b5e3f"/>
+  <text x="546" y="64" fill="#ffffff" font-size="13" font-weight="900">FT</text>
+  <text x="578" y="64" fill="#111827" font-size="15" font-weight="800">Food Trace</text>
+  <text x="1100" y="64" fill="#94a3b8" font-size="12" font-weight="700" text-anchor="end">CỔNG THÔNG TIN</text>
+
+  <!-- Heading -->
+  <text x="540" y="145" fill="#0f172a" font-size="28" font-weight="800">Đăng nhập</text>
+  <text x="540" y="175" fill="#64748b" font-size="14">Truy cập không gian làm việc của bạn trong chuỗi cung ứng.</text>
+
+  <!-- Input Email -->
+  <text x="540" y="225" fill="#334155" font-size="13" font-weight="700">Email</text>
+  <rect x="540" y="235" width="560" height="46" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="555" y="263" fill="#0f172a" font-size="14">farmer_a@demo.local</text>
+
+  <!-- Input Password -->
+  <text x="540" y="315" fill="#334155" font-size="13" font-weight="700">Mật khẩu</text>
+  <rect x="540" y="325" width="560" height="46" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="555" y="353" fill="#64748b" font-size="16">••••••••••••</text>
+  <text x="1075" y="353" fill="#059669" font-size="13" font-weight="700" text-anchor="end">Hiện</text>
+
+  <!-- Submit Button -->
+  <rect x="540" y="395" width="560" height="48" rx="6" fill="url(#btnGrad)"/>
+  <text x="820" y="425" fill="#ffffff" font-size="15" font-weight="750" text-anchor="middle">Đăng nhập</text>
+
+  <!-- Quick Demo Card -->
+  <rect x="540" y="475" width="560" height="150" rx="8" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="560" y="505" fill="#475569" font-size="13" font-weight="750">Đăng nhập nhanh thử nghiệm (Không cần CSDL):</text>
+
+  <rect x="560" y="525" width="260" height="40" rx="6" fill="#ffffff" stroke="#cbd5e1"/>
+  <circle cx="580" cy="545" r="8" fill="#dcfce7"/>
+  <text x="600" y="550" fill="#1e293b" font-size="13" font-weight="650">Nông dân (Farmer)</text>
+
+  <rect x="830" y="525" width="250" height="40" rx="6" fill="#ffffff" stroke="#cbd5e1"/>
+  <circle cx="850" cy="545" r="8" fill="#fef3c7"/>
+  <text x="870" y="550" fill="#1e293b" font-size="13" font-weight="650">Chế biến (Processor)</text>
+
+  <rect x="560" y="575" width="260" height="40" rx="6" fill="#ffffff" stroke="#cbd5e1"/>
+  <circle cx="580" cy="595" r="8" fill="#dbeafe"/>
+  <text x="600" y="600" fill="#1e293b" font-size="13" font-weight="650">Phân phối (Distributor)</text>
+
+  <rect x="830" y="575" width="250" height="40" rx="6" fill="#ffffff" stroke="#cbd5e1"/>
+  <circle cx="850" cy="595" r="8" fill="#f3e8ff"/>
+  <text x="870" y="600" fill="#1e293b" font-size="13" font-weight="650">Quản trị viên (Admin)</text>
+
+  <!-- Public Trace Link -->
+  <rect x="540" y="645" width="560" height="44" rx="6" fill="#ffffff" stroke="#059669" stroke-width="1.5"/>
+  <text x="820" y="672" fill="#059669" font-size="14" font-weight="750" text-anchor="middle">🔍 Tra cứu nguồn gốc công khai (Dành cho Người tiêu dùng)</text>
+
+  <text x="820" y="725" fill="#94a3b8" font-size="12" text-anchor="middle">© Food Trace · Cổng truy xuất nguồn gốc thực phẩm</text>
+</svg>

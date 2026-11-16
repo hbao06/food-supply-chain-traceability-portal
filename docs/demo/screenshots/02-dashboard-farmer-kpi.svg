@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 750" width="1200" height="750" style="background:#f4f7f5;font-family:system-ui,-apple-system,sans-serif">
+  <!-- Sidebar -->
+  <rect x="0" y="0" width="240" height="750" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+  <rect x="24" y="24" width="28" height="28" rx="6" fill="#1b5e3f"/>
+  <text x="30" y="43" fill="#ffffff" font-size="13" font-weight="900">FT</text>
+  <text x="60" y="43" fill="#111827" font-size="15" font-weight="800">Food Trace</text>
+
+  <text x="24" y="90" fill="#94a3b8" font-size="11" font-weight="700">KHÔNG GIAN LÀM VIỆC</text>
+
+  <rect x="16" y="105" width="208" height="40" rx="6" fill="#e8f5ee"/>
+  <text x="48" y="130" fill="#1b5e3f" font-size="13.5" font-weight="750">📊 Tổng quan</text>
+
+  <text x="48" y="175" fill="#475569" font-size="13.5" font-weight="600">📦 Quản lý lô</text>
+  <text x="48" y="220" fill="#475569" font-size="13.5" font-weight="600">🔍 Tra cứu công khai</text>
+
+  <!-- Topbar -->
+  <rect x="240" y="0" width="960" height="64" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="264" y="36" fill="#64748b" font-size="12" font-weight="700">TRANG CHỦ</text>
+  <text x="340" y="36" fill="#94a3b8" font-size="12">/</text>
+  <text x="355" y="36" fill="#0f172a" font-size="13" font-weight="750">Tổng quan không gian làm việc</text>
+
+  <circle cx="1060" cy="32" r="14" fill="#f1f5f9"/>
+  <text x="1056" y="36" fill="#475569" font-size="13">🔔</text>
+  <circle cx="1068" cy="24" r="4" fill="#ef4444"/>
+
+  <rect x="1090" y="16" width="90" height="32" rx="16" fill="#f8fafc" stroke="#e2e8f0"/>
+  <circle cx="1106" cy="32" r="10" fill="#1b5e3f"/>
+  <text x="1103" y="36" fill="#fff" font-size="10" font-weight="bold">A</text>
+  <text x="1122" y="36" fill="#1e293b" font-size="12" font-weight="650">V. An</text>
+
+  <!-- Main Content -->
+  <!-- Header Banner -->
+  <text x="264" y="105" fill="#166534" font-size="11" font-weight="800" letter-spacing="1">TỔNG QUAN HỆ THỐNG</text>
+  <text x="264" y="135" fill="#0f172a" font-size="24" font-weight="800">Xin chào, Nguyễn Văn An (Nông dân)</text>
+  <text x="264" y="160" fill="#64748b" font-size="13.5">Chào mừng bạn quay lại Hệ thống truy xuất nguồn gốc và minh bạch chuỗi cung ứng thực phẩm.</text>
+
+  <rect x="264" y="172" width="165" height="24" rx="4" fill="#dcfce7"/>
+  <text x="274" y="188" fill="#15803d" font-size="11.5" font-weight="750">Nhà sản xuất (Farmer)</text>
+  <text x="440" y="188" fill="#475569" font-size="12.5" font-weight="600">🏢 HTX Cà phê Cầu Đất</text>
+
+  <!-- 4 Role KPI Cards -->
+  <g transform="translate(264, 215)">
+    <!-- KPI 1 -->
+    <rect x="0" y="0" width="215" height="100" rx="8" fill="#ffffff" stroke="#e2e8f0"/>
+    <rect x="0" y="0" width="215" height="4" rx="2" fill="#16a34a"/>
+    <text x="16" y="24" fill="#64748b" font-size="10.5" font-weight="750">NÔNG TRẠI</text>
+    <text x="16" y="58" fill="#0f172a" font-size="28" font-weight="800">6</text>
+    <text x="16" y="78" fill="#15803d" font-size="12" font-weight="700">Tổng số lô nông sản</text>
+    <text x="16" y="92" fill="#94a3b8" font-size="10.5">Tiêu chuẩn canh tác sạch</text>
+
+    <!-- KPI 2 -->
+    <rect x="235" y="0" width="215" height="100" rx="8" fill="#ffffff" stroke="#e2e8f0"/>
+    <rect x="235" y="0" width="215" height="4" rx="2" fill="#d97706"/>
+    <text x="251" y="24" fill="#64748b" font-size="10.5" font-weight="750">SẴN SÀNG</text>
+    <text x="251" y="58" fill="#0f172a" font-size="28" font-weight="800">1</text>
+    <text x="251" y="78" fill="#b45309" font-size="12" font-weight="700">Chờ thu gom / Vận chuyển</text>
+    <text x="251" y="92" fill="#94a3b8" font-size="10.5">Trạng thái mới tạo (CREATED)</text>
+
+    <!-- KPI 3 -->
+    <rect x="470" y="0" width="215" height="100" rx="8" fill="#ffffff" stroke="#e2e8f0"/>
+    <rect x="470" y="0" width="215" height="4" rx="2" fill="#059669"/>
+    <text x="486" y="24" fill="#64748b" font-size="10.5" font-weight="750">THÀNH PHẨM</text>
+    <text x="486" y="58" fill="#0f172a" font-size="28" font-weight="800">1</text>
+    <text x="486" y="78" fill="#047857" font-size="12" font-weight="700">Đã xuất bán ra thị trường</text>
+    <text x="486" y="92" fill="#94a3b8" font-size="10.5">Đã giao chuỗi siêu thị (SHIPPED)</text>
+
+    <!-- KPI 4 -->
+    <rect x="705" y="0" width="215" height="100" rx="8" fill="#ffffff" stroke="#e2e8f0"/>
+    <rect x="705" y="0" width="215" height="4" rx="2" fill="#0d9488"/>
+    <text x="721" y="24" fill="#64748b" font-size="10.5" font-weight="750">CHỨNG NHẬN</text>
+    <text x="721" y="58" fill="#0f172a" font-size="28" font-weight="800">100%</text>
+    <text x="721" y="78" fill="#0f766e" font-size="12" font-weight="700">Chứng nhận VietGAP</text>
+    <text x="721" y="92" fill="#94a3b8" font-size="10.5">Mã QR truy xuất từng lô</text>
+  </g>
+
+  <!-- Action Band -->
+  <rect x="264" y="335" width="910" height="75" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="284" y="362" fill="#15803d" font-size="10.5" font-weight="800">QUẢN LÝ LÔ HÀNG</text>
+  <text x="284" y="385" fill="#0f172a" font-size="16" font-weight="750">Trung tâm điều hành lô nông sản nông trại</text>
+  
+  <rect x="800" y="352" width="160" height="40" rx="6" fill="#16a34a"/>
+  <text x="880" y="377" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">+ Khởi tạo lô mới</text>
+  
+  <rect x="970" y="352" width="180" height="40" rx="6" fill="#f8fafc" stroke="#cbd5e1"/>
+  <text x="1060" y="377" fill="#334155" font-size="13" font-weight="650" text-anchor="middle">Xem tất cả lô (6) →</text>
+
+  <!-- Recent Batches Table -->
+  <text x="264" y="445" fill="#0f172a" font-size="17" font-weight="750">Lô hàng gần đây</text>
+  <rect x="264" y="460" width="910" height="260" rx="8" fill="#ffffff" stroke="#e2e8f0"/>
+
+  <rect x="264" y="460" width="910" height="40" fill="#f8fafc" rx="8"/>
+  <text x="284" y="485" fill="#475569" font-size="12" font-weight="700">Mã lô</text>
+  <text x="420" y="485" fill="#475569" font-size="12" font-weight="700">Sản phẩm</text>
+  <text x="680" y="485" fill="#475569" font-size="12" font-weight="700">Sản lượng</text>
+  <text x="800" y="485" fill="#475569" font-size="12" font-weight="700">Trạng thái</text>
+  <text x="1100" y="485" fill="#475569" font-size="12" font-weight="700" text-anchor="end">Thao tác</text>
+
+  <!-- Row 1 -->
+  <line x1="264" y1="500" x2="1174" y2="500" stroke="#f1f5f9"/>
+  <text x="284" y="530" fill="#166534" font-size="12.5" font-weight="700">BATCH-2026-0001</text>
+  <text x="420" y="530" fill="#0f172a" font-size="13" font-weight="650">Cà phê Arabica Cầu Đất Thượng Hạng</text>
+  <text x="680" y="530" fill="#334155" font-size="13">1.250,5 kg</text>
+  <rect x="800" y="515" width="80" height="22" rx="4" fill="#dcfce7"/>
+  <text x="815" y="530" fill="#15803d" font-size="11" font-weight="700">Đã tạo</text>
+  <text x="1100" y="530" fill="#059669" font-size="12" font-weight="700" text-anchor="end">Xem chi tiết →</text>
+
+  <!-- Row 2 -->
+  <line x1="264" y1="550" x2="1174" y2="550" stroke="#f1f5f9"/>
+  <text x="284" y="580" fill="#1e40af" font-size="12.5" font-weight="700">BATCH-2026-0002</text>
+  <text x="420" y="580" fill="#0f172a" font-size="13" font-weight="650">Gạo ST25 Hữu Cơ Sóc Trăng</text>
+  <text x="680" y="580" fill="#334155" font-size="13">5.000 kg</text>
+  <rect x="800" y="565" width="95" height="22" rx="4" fill="#dbeafe"/>
+  <text x="812" y="580" fill="#1d4ed8" font-size="11" font-weight="700">Vận chuyển</text>
+  <text x="1100" y="580" fill="#059669" font-size="12" font-weight="700" text-anchor="end">Xem chi tiết →</text>
+
+  <!-- Row 3 -->
+  <line x1="264" y1="600" x2="1174" y2="600" stroke="#f1f5f9"/>
+  <text x="284" y="630" fill="#0f766e" font-size="12.5" font-weight="700">BATCH-2026-0006</text>
+  <text x="420" y="630" fill="#0f172a" font-size="13" font-weight="650">Bưởi Da Xanh Bến Tre Loại 1</text>
+  <text x="680" y="630" fill="#334155" font-size="13">1.800 kg</text>
+  <rect x="800" y="615" width="90" height="22" rx="4" fill="#ccfbf1"/>
+  <text x="812" y="630" fill="#0f766e" font-size="11" font-weight="700">Đã xuất kho</text>
+  <text x="1100" y="630" fill="#059669" font-size="12" font-weight="700" text-anchor="end">Xem chi tiết →</text>
+</svg>

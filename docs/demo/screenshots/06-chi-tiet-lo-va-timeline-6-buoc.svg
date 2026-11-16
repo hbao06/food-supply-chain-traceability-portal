@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 750" width="1200" height="750" style="background:#f4f7f5;font-family:system-ui,-apple-system,sans-serif">
+  <!-- Topbar -->
+  <rect x="0" y="0" width="1200" height="64" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+  <rect x="24" y="18" width="28" height="28" rx="6" fill="#1b5e3f"/>
+  <text x="30" y="37" fill="#ffffff" font-size="13" font-weight="900">FT</text>
+  <text x="60" y="37" fill="#111827" font-size="15" font-weight="800">Food Trace</text>
+
+  <text x="180" y="36" fill="#64748b" font-size="12" font-weight="700">QUẢN LÝ LÔ</text>
+  <text x="260" y="36" fill="#94a3b8" font-size="12">/</text>
+  <text x="275" y="36" fill="#0f172a" font-size="13" font-weight="750">Chi tiết lô #106 (BATCH-2026-0006)</text>
+
+  <!-- Hero Header -->
+  <rect x="40" y="90" width="1120" height="120" rx="10" fill="#ffffff" stroke="#e2e8f0"/>
+  <rect x="65" y="110" width="140" height="26" rx="4" fill="#f1f5f9"/>
+  <text x="75" y="128" fill="#1e293b" font-size="13" font-weight="750">BATCH-2026-0006</text>
+  <rect x="215" y="110" width="105" height="26" rx="4" fill="#ccfbf1"/>
+  <text x="228" y="128" fill="#0f766e" font-size="12" font-weight="750">Đã xuất kho</text>
+
+  <text x="65" y="170" fill="#0f172a" font-size="24" font-weight="800">Bưởi Da Xanh Bến Tre Loại 1</text>
+  <text x="65" y="195" fill="#64748b" font-size="13.5">📍 Xuất xứ: Huyện Châu Thành, Tỉnh Bến Tre · Nông trại Cái Mơn · Sản lượng: 1.800 kg</text>
+
+  <!-- QR Action Button -->
+  <rect x="990" y="125" width="140" height="42" rx="6" fill="#f8fafc" stroke="#cbd5e1"/>
+  <text x="1060" y="151" fill="#334155" font-size="13" font-weight="700" text-anchor="middle">📷 Xem mã QR</text>
+
+  <!-- Left: Timeline Steps -->
+  <rect x="40" y="230" width="760" height="490" rx="10" fill="#ffffff" stroke="#e2e8f0"/>
+  <text x="65" y="265" fill="#0f172a" font-size="17" font-weight="800">Dòng thời gian &amp; Timeline chuỗi cung ứng</text>
+  <text x="65" y="285" fill="#64748b" font-size="12.5">Quy trình 6 bước bất biến (CREATED → TRANSPORTED → RECEIVED → PROCESSED → PACKAGED → SHIPPED)</text>
+
+  <!-- Step 1 Card -->
+  <rect x="65" y="310" width="710" height="65" rx="6" fill="#f8fafc" stroke="#e2e8f0"/>
+  <circle cx="95" cy="342" r="14" fill="#16a34a"/>
+  <text x="91" y="346" fill="#fff" font-size="10" font-weight="bold">1</text>
+  <text x="120" y="336" fill="#0f172a" font-size="13.5" font-weight="750">Khởi tạo lô nông sản (CREATED)</text>
+  <text x="120" y="355" fill="#64748b" font-size="12">Nông trại Cái Mơn · 20/10/2026 07:15 · Thu hoạch vườn bưởi đạt tiêu chuẩn VietGAP</text>
+
+  <!-- Step 2 Card -->
+  <rect x="65" y="385" width="710" height="65" rx="6" fill="#f8fafc" stroke="#e2e8f0"/>
+  <circle cx="95" cy="417" r="14" fill="#2563eb"/>
+  <text x="91" y="421" fill="#fff" font-size="10" font-weight="bold">2</text>
+  <text x="120" y="411" fill="#0f172a" font-size="13.5" font-weight="750">Vận chuyển từ nông trại (TRANSPORTED)</text>
+  <text x="120" y="430" fill="#64748b" font-size="12">Đội Xe Vận tải Miền Tây · 21/10/2026 08:30 · Xe thùng kín chuyên dụng 71C-082.45</text>
+
+  <!-- Step 3 Card -->
+  <rect x="65" y="460" width="710" height="65" rx="6" fill="#f8fafc" stroke="#e2e8f0"/>
+  <circle cx="95" cy="492" r="14" fill="#4f46e5"/>
+  <text x="91" y="496" fill="#fff" font-size="10" font-weight="bold">3</text>
+  <text x="120" y="486" fill="#0f172a" font-size="13.5" font-weight="750">Tiếp nhận tại kho sơ chế (RECEIVED)</text>
+  <text x="120" y="505" fill="#64748b" font-size="12">Tổng kho Bến Tre Fruit · 21/10/2026 11:20 · Kiểm định dư lượng thuốc BVTV đạt tiêu chuẩn</text>
+
+  <!-- Step 4 Card -->
+  <rect x="65" y="535" width="710" height="65" rx="6" fill="#f8fafc" stroke="#e2e8f0"/>
+  <circle cx="95" cy="567" r="14" fill="#d97706"/>
+  <text x="91" y="571" fill="#fff" font-size="10" font-weight="bold">4</text>
+  <text x="120" y="561" fill="#0f172a" font-size="13.5" font-weight="750">Sơ chế &amp; bảo quản (PROCESSED)</text>
+  <text x="120" y="580" fill="#64748b" font-size="12">Xưởng sơ chế trái cây · 21/10/2026 15:00 · Rửa sạch sát khuẩn vỏ, bọc màng lưới xốp</text>
+
+  <!-- Step 5 & 6 Cards mini -->
+  <rect x="65" y="610" width="710" height="50" rx="6" fill="#f8fafc" stroke="#e2e8f0"/>
+  <circle cx="95" cy="635" r="12" fill="#9333ea"/>
+  <text x="92" y="639" fill="#fff" font-size="10" font-weight="bold">5</text>
+  <text x="120" y="632" fill="#0f172a" font-size="13" font-weight="700">Đóng gói (PACKAGED) &amp; Dán nhãn tem QR GS1</text>
+  <text x="120" y="648" fill="#64748b" font-size="11.5">22/10/2026 · Đóng thùng 12 quả/thùng</text>
+
+  <rect x="65" y="668" width="710" height="42" rx="6" fill="#e6fffa" stroke="#99f6e4"/>
+  <circle cx="95" cy="689" r="12" fill="#0d9488"/>
+  <text x="92" y="693" fill="#fff" font-size="10" font-weight="bold">6</text>
+  <text x="120" y="694" fill="#0f766e" font-size="13" font-weight="750">Xuất kho (SHIPPED) giao Co.opmart &amp; WinMart</text>
+
+  <!-- Right: QR Side Card -->
+  <rect x="830" y="230" width="330" height="490" rx="10" fill="#ffffff" stroke="#e2e8f0"/>
+  <text x="855" y="265" fill="#0f172a" font-size="16" font-weight="800">Mã QR truy xuất</text>
+  <text x="855" y="285" fill="#64748b" font-size="12">Quét mã bằng Camera điện thoại</text>
+
+  <!-- QR Canvas placeholder -->
+  <rect x="900" y="310" width="190" height="190" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+  <!-- QR Pattern illustration -->
+  <rect x="915" y="325" width="45" height="45" fill="#1b5e3f"/>
+  <rect x="925" y="335" width="25" height="25" fill="#fff"/>
+  <rect x="930" y="340" width="15" height="15" fill="#1b5e3f"/>
+
+  <rect x="1030" y="325" width="45" height="45" fill="#1b5e3f"/>
+  <rect x="1040" y="335" width="25" height="25" fill="#fff"/>
+  <rect x="1045" y="340" width="15" height="15" fill="#1b5e3f"/>
+
+  <rect x="915" y="440" width="45" height="45" fill="#1b5e3f"/>
+  <rect x="925" y="450" width="25" height="25" fill="#fff"/>
+  <rect x="930" y="455" width="15" height="15" fill="#1b5e3f"/>
+
+  <!-- Random QR dots -->
+  <rect x="975" y="335" width="10" height="10" fill="#1b5e3f"/>
+  <rect x="995" y="345" width="15" height="15" fill="#1b5e3f"/>
+  <rect x="980" y="380" width="30" height="30" fill="#1b5e3f"/>
+  <rect x="1025" y="400" width="20" height="20" fill="#1b5e3f"/>
+  <rect x="1000" y="450" width="25" height="15" fill="#1b5e3f"/>
+  <rect x="1040" y="445" width="20" height="20" fill="#1b5e3f"/>
+
+  <rect x="855" y="525" width="280" height="38" rx="6" fill="#16a34a"/>
+  <text x="995" y="549" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">📥 Tải ảnh QR (PNG)</text>
+
+  <rect x="855" y="575" width="280" height="38" rx="6" fill="#f8fafc" stroke="#cbd5e1"/>
+  <text x="995" y="599" fill="#334155" font-size="13" font-weight="650" text-anchor="middle">📋 Sao chép liên kết QR</text>
+
+  <rect x="855" y="630" width="280" height="70" rx="6" fill="#f0fdf4" stroke="#bbf7d0"/>
+  <text x="870" y="652" fill="#166534" font-size="11.5" font-weight="750">Chữ ký số HMAC-SHA256:</text>
+  <text x="870" y="670" fill="#15803d" font-size="11" font-family="monospace">BATCH-2026-0006.4c5d6e7f8a9b01</text>
+  <text x="870" y="688" fill="#64748b" font-size="10.5">Xác thực bởi Cổng Food Trace</text>
+</svg>
