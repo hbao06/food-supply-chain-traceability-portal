@@ -16,7 +16,8 @@
     "smoke:events": "node scripts/smoke-events.js",
     "smoke:trace": "node scripts/smoke-trace.js",
     "smoke:admin": "node scripts/smoke-admin.js",
-    "check:openapi": "node scripts/check-openapi.js"
+    "check:openapi": "node scripts/check-openapi.js",
+    "test:coverage": "node --test --experimental-test-coverage --test-coverage-lines=60 --test-coverage-branches=60 --test-coverage-functions=60"
   },
   "keywords": [
     "food-traceability",

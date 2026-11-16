@@ -124,7 +124,7 @@ Công cụ ở bảng trên là **đề xuất**, nhóm có thể thay bằng c�
 | TC-QR-16 | `GET /trace/code/BATCH-2026-9999` | 404 cùng thông báo như TC-QR-15 | AC-QR-03-E2 | API | M |
 | TC-QR-17 | Một IP gửi 61 yêu cầu trong 1 phút tới endpoint truy xuất | Yêu cầu thứ 61 trả 429 | AC-QR-03-E3 | API | S |
 
-**Trạng thái sau đợt sửa PR #62:** TC-QR-01, 02, 03, 05, 06, 07, 08, 09, 10 — Đạt (chạy tự động); TC-QR-04, 11–17 — Chờ PR #59 (W7-TV2) merge. E2E-QR (tạo lô → lấy QR → xác minh token) — Đạt.
+**Trạng thái từ tuần 8 (W8-TV4):** toàn bộ 17 ca TC-QR — Đạt (chạy tự động). TC-QR-04, 11–17 được bỏ bỏ qua sau khi PR #59 merge: harness nối module trace thật với repo giả cùng dữ liệu trong bộ nhớ và rate limiter 60 yêu cầu/phút/IP (đặt lại sau mỗi ca). E2E-QR (tạo lô → lấy QR → xác minh token) — Đạt. Chi tiết ở `docs/test/test-report-w8.md`.
 
 ### 5.2 CI/CD và Docker (TV4)
 | Mã | Ca kiểm thử | Kết quả mong đợi | AC | Loại | Ưu tiên |
@@ -280,7 +280,7 @@ Mỗi lỗi tạo thành GitHub Issue với label `type: bug`, mức `priority:`
 | 5 | | | | | |
 | 6 | | | | | |
 | 7 | | | | | |
-| 8 | | | | | |
+| 8 | 293 (274 backend + 19 frontend) | 293 | 0 | 0 | 93,47% (dòng, backend) |
 
 ---
 

@@ -21,8 +21,8 @@ services:
       DB_HOST: database # tên service bên dưới, khác với localhost khi chạy ngoài Docker
       DB_PORT: 5432
       DB_NAME: food_traceability
-      DB_USER: postgres
-      DB_PASSWORD: postgres # trùng POSTGRES_PASSWORD của service database
+      DB_USER: ${BACKEND_DB_USER:-postgres}
+      DB_PASSWORD: ${BACKEND_DB_PASSWORD:-postgres}
       JWT_SECRET: ${JWT_SECRET} # đặt trong .env ở thư mục gốc (>= 32 ký tự), thiếu thì backend dừng ngay
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1h}
       BCRYPT_COST: ${BCRYPT_COST:-10}
@@ -41,9 +41,9 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      # W7-TV3: chỉ mở cho chính máy này (127.0.0.1). "5432:5432" mở cho mọi máy cùng mạng (Wi-Fi trường)
-      # trong khi mật khẩu postgres là "postgres". Container backend vẫn kết nối qua mạng nội bộ của Docker.
-      - "127.0.0.1:5432:5432"
+      # W7-TV3: chỉ mở cổng host 15432 trên loopback; PostgreSQL nghe 5432 trong mạng Docker.
+      # Cổng host 15432 tránh cổng bị Windows loại trừ và không mở CSDL ra LAN.
+      - "127.0.0.1:15432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
