@@ -1,6 +1,7 @@
 'use strict';
 
-// Dữ liệu mẫu cho phát triển, demo và kiểm thử (W5-TV3).
+// Dữ liệu mẫu cho phát triển, demo và kiểm thử (W5-TV3; W8-TV3 bổ sung lô 0004, 0005 cho đủ 6 trạng thái,
+// bỏ biển số xe khỏi mô tả sự kiện, không ghi email vào audit).
 // Theo bảng "Dữ liệu mẫu" trong docs/test/test-plan.md mục 3 (TV4):
 //   farmer_a, farmer_b, processor_a, distributor_a, admin_1, user_pending, user_locked,
 //   BATCH-2026-0001 (A, CREATED, có QR), BATCH-2026-0002 (A, đã rời CREATED), BATCH-2026-0101 (B).
@@ -46,7 +47,7 @@ const BATCHES = [
     steps: [] },
   { code: 'BATCH-2026-0002', product: 'robusta', farmer: 'farmer_a', origin: 'Cầu Đất, Đà Lạt', quantity: 300, days: 12,
     steps: [
-      ['TRANSPORTED', 'distributor_a', 'QL20, Đà Lạt → TP.HCM', 'Xe lạnh 51C-123.45'],
+      ['TRANSPORTED', 'distributor_a', 'QL20, Đà Lạt → TP.HCM', 'Xe lạnh 2–8°C'],
       ['RECEIVED', 'distributor_a', 'Kho Quận 7, TP.HCM', 'Nhận đủ 300 kg'],
       ['PROCESSED', 'processor_a', 'Xưởng Tân Bình', 'Rang mộc 220°C'],
       ['PACKAGED', 'processor_a', 'Xưởng Tân Bình', 'Đóng túi 500 g'],
@@ -56,6 +57,17 @@ const BATCHES = [
     steps: [
       ['TRANSPORTED', 'distributor_a', 'QL20, Đà Lạt → TP.HCM', null],
       ['RECEIVED', 'distributor_a', 'Kho Quận 7, TP.HCM', 'Chờ chuyển xưởng chế biến'],
+    ] },
+  // W8: hai lô thêm để demo đủ 6 trạng thái và để Distributor B (Hà Nội) có dữ liệu.
+  { code: 'BATCH-2026-0004', product: 'arabica', farmer: 'farmer_a', origin: 'Cầu Đất, Đà Lạt', quantity: 120, days: 3,
+    steps: [
+      ['TRANSPORTED', 'distributor_b', 'QL20 → QL1A, Đà Lạt → Hà Nội', 'Xe lạnh 2–8°C'],
+    ] },
+  { code: 'BATCH-2026-0005', product: 'robusta', farmer: 'farmer_a', origin: 'Cầu Đất, Đà Lạt', quantity: 250, days: 8,
+    steps: [
+      ['TRANSPORTED', 'distributor_a', 'QL20, Đà Lạt → TP.HCM', null],
+      ['RECEIVED', 'distributor_a', 'Kho Quận 7, TP.HCM', null],
+      ['PROCESSED', 'processor_a', 'Xưởng Tân Bình', 'Rang vừa 210°C'],
     ] },
   { code: 'BATCH-2026-0101', product: 'durian', farmer: 'farmer_b', origin: 'Chợ Lách, Bến Tre', quantity: 1000, days: 9,
     steps: [
@@ -123,7 +135,8 @@ async function seedDemo(db, { passwordHash, qr, now = new Date() }) {
       [u.name, u.email, passwordHash, u.role, u.status, u.org ? orgId[u.org] : null]
     );
     userId[u.key] = Number(r.rows[0].user_id);
-    await audit(null, 'USER', userId[u.key], { email: u.email, role: u.role, status: u.status });
+    // Không ghi email: audit không xóa được, email đã có trong bảng users (cùng quy tắc với REGISTER, W7).
+    await audit(null, 'USER', userId[u.key], { name: u.name, role: u.role, status: u.status });
   }
 
   const productId = {};

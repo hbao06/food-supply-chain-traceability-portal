@@ -8,6 +8,13 @@ const { loadMigrations, migrate, sha256 } = require('../src/db/migrator');
 
 const ROOT = path.resolve(__dirname, '../../database');
 
+test('schema-current.sql đã sinh lại sau migration mới nhất (W8) – quên thì chạy database/scripts/dump-schema.sh', () => {
+  const ms = loadMigrations(path.join(ROOT, 'migrations'));
+  const latest = ms.at(-1);
+  const head = fs.readFileSync(path.join(ROOT, 'schema-current.sql'), 'utf8').split('\n').slice(0, 6).join('\n');
+  assert.ok(head.includes(`001 → ${latest.version} (${latest.name})`), `schema-current.sql chưa có ${latest.name}`);
+});
+
 test('migrations trong repo: đúng tên, đúng thứ tự, không có BEGIN/COMMIT', () => {
   const ms = loadMigrations(path.join(ROOT, 'migrations'));
   assert.deepEqual(ms.map((m) => m.version).slice(0, 2), ['001', '002']);

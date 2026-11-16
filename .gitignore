@@ -141,3 +141,8 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Bản sao lưu CSDL (database/scripts/backup.*): chứa hash mật khẩu và dữ liệu người dùng – không commit (W8-TV3)
+backups/
+*.dump
+*.backup

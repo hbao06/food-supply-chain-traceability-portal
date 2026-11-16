@@ -140,3 +140,22 @@ test('QR mẫu trùng khớp common/qrToken.js của module Batches', { skip: !f
     assert.equal(tri.verify(mine.url(b.code).split('/trace/')[1]), b.code);
   }
 });
+
+test('W8: dữ liệu demo có đủ 6 trạng thái lô và mỗi Distributor đều có lô để xem', () => {
+  const status = (b) => (b.steps.length ? b.steps.at(-1)[0] : 'CREATED');
+  assert.deepEqual([...new Set(seed.BATCHES.map(status))].sort(), [...EVENT_SEQUENCE].sort());
+  for (const key of ['distributor_a', 'distributor_b', 'processor_a']) {
+    assert.ok(seed.BATCHES.some((b) => b.steps.some(([, actor]) => actor === key)), `${key} chưa có lô nào`);
+  }
+});
+
+test('W8: dữ liệu demo không có dữ liệu cá nhân thừa (biển số xe, số điện thoại) và audit không chứa email', async () => {
+  const text = JSON.stringify(seed.BATCHES);
+  assert.doesNotMatch(text, /\b\d{2}[A-Z]-?\d{3}\.?\d{2}\b/, 'biển số xe');
+  assert.doesNotMatch(text, /\b0\d{9}\b/, 'số điện thoại');
+  for (const u of seed.USERS) assert.match(u.email, /@demo\.local$/);
+  const db = fakeDb();
+  await seed.seedDemo(db, { passwordHash: HASH, qr });
+  const audits = JSON.stringify(inserts(db, 'audit_logs').map((a) => a.params));
+  assert.doesNotMatch(audits, /@demo\.local/);
+});
