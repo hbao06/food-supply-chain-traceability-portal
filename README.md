@@ -74,6 +74,8 @@ Tạo chuỗi bí mật: `node -e "console.log(require('crypto').randomBytes(48)
 
 Bật PostgreSQL (Docker: `docker compose up -d database`; hoặc PostgreSQL cài trên máy, tự tạo CSDL `food_traceability`). Rồi tạo bảng và Admin:
 
+Nếu dùng Docker, đặt `DB_PORT=15432` trong `.env` ở thư mục gốc trước khi chạy `npm run db:migrate` / `npm run db:seed:admin` từ máy host. `DB_PORT=5432` chỉ dành cho PostgreSQL cài trực tiếp trên máy. Để sai cổng sẽ báo `ECONNREFUSED` hoặc có thể chạy migration nhầm vào CSDL khác đang chạy ở cổng 5432.
+
 ```bash
 cd backend
 npm install
@@ -96,7 +98,7 @@ npm install
 npm run dev
 ```
 
-Hoặc chạy cả ba dịch vụ bằng Docker (đã chạy bước 2 trên máy với `DB_HOST=localhost`):
+Hoặc chạy cả ba dịch vụ bằng Docker (đã chạy bước 2 trên máy với `DB_HOST=localhost`, `DB_PORT=15432` nếu bước 2 dùng Docker):
 
 ```bash
 docker compose up --build
