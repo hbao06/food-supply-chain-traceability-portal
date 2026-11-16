@@ -400,6 +400,41 @@ function Workspace({
   const [lang, setLang] = useState('VN')
   const routeInfo = parseRoute(route)
 
+  const [dashboardBatches, setDashboardBatches] = useState(() => (preview ? PREVIEW_BATCHES : []))
+
+  useEffect(() => {
+    if (preview || !token) return
+    let active = true
+    api
+      .listBatches(token, { limit: 100 })
+      .then((data) => {
+        if (!active) return
+        if (Array.isArray(data?.items)) {
+          setDashboardBatches(data.items)
+        }
+      })
+      .catch(() => {
+        // Giữ danh sách hiện tại nếu gặp lỗi mạng
+      })
+    return () => {
+      active = false
+    }
+  }, [token, preview])
+
+  const totalBatches = dashboardBatches.length
+  const createdBatches = dashboardBatches.filter((b) => b.currentStatus === 'CREATED').length
+  const transportedBatches = dashboardBatches.filter((b) => b.currentStatus === 'TRANSPORTED').length
+  const receivedBatches = dashboardBatches.filter((b) => b.currentStatus === 'RECEIVED').length
+  const processingBatches = dashboardBatches.filter((b) =>
+    ['RECEIVED', 'PROCESSED'].includes(b.currentStatus)
+  ).length
+  const packagedBatches = dashboardBatches.filter((b) => b.currentStatus === 'PACKAGED').length
+  const shippedBatches = dashboardBatches.filter((b) => b.currentStatus === 'SHIPPED').length
+  const inChainBatches = dashboardBatches.filter((b) =>
+    ['TRANSPORTED', 'RECEIVED', 'PROCESSED', 'PACKAGED'].includes(b.currentStatus)
+  ).length
+  const activeBatches = dashboardBatches.filter((b) => b.currentStatus !== 'RECALLED').length
+
   useEffect(() => {
     if (preview) return
     let active = true
@@ -881,27 +916,27 @@ function Workspace({
                   <>
                     <div className="kpi-card-metric">
                       <span className="metric-tag">NÔNG TRẠI</span>
-                      <strong className="metric-num">6</strong>
+                      <strong className="metric-num">{totalBatches}</strong>
                       <span className="metric-title">Tổng số lô nông sản</span>
                       <span className="metric-desc">Được canh tác theo tiêu chuẩn sạch</span>
                     </div>
                     <div className="kpi-card-metric highlight-orange">
                       <span className="metric-tag">SẴN SÀNG</span>
-                      <strong className="metric-num">1</strong>
+                      <strong className="metric-num">{createdBatches}</strong>
                       <span className="metric-title">Chờ thu gom / Vận chuyển</span>
                       <span className="metric-desc">Trạng thái mới tạo (CREATED)</span>
                     </div>
+                    <div className="kpi-card-metric highlight-blue">
+                      <span className="metric-tag">LUÂN CHUYỂN</span>
+                      <strong className="metric-num">{inChainBatches}</strong>
+                      <span className="metric-title">Đang lưu thông trong chuỗi</span>
+                      <span className="metric-desc">Vận chuyển hoặc đang chế biến</span>
+                    </div>
                     <div className="kpi-card-metric highlight-green">
                       <span className="metric-tag">THÀNH PHẨM</span>
-                      <strong className="metric-num">1</strong>
+                      <strong className="metric-num">{shippedBatches}</strong>
                       <span className="metric-title">Đã xuất bán ra thị trường</span>
                       <span className="metric-desc">Đã giao chuỗi siêu thị (SHIPPED)</span>
-                    </div>
-                    <div className="kpi-card-metric highlight-teal">
-                      <span className="metric-tag">CHỨNG NHẬN</span>
-                      <strong className="metric-num">100%</strong>
-                      <span className="metric-title">Chứng nhận canh tác VietGAP</span>
-                      <span className="metric-desc">Có mã QR truy xuất từng lô</span>
                     </div>
                   </>
                 )}
@@ -909,27 +944,27 @@ function Workspace({
                   <>
                     <div className="kpi-card-metric highlight-blue">
                       <span className="metric-tag">ĐẾN NƠI</span>
-                      <strong className="metric-num">1</strong>
+                      <strong className="metric-num">{transportedBatches}</strong>
                       <span className="metric-title">Chờ tiếp nhận nguyên liệu</span>
                       <span className="metric-desc">Đang trên đường chuyển đến (TRANSPORTED)</span>
                     </div>
                     <div className="kpi-card-metric highlight-orange">
                       <span className="metric-tag">GIA CÔNG</span>
-                      <strong className="metric-num">2</strong>
+                      <strong className="metric-num">{processingBatches}</strong>
                       <span className="metric-title">Đang sơ chế & Chế biến</span>
                       <span className="metric-desc">Quy trình rang sấy, đóng gói vô trùng</span>
                     </div>
                     <div className="kpi-card-metric highlight-purple">
                       <span className="metric-tag">ĐÓNG GÓI</span>
-                      <strong className="metric-num">1</strong>
+                      <strong className="metric-num">{packagedBatches}</strong>
                       <span className="metric-title">Hoàn tất dán tem mã QR</span>
-                      <span className="metric-desc">Sẵn sàng xuất kho sang nhà bán lẻ</span>
+                      <span className="metric-desc">Sẵn sàng xuất kho (PACKAGED)</span>
                     </div>
-                    <div className="kpi-card-metric highlight-teal">
-                      <span className="metric-tag">TIÊU CHUẨN</span>
-                      <strong className="metric-num">ISO 22K</strong>
-                      <span className="metric-title">Chuẩn HACCP & ISO 22000</span>
-                      <span className="metric-desc">100% đạt kiểm nghiệm an toàn</span>
+                    <div className="kpi-card-metric highlight-green">
+                      <span className="metric-tag">XUẤT XƯỞNG</span>
+                      <strong className="metric-num">{shippedBatches}</strong>
+                      <span className="metric-title">Đã xuất kho sang nhà bán lẻ</span>
+                      <span className="metric-desc">Hoàn tất giao dịch cung ứng (SHIPPED)</span>
                     </div>
                   </>
                 )}
@@ -937,27 +972,27 @@ function Workspace({
                   <>
                     <div className="kpi-card-metric highlight-blue">
                       <span className="metric-tag">LOGISTICS</span>
-                      <strong className="metric-num">1</strong>
+                      <strong className="metric-num">{transportedBatches}</strong>
                       <span className="metric-title">Lô đang trên đường vận chuyển</span>
-                      <span className="metric-desc">Container lạnh kiểm soát hành trình</span>
+                      <span className="metric-desc">Đang luân chuyển (TRANSPORTED)</span>
+                    </div>
+                    <div className="kpi-card-metric highlight-orange">
+                      <span className="metric-tag">TIẾP NHẬN</span>
+                      <strong className="metric-num">{receivedBatches}</strong>
+                      <span className="metric-title">Đã tiếp nhận vào kho</span>
+                      <span className="metric-desc">Sẵn sàng phân phối (RECEIVED)</span>
                     </div>
                     <div className="kpi-card-metric highlight-green">
                       <span className="metric-tag">ĐÃ GIAO</span>
-                      <strong className="metric-num">1</strong>
+                      <strong className="metric-num">{shippedBatches}</strong>
                       <span className="metric-title">Đã giao siêu thị / Điểm bán</span>
                       <span className="metric-desc">Đã bàn giao đại lý (SHIPPED)</span>
                     </div>
-                    <div className="kpi-card-metric highlight-teal">
-                      <span className="metric-tag">NHIỆT ĐỘ</span>
-                      <strong className="metric-num">4.8°C</strong>
-                      <span className="metric-title">Nhiệt độ thùng lạnh trung bình</span>
-                      <span className="metric-desc">Dải nhiệt tối ưu 2°C - 6°C</span>
-                    </div>
                     <div className="kpi-card-metric highlight-purple">
-                      <span className="metric-tag">ĐÚNG HẠN</span>
-                      <strong className="metric-num">99.4%</strong>
-                      <span className="metric-title">Tỷ lệ giao hàng đúng hẹn</span>
-                      <span className="metric-desc">Thời gian vận chuyển cam kết</span>
+                      <span className="metric-tag">TỔNG LÔ</span>
+                      <strong className="metric-num">{totalBatches}</strong>
+                      <span className="metric-title">Tổng số lô theo dõi</span>
+                      <span className="metric-desc">Theo dõi toàn bộ lô phân phối</span>
                     </div>
                   </>
                 )}
@@ -965,27 +1000,27 @@ function Workspace({
                   <>
                     <div className="kpi-card-metric">
                       <span className="metric-tag">TOÀN MẠNG</span>
-                      <strong className="metric-num">6</strong>
+                      <strong className="metric-num">{totalBatches}</strong>
                       <span className="metric-title">Tổng số lô nông sản hệ thống</span>
                       <span className="metric-desc">Theo dõi toàn diện các đơn vị</span>
                     </div>
                     <div className="kpi-card-metric highlight-blue">
-                      <span className="metric-tag">SỰ KIỆN</span>
-                      <strong className="metric-num">21</strong>
-                      <span className="metric-title">Sự kiện chuỗi cung ứng</span>
-                      <span className="metric-desc">Ghi nhận mốc luân chuyển hàng</span>
+                      <span className="metric-tag">LƯU THÔNG</span>
+                      <strong className="metric-num">{activeBatches}</strong>
+                      <span className="metric-title">Lô đang lưu thông bình thường</span>
+                      <span className="metric-desc">Không có cảnh báo thu hồi</span>
                     </div>
                     <div className="kpi-card-metric highlight-green">
-                      <span className="metric-tag">BẢO MẬT</span>
-                      <strong className="metric-num">100%</strong>
-                      <span className="metric-title">Toàn vẹn chuỗi băm SHA-256</span>
-                      <span className="metric-desc">Hash-chained không thể sửa đổi</span>
+                      <span className="metric-tag">HOÀN TẤT</span>
+                      <strong className="metric-num">{shippedBatches}</strong>
+                      <span className="metric-title">Lô hoàn tất chuỗi cung ứng</span>
+                      <span className="metric-desc">Đã giao điểm bán tiêu dùng</span>
                     </div>
-                    <div className="kpi-card-metric highlight-teal">
-                      <span className="metric-tag">KIỂM TOÁN</span>
-                      <strong className="metric-num">5</strong>
-                      <span className="metric-title">Bản ghi nhật ký kiểm toán</span>
-                      <span className="metric-desc">Lưu vết mọi thao tác thay đổi</span>
+                    <div className="kpi-card-metric highlight-orange">
+                      <span className="metric-tag">MỚI TẠO</span>
+                      <strong className="metric-num">{createdBatches}</strong>
+                      <span className="metric-title">Lô mới tạo tại nông trại</span>
+                      <span className="metric-desc">Sẵn sàng xuất trại (CREATED)</span>
                     </div>
                   </>
                 )}

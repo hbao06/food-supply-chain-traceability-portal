@@ -18,9 +18,18 @@ import {
   IconCheck,
 } from '../components/Icons.jsx'
 
+import {
+  parseAuditLogsResponse,
+  parseVerifyResponse,
+  getAuditBatchCode,
+} from './auditHelpers.js'
+
 export function AuditLogView({ token, preview = false, onOpenBatch }) {
   const [logs, setLogs] = useState(() => (preview ? PREVIEW_AUDIT_LOGS : []))
   const [loading, setLoading] = useState(!preview)
+  const [error, setError] = useState('')
+  const [refreshKey, setRefreshKey] = useState(0)
+
   const [filterAction, setFilterAction] = useState('ALL')
   const [filterEntity, setFilterEntity] = useState('ALL')
   const [searchQuery, setSearchQuery] = useState('')
@@ -30,19 +39,25 @@ export function AuditLogView({ token, preview = false, onOpenBatch }) {
 
   useEffect(() => {
     if (preview) return
+
     let active = true
 
     api
       .listAuditLogs(token)
       .then((res) => {
         if (!active) return
-        const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []
-        setLogs(list.length > 0 ? list : PREVIEW_AUDIT_LOGS)
+        const list = parseAuditLogsResponse(res)
+        setLogs(list)
+        setError('')
       })
       .catch((err) => {
         if (!active) return
-        console.warn('API audit logs không khả dụng, sử dụng dữ liệu kiểm toán mẫu:', err)
-        setLogs(PREVIEW_AUDIT_LOGS)
+        setError(
+          err instanceof ApiError
+            ? errorMessage(err)
+            : 'Không thể tải danh sách nhật ký kiểm toán từ máy chủ.'
+        )
+        setLogs([])
       })
       .finally(() => {
         if (active) setLoading(false)
@@ -51,7 +66,7 @@ export function AuditLogView({ token, preview = false, onOpenBatch }) {
     return () => {
       active = false
     }
-  }, [token, preview])
+  }, [token, preview, refreshKey])
 
   async function handleVerifyHashChain() {
     setVerifying(true)
@@ -59,29 +74,38 @@ export function AuditLogView({ token, preview = false, onOpenBatch }) {
 
     try {
       if (preview || !token) {
-        // Mock verification with realistic delay
+        // Mock verification ở chế độ demo/preview
         await new Promise((r) => setTimeout(r, 600))
         setVerifyResult({
           verified: true,
           count: logs.length,
-          algorithm: 'HMAC-SHA256',
+          firstBrokenId: null,
+          reason: null,
+          algorithm: 'SHA-256 + HMAC-Chaining (CSDL)',
           timestamp: new Date().toISOString(),
-          message: 'Toàn bộ chuỗi băm kiểm toán (Audit Logs) và sự kiện chuỗi cung ứng đều khớp tuyệt đối. Không phát hiện bất kỳ sự can thiệp hoặc thay đổi dữ liệu trái phép nào.',
+          message:
+            'Toàn bộ chuỗi băm kiểm toán (Audit Logs) và sự kiện chuỗi cung ứng đều khớp tuyệt đối. Không phát hiện bất kỳ sự can thiệp hoặc thay đổi dữ liệu trái phép nào.',
         })
       } else {
         const res = await api.verifyAuditChain(token)
+        const parsed = parseVerifyResponse(res)
         setVerifyResult({
-          verified: Boolean(res?.verified ?? true),
-          count: res?.count || logs.length,
-          algorithm: res?.algorithm || 'HMAC-SHA256',
-          timestamp: new Date().toISOString(),
-          message: res?.message || 'Xác thực chuỗi băm mật mã thành công.',
+          ...parsed,
+          algorithm: 'SHA-256 (Trigger CSDL)',
         })
       }
     } catch (err) {
       setVerifyResult({
         verified: false,
-        message: err instanceof ApiError ? errorMessage(err) : 'Không thể kết nối đến dịch vụ kiểm toán mật mã.',
+        count: 0,
+        firstBrokenId: null,
+        reason: null,
+        algorithm: 'SHA-256',
+        timestamp: new Date().toISOString(),
+        message:
+          err instanceof ApiError
+            ? errorMessage(err)
+            : 'Không thể kết nối đến dịch vụ kiểm toán mật mã.',
       })
     } finally {
       setVerifying(false)
@@ -102,11 +126,31 @@ export function AuditLogView({ token, preview = false, onOpenBatch }) {
       if (filterEntity !== 'ALL' && item.entityType !== filterEntity) return false
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim()
-        const matchCode = item.batchCode?.toLowerCase().includes(q)
+        const batchCode = getAuditBatchCode(item)
+        const matchId = String(item.auditId).includes(q)
+        const matchCode = batchCode?.toLowerCase().includes(q)
         const matchActor = item.actorName?.toLowerCase().includes(q)
         const matchOrg = item.organizationName?.toLowerCase().includes(q)
         const matchHash = item.hash?.toLowerCase().includes(q)
-        if (!matchCode && !matchActor && !matchOrg && !matchHash) return false
+        const matchEntity =
+          item.entityType?.toLowerCase().includes(q) ||
+          String(item.entityId).includes(q)
+        const matchAction = item.action?.toLowerCase().includes(q)
+        const matchValues =
+          JSON.stringify(item.newValue || '').toLowerCase().includes(q) ||
+          JSON.stringify(item.oldValue || '').toLowerCase().includes(q)
+        if (
+          !matchId &&
+          !matchCode &&
+          !matchActor &&
+          !matchOrg &&
+          !matchHash &&
+          !matchEntity &&
+          !matchAction &&
+          !matchValues
+        ) {
+          return false
+        }
       }
       return true
     })
@@ -160,7 +204,9 @@ export function AuditLogView({ token, preview = false, onOpenBatch }) {
               <span className={`verify-status-badge ${verifyResult.verified ? 'badge-ok' : 'badge-fail'}`}>
                 {verifyResult.verified ? 'CHUỖI BĂM HỢP LỆ 100%' : 'CẢNH BÁO: PHÁT HIỆN SAI LỆCH'}
               </span>
-              <span className="verify-algo-text">Thuật toán: SHA-256 + HMAC-Chaining</span>
+              <span className="verify-algo-text">
+                Thuật toán: {verifyResult.algorithm || 'SHA-256 + HMAC-Chaining'}
+              </span>
               {verifyResult.timestamp && (
                 <span className="verify-time-text">
                   Thời điểm kiểm tra: {formatDateTime(verifyResult.timestamp)}
@@ -194,8 +240,16 @@ export function AuditLogView({ token, preview = false, onOpenBatch }) {
         </div>
         <div className="kpi-card">
           <span className="kpi-label">Toàn vẹn chuỗi khối</span>
-          <strong className="kpi-value kpi-highlight">100%</strong>
-          <span className="kpi-sub">Hash chain liên kết liên tục</span>
+          <strong className={`kpi-value ${verifyResult ? (verifyResult.verified ? 'kpi-highlight' : 'kpi-danger') : ''}`}>
+            {verifyResult ? (verifyResult.verified ? '100% Hợp lệ' : 'Bị gián đoạn') : 'Chưa kiểm tra'}
+          </strong>
+          <span className="kpi-sub">
+            {verifyResult
+              ? verifyResult.verified
+                ? `Đã khớp ${verifyResult.count} bản ghi`
+                : `Lỗi tại #${verifyResult.firstBrokenId ?? '?'}`
+              : 'Nhấn "Xác thực chuỗi băm" để đối soát'}
+          </span>
         </div>
         <div className="kpi-card">
           <span className="kpi-label">Thuật toán băm</span>
@@ -218,7 +272,7 @@ export function AuditLogView({ token, preview = false, onOpenBatch }) {
           <input
             type="search"
             className="search-input"
-            placeholder="Tìm theo mã lô, người thực hiện, đơn vị, mã hash…"
+            placeholder="Tìm theo mã lô, người thực hiện, đơn vị, mã hash, chi tiết…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -234,7 +288,7 @@ export function AuditLogView({ token, preview = false, onOpenBatch }) {
             <option value="ALL">Mọi hành động</option>
             <option value="CREATE">Tạo mới (CREATE)</option>
             <option value="EVENT">Sự kiện chuỗi cung ứng (EVENT)</option>
-            <option value="UPDATE">Cập nhật lô (UPDATE)</option>
+            <option value="UPDATE">Cập nhật (UPDATE)</option>
             <option value="LOGIN">Đăng nhập (LOGIN)</option>
           </select>
 
@@ -253,7 +307,23 @@ export function AuditLogView({ token, preview = false, onOpenBatch }) {
       </div>
 
       {/* Table Content */}
-      {loading ? (
+      {error ? (
+        <div className="state-block error-block" role="alert">
+          <IconAlertTriangle />
+          <p>{error}</p>
+          <button
+            type="button"
+            className="button secondary"
+            onClick={() => {
+              setLoading(true)
+              setError('')
+              setRefreshKey((k) => k + 1)
+            }}
+          >
+            Thử lại
+          </button>
+        </div>
+      ) : loading ? (
         <div className="state-block" role="status">
           <span className="spinner-sm" /> Đang tải nhật ký kiểm toán…
         </div>
@@ -280,6 +350,9 @@ export function AuditLogView({ token, preview = false, onOpenBatch }) {
               <tbody>
                 {filteredLogs.map((log) => {
                   const isCopied = copiedHash === log.auditId
+                  const logTime = log.createdAt || log.timestamp
+                  const batchCode = getAuditBatchCode(log)
+
                   return (
                     <tr key={log.auditId} className="audit-row-item">
                       <td className="cell-audit-id">
@@ -288,30 +361,35 @@ export function AuditLogView({ token, preview = false, onOpenBatch }) {
                       <td className="cell-time">
                         <div className="audit-time-block">
                           <span className="time-primary">
-                            <IconClock /> {formatDateTime(log.timestamp)}
+                            <IconClock /> {formatDateTime(logTime)}
                           </span>
-                          <span className="time-sub">{formatRelativeTime(log.timestamp)}</span>
+                          <span className="time-sub">{formatRelativeTime(logTime)}</span>
                         </div>
                       </td>
                       <td className="cell-action">
-                        <span className={`action-pill pill-${log.action.toLowerCase()}`}>
+                        <span className={`action-pill pill-${(log.action || '').toLowerCase()}`}>
                           {log.action}
                         </span>
                       </td>
                       <td className="cell-entity">
                         <div className="entity-block">
                           <span className="entity-type-tag">{log.entityType}</span>
-                          {log.batchCode ? (
+                          {batchCode ? (
                             <button
                               type="button"
                               className="entity-code-btn"
                               title="Xem chi tiết lô hàng này"
-                              onClick={() => onOpenBatch && onOpenBatch(log.entityId || log.batchCode)}
+                              onClick={() =>
+                                onOpenBatch &&
+                                onOpenBatch(log.entityId || batchCode)
+                              }
                             >
-                              <code>{log.batchCode}</code>
+                              <code>{batchCode}</code>
                             </button>
                           ) : (
-                            <span className="entity-id-text">ID: {log.entityId || '—'}</span>
+                            <span className="entity-id-text">
+                              ID: {log.entityId ?? '—'}
+                            </span>
                           )}
                         </div>
                       </td>
@@ -320,31 +398,50 @@ export function AuditLogView({ token, preview = false, onOpenBatch }) {
                           <span className="actor-name">
                             <IconUser /> {log.actorName || 'Hệ thống'}
                           </span>
-                          <span className="actor-role-sub">{log.actorRole || 'Thành viên'}</span>
+                          <span className="actor-role-sub">
+                            {log.actorRole || (log.actorId ? `Mã #${log.actorId}` : 'Tự động')}
+                          </span>
                         </div>
                       </td>
                       <td className="cell-org">
                         <span className="org-text">
-                          <IconBuilding /> {log.organizationName || 'Toàn hệ thống'}
+                          <IconBuilding /> {log.organizationName || log.newValue?.organizationName || 'Toàn hệ thống'}
                         </span>
                       </td>
                       <td className="cell-hash">
                         <div className="hash-block">
-                          <code className="hash-preview" title={`Hash: ${log.hash}\nPrevious: ${log.previousHash}`}>
-                            {log.hash ? `${log.hash.slice(0, 10)}…${log.hash.slice(-8)}` : '—'}
-                          </code>
-                          <button
-                            type="button"
-                            className="hash-copy-btn"
-                            title="Sao chép toàn bộ mã SHA-256"
-                            onClick={() => copyText(log.hash, log.auditId)}
-                          >
-                            {isCopied ? <IconCheck /> : <IconCopy />}
-                          </button>
+                          {log.hash ? (
+                            <>
+                              <code
+                                className="hash-preview"
+                                title={`Hash: ${log.hash}\nPrevious: ${log.previousHash || 'N/A'}`}
+                              >
+                                {log.hash.slice(0, 10)}…{log.hash.slice(-8)}
+                              </code>
+                              <button
+                                type="button"
+                                className="hash-copy-btn"
+                                title="Sao chép toàn bộ mã SHA-256"
+                                onClick={() => copyText(log.hash, log.auditId)}
+                              >
+                                {isCopied ? <IconCheck /> : <IconCopy />}
+                              </button>
+                            </>
+                          ) : (
+                            <span
+                              className="hash-sealed-text"
+                              title="Lưu vết bất biến append-only, liên kết chuỗi băm trong CSDL PostgreSQL"
+                            >
+                              Lưu vết CSDL (SHA-256)
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="cell-integrity text-right">
-                        <span className="integrity-badge verified" title="Bản ghi đã được băm SHA-256 và chuỗi hóa liên tục">
+                        <span
+                          className="integrity-badge verified"
+                          title="Bản ghi lưu vết bất biến append-only được bảo vệ"
+                        >
                           <IconCheckCircle /> Hợp lệ
                         </span>
                       </td>
