@@ -1,4 +1,4 @@
-# ERD v3.3 – Cơ sở dữ liệu (W3-TV3, cập nhật W4, W5, W6, W7)
+# ERD v3.3 – Cơ sở dữ liệu (W3-TV3, cập nhật W4, W5, W6, W7, W8)
 
 **Dự án:** Food Supply Chain Traceability & Provenance Portal – Nhóm 13
 **Người phụ trách:** Đặng Vĩnh Quang (TV3 - Database / Auth / Security)
@@ -9,6 +9,7 @@
 **Cập nhật tuần 5 (v3.2):** thêm bảng `products`, cột `batches.product_id`, view `farms` (`database/migrations/003_products_farms.sql`) và dữ liệu mẫu (`npm run db:seed:demo`).
 **Cập nhật tuần 6 (v3.3):** thêm bảng `event_types` (migration 004), chuỗi băm `prev_hash` / `row_hash` cho `audit_logs` và `supply_chain_events` (migration 005), vai trò CSDL `fsc_app` (migration 006).
 **Cập nhật tuần 7:** chỉ thêm / thay chỉ mục (migration 007), không đổi bảng hay cột nên sơ đồ giữ nguyên v3.3. Rà soát bảo mật: [`docs/security/security-checklist.md`](../security/security-checklist.md).
+**Rà soát tuần 8:** không đổi bảng / cột (sơ đồ giữ nguyên v3.3). Bản schema đầy đủ hiện tại để tra cứu: [`database/schema-current.sql`](../../database/schema-current.sql) (tự sinh sau 001 → 007); kết quả rà soát schema: mục 7 của [`security-checklist.md`](../security/security-checklist.md).
 
 ERD v3 thay cho bản nháp v2 (`erd-draft.md`). Tên bảng và cột được thống nhất với Class Diagram (`docs/UML/class-diagram.dot`) và OpenAPI (`docs/openapi-spec.yaml`, bản W3-TV2): CSDL dùng `snake_case`, API dùng `camelCase` tương ứng.
 

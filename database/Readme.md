@@ -12,7 +12,13 @@ PostgreSQL 16 (service `database` trong `docker-compose.yml`, CSDL `food_traceab
 | `migrations/006_app_db_role.sql` | Vai trò CSDL `fsc_app` quyền tối thiểu cho backend (W6) |
 | `migrations/007_query_indexes.sql` | Chỉ mục cấp mã lô, tìm kiếm trigram (`pg_trgm`), danh sách lô / audit theo thời gian (W7) |
 | `tests/schema-check.sql` | 78 ca kiểm tra ràng buộc và chỉ mục; dữ liệu thử được ROLLBACK |
-| `schema.sql` | Bản v1 của Tuần 3, giữ để tham chiếu (giống hệt `001`, có test chặn lệch). **Không dùng để tạo CSDL nữa** |
+| `tests/demo-check.sql` | Kiểm tra "CSDL sạch" trước khi demo / sau khi khôi phục: chuỗi băm, QR, trạng thái lô, tài khoản, dữ liệu thử còn sót, quyền `fsc_app`, bộ đếm id (W8, chỉ đọc) |
+| `tests/perf/` | Dữ liệu 60 000 lô và câu đo truy vấn (W7) – chỉ cho CSDL thử |
+| `scripts/backup.sh`, `backup.ps1` | Sao lưu CSDL trong Docker ra `backups/*.dump` (W8) |
+| `scripts/restore.sh`, `restore.ps1` | Khôi phục an toàn từ bản sao lưu, tự chạy `demo-check.sql` (W8) |
+| `scripts/dump-schema.sh` | Sinh lại `schema-current.sql` |
+| `schema-current.sql` | **Toàn bộ schema hiện tại** (sau 001 → 007) để đọc / tra cứu; tự sinh, không sửa tay, không dùng để tạo CSDL (W8) |
+| `schema.sql` | Bản v1 của Tuần 3, giữ để tham chiếu (giống hệt `001`, có test chặn lệch). **Đã cũ, không dùng để tạo CSDL, không dùng để tra cứu** – xem `schema-current.sql` |
 
 Thiết kế và từ điển dữ liệu: [`docs/ERD/Readme.md`](../docs/ERD/Readme.md) · sơ đồ: [`docs/ERD/ERD-v3.pdf`](../docs/ERD/ERD-v3.pdf).
 
@@ -43,16 +49,26 @@ Kiểm tra ràng buộc (CSDL trống, sau khi migrate):
 docker compose exec -T database psql -U postgres -d food_traceability -v ON_ERROR_STOP=1 < database/tests/schema-check.sql
 ```
 
+PowerShell không có `<`, nên chép file vào container rồi chạy:
+
+```powershell
+docker compose cp database/tests/schema-check.sql database:/tmp/schema-check.sql
+docker compose exec database psql -U postgres -d food_traceability -v ON_ERROR_STOP=1 -f /tmp/schema-check.sql
+```
+
 Kết quả mong đợi: mọi dòng `PASS ...` và dòng cuối `ALL CHECKS PASSED`.
 
-## Dữ liệu mẫu (W5)
+## Dữ liệu mẫu (W5, bổ sung W8)
 
 `npm run db:seed:demo` nạp dữ liệu mẫu theo bảng seed trong `docs/test/test-plan.md` mục 3. **Chỉ dùng cho CSDL phát triển / demo** (từ chối chạy khi `NODE_ENV=production`).
 
 - Cần `QR_HMAC_SECRET` trong `.env` **giống với backend**, để QR của lô mẫu quét được ở trang truy xuất. `TRACE_BASE_URL` tùy chọn (mặc định `http://localhost:5173`).
 - Mật khẩu chung của mọi tài khoản mẫu: `SEED_USER_PASSWORD` trong `.env`, không đặt thì là `Demo12345`.
-- Chạy lại an toàn: đã có dữ liệu mẫu thì bỏ qua. Cần CSDL chưa có các mã lô `BATCH-2026-0001…0102` và email `@demo.local` bên dưới (nếu đã có thì dừng và báo rõ).
-- Toàn bộ chạy trong một transaction và đi qua đủ ràng buộc / trigger của CSDL; mỗi dòng tạo ra có audit (`source: "seed"`).
+- Chạy lại an toàn: đã có đủ dữ liệu mẫu thì bỏ qua. Lần đầu cần CSDL chưa có các mã lô và email `@demo.local` bên dưới (nếu đã có thì dừng và báo rõ).
+- **CSDL đã seed bản W5** (chưa có lô 0004, 0005): chạy lại `npm run db:seed:demo` sẽ **chỉ thêm các lô còn thiếu**, dùng lại đơn vị / tài khoản / sản phẩm mẫu đã có (đã thử trên CSDL thật). Dữ liệu cũ không được sửa (lịch sử chỉ ghi thêm), nên mô tả sự kiện có biển số xe của bản W5 vẫn còn – `demo-check.sql` sẽ báo WARN; muốn sạch hoàn toàn thì tạo lại CSDL (mục "Chuẩn bị CSDL sạch để demo"). Nếu tài khoản / đơn vị / sản phẩm mẫu đã bị xóa, đổi tên hoặc bị khóa, lệnh dừng và hướng dẫn tạo lại CSDL.
+- Toàn bộ chạy trong một transaction và đi qua đủ ràng buộc / trigger của CSDL; mỗi dòng tạo ra có audit (`source: "seed"`, không chứa email).
+- Không có dữ liệu cá nhân thật: email `@demo.local`, mô tả sự kiện không có biển số xe / số điện thoại (test `seedDemo.test.js` chặn).
+- Chạy được cả khi backend dùng vai trò `fsc_app` (đã thử trên CSDL thật).
 
 | Mã (test plan) | Email | Vai trò | Trạng thái | Đơn vị |
 | --- | --- | --- | --- | --- |
@@ -61,7 +77,7 @@ Kết quả mong đợi: mọi dòng `PASS ...` và dòng cuối `ALL CHECKS PAS
 | `farmer_b` | farmer_b@demo.local | FARMER | ACTIVE | Nông trại Sầu riêng Cái Mơn (nông trại B) |
 | `processor_a` | processor_a@demo.local | PROCESSOR | ACTIVE | Công ty Chế biến Nông sản Sài Gòn |
 | `distributor_a` | distributor_a@demo.local | DISTRIBUTOR | ACTIVE | Vận tải Lạnh Miền Nam |
-| `distributor_b` | distributor_b@demo.local | DISTRIBUTOR | ACTIVE | Phân phối Thực phẩm Sạch Hà Nội (chưa xử lý lô nào) |
+| `distributor_b` | distributor_b@demo.local | DISTRIBUTOR | ACTIVE | Phân phối Thực phẩm Sạch Hà Nội |
 | `user_pending` | user_pending@demo.local | FARMER | PENDING | – |
 | `user_locked` | user_locked@demo.local | DISTRIBUTOR | LOCKED | Vận tải Lạnh Miền Nam |
 
@@ -70,12 +86,64 @@ Kết quả mong đợi: mọi dòng `PASS ...` và dòng cuối `ALL CHECKS PAS
 | `BATCH-2026-0001` | A | Cà phê Arabica Cầu Đất, 500 kg | CREATED | Sửa lô được; QR; Distributor thấy lô đang chờ |
 | `BATCH-2026-0002` | A | Cà phê Robusta rang xay, 300 kg | SHIPPED (đủ 6 bước) | Sửa lô bị từ chối (409); timeline đầy đủ |
 | `BATCH-2026-0003` | A | Cà phê Arabica Cầu Đất, 200 kg | RECEIVED | Processor thấy lô đang chờ chế biến |
+| `BATCH-2026-0004` | A | Cà phê Arabica Cầu Đất, 120 kg | TRANSPORTED (distributor_b) | Distributor B có dữ liệu; lô đang vận chuyển (W8) |
+| `BATCH-2026-0005` | A | Cà phê Robusta rang xay, 250 kg | PROCESSED | Processor ghi tiếp PACKAGED (W8) |
 | `BATCH-2026-0101` | B | Sầu riêng Ri6, 1000 kg | PACKAGED | Ngoài phạm vi của farmer_a (404); chờ SHIPPED |
 | `BATCH-2026-0102` | B | Sầu riêng Ri6, 150 kg | CREATED | Lô mới của nông trại B |
 
-Phạm vi đọc lô với dữ liệu này (đã kiểm tra trên CSDL thật): farmer_a thấy 0001, 0002, 0003; farmer_b thấy 0101, 0102; processor_a thấy 0002, 0101 (thêm 0003 khi tra để tiếp nhận); distributor_b không thấy lô nào trong danh sách (thấy 0001, 0101, 0102 khi tra để tiếp nhận); admin_1 thấy tất cả.
+Đủ 6 trạng thái: CREATED (0001, 0102), TRANSPORTED (0004), RECEIVED (0003), PROCESSED (0005), PACKAGED (0101), SHIPPED (0002).
+
+Phạm vi đọc lô với dữ liệu này (W8, chạy `batchReadScope` thật trên CSDL đã seed):
+
+| Tài khoản | Danh sách `GET /batches` | Mở được theo id (thêm lô đang chờ vai trò mình) |
+| --- | --- | --- |
+| admin_1 | tất cả 7 lô | tất cả |
+| farmer_a | 0001, 0002, 0003, 0004, 0005 | như danh sách |
+| farmer_b | 0101, 0102 | như danh sách |
+| processor_a | 0002, 0005, 0101 | thêm 0003 |
+| distributor_a | 0002, 0003, 0005, 0101 | thêm 0001, 0004, 0102 (0004 do distributor_b đang vận chuyển – xem R-07 trong security checklist) |
+| distributor_b | 0004 | thêm 0001, 0101, 0102 |
 
 Mã lô tạo qua API sau khi seed sẽ tiếp tục từ `BATCH-2026-0103`.
+
+## Chuẩn bị CSDL sạch để demo (W8)
+
+```bash
+docker compose down -v                    # xóa volume postgres_data (MẤT dữ liệu cũ – sao lưu trước nếu cần)
+docker compose up -d database
+cd backend
+npm run db:migrate
+npm run db:seed:admin
+npm run db:seed:demo                      # QR_HMAC_SECRET, TRACE_BASE_URL phải giống backend lúc demo
+cd ..
+docker compose cp database/tests/demo-check.sql database:/tmp/demo-check.sql
+docker compose exec database psql -U postgres -d food_traceability -v ON_ERROR_STOP=1 -f /tmp/demo-check.sql
+```
+
+Kết quả mong đợi: `CSDL SẠCH: 0 FAIL`. `WARN` thường gặp: `fsc_app chưa bật đăng nhập` (bật theo `docs/deployment.md` nếu demo bằng `fsc_app`).
+Demo từ máy khác trong mạng: đặt `TRACE_BASE_URL=http://<IP máy>:5173` **trước** `db:seed:demo`, vì địa chỉ này được ghi vào QR của lô mẫu (`demo-check.sql` in ra địa chỉ đang dùng).
+
+## Sao lưu và khôi phục (W8)
+
+Chạy ở thư mục gốc repo khi service `database` đang chạy. Windows dùng bản `.ps1` (cùng chức năng):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File database\scripts\backup.ps1
+#   -> backups\fsc-food_traceability-20261116-140000.dump
+powershell -ExecutionPolicy Bypass -File database\scripts\restore.ps1 -File backups\fsc-food_traceability-20261116-140000.dump -Yes
+```
+
+```bash
+bash database/scripts/backup.sh
+bash database/scripts/restore.sh backups/fsc-food_traceability-20261116-140000.dump --yes
+```
+
+- Định dạng `pg_dump -Fc` (nén). File tạo **trong container** rồi chép ra bằng `docker compose cp`, không dùng `>` vì PowerShell làm hỏng file nhị phân.
+- Khôi phục không xóa CSDL đang dùng cho tới khi bản sao lưu đã khôi phục **thành công** vào CSDL tạm `food_traceability_restore` **và qua `demo-check.sql` trên CSDL tạm** (chuỗi băm, QR, bộ đếm id…). File hỏng hoặc bản sao lưu có lịch sử bị sửa → xóa CSDL tạm, CSDL cũ giữ nguyên. `--skip-check` / `-SkipCheck` bỏ qua kiểm tra (chỉ khi biết rõ bản sao lưu hợp lệ nhưng chưa "sạch", ví dụ chưa có Admin).
+- Tự tạo vai trò `fsc_app` nếu chưa có (pg_dump không chứa vai trò; thiếu thì lệnh GRANT trong bản sao lưu lỗi). Mật khẩu đăng nhập của `fsc_app` không nằm trong bản sao lưu: khôi phục sang máy mới thì đặt lại.
+- Trigger được tạo sau khi nạp dữ liệu nên trigger append-only không chặn việc khôi phục, và chuỗi băm giữ nguyên.
+- Đã thử: cụm PostgreSQL mới chưa có `fsc_app` → khôi phục thành công, `CSDL SẠCH: 0 FAIL`, ghi audit mới bằng `fsc_app` nối tiếp đúng chuỗi; bản sao lưu có 1 sự kiện bị sửa lén → dừng ở bước 4, CSDL đang dùng còn nguyên, không sót CSDL tạm.
+- **Bản sao lưu chứa hash mật khẩu, email, họ tên**: `backups/` và `*.dump` đã có trong `.gitignore` (test SEC-07); không gửi lên nhóm chat / Drive công khai.
 
 ## Lịch sử chỉ ghi thêm và phân quyền CSDL (W6)
 
@@ -120,5 +188,6 @@ Migration 007. Đo trên 60 000 lô / 143 000 sự kiện / 60 000 audit: [`docs
 - Ghi sự kiện: chỉ INSERT vào `supply_chain_events`; CSDL tự cập nhật `batches.current_status`.
 - Lỗi ràng buộc trả về SQLSTATE `23505` (trùng), `23514` (vi phạm CHECK / quy tắc nghiệp vụ), `23503` (khóa ngoại), `42501` (sửa bảng append-only hoặc bảng `roles`). Backend vẫn tự kiểm tra trước để trả đúng 400/403/404/409.
 - `/trace/...` đọc từ view `public_batch_trace`, `public_event_trace` để không lộ cột nội bộ.
+- Tra cứu tên bảng / cột: `database/schema-current.sql` (bản đầy đủ hiện tại). Các comment "đúng database/schema.sql" trong code nói tới bản W3, đã cũ.
 - `batches.product_id` không bắt buộc. Gửi `product_id` mà không gửi `product_name` thì CSDL tự lấy tên từ `products`; sản phẩm phải thuộc đúng nông trại của lô (sai → SQLSTATE `23514`).
 - Phân quyền và phạm vi đọc lô: dùng middleware trong [`backend/src/middleware`](../backend/src/middleware/README.md).

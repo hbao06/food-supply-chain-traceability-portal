@@ -208,3 +208,26 @@ test('SEC-06: tìm kiếm bằng đủ mã lô dùng so khớp đúng (chỉ m�
   assert.equal(word.params[0], '%50\\%\\_cà%'); // ký tự đại diện của LIKE được thoát
   assert.equal(repo.FULL_BATCH_CODE.test('BATCH-2026-04'), false); // mã chưa đủ -> tìm chứa chuỗi như cũ
 });
+
+// ---------------------------------------------------------------------------
+// SEC-07 – bản sao lưu CSDL (W8-TV3)
+// ---------------------------------------------------------------------------
+test('SEC-07: bản sao lưu CSDL không thể lỡ commit; script sao lưu không chuyển hướng dữ liệu nhị phân qua stdout', () => {
+  const ignore = read(path.join(ROOT, '.gitignore')).split('\n').map((l) => l.trim());
+  for (const rule of ['backups/', '*.dump']) assert.ok(ignore.includes(rule), `.gitignore thiếu ${rule}`);
+  for (const f of ['backup.sh', 'backup.ps1']) {
+    const src = read(path.join(ROOT, 'database/scripts', f));
+    assert.match(src, /pg_dump[^\n]*--file=/, `${f}: pg_dump phải ghi ra file trong container`);
+    assert.doesNotMatch(src, /pg_dump[^\n]*\s>\s/, `${f}: không dùng > (PowerShell làm hỏng file nhị phân)`);
+  }
+  for (const f of ['restore.sh', 'restore.ps1']) {
+    const src = read(path.join(ROOT, 'database/scripts', f));
+    assert.match(src, /CREATE ROLE fsc_app/, `${f}: phải tạo fsc_app trước khi khôi phục`);
+    assert.match(src, /_restore/, `${f}: phải khôi phục vào CSDL tạm trước khi thay CSDL thật`);
+    assert.ok(src.indexOf('pg_restore -U') < src.indexOf('--force'), `${f}: chỉ xóa CSDL cũ SAU khi khôi phục thành công`);
+    // Review TV2 (W8): kiểm tra toàn vẹn chạy trên CSDL TẠM và TRƯỚC khi xóa CSDL đang dùng.
+    const check = src.search(/psql[^\n]*-d "?\$(TMP_DB|tmpDb)"?[^\n]*demo-check\.sql/);
+    assert.ok(check > 0, `${f}: phải chạy demo-check.sql trên CSDL tạm`);
+    assert.ok(check < src.indexOf('--force'), `${f}: kiểm tra toàn vẹn phải chạy trước khi xóa CSDL cũ`);
+  }
+});
