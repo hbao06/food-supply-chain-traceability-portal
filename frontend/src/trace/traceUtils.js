@@ -96,12 +96,12 @@ export function parseTraceInput(rawInput) {
     }
   }
 
-  // Standard batch code (e.g. BATCH-2026-0001)
+  // Standard batch code (e.g. FR-2026-0001)
   return {
     valid: true,
     mode: 'code',
-    identifier: trimmed,
-    route: buildTraceRoute('code', trimmed),
+    identifier: trimmed.toUpperCase().startsWith('FR-') ? trimmed.toUpperCase() : trimmed,
+    route: buildTraceRoute('code', trimmed.toUpperCase().startsWith('FR-') ? trimmed.toUpperCase() : trimmed),
   }
 }
 

@@ -2,7 +2,7 @@
 
 const { NotFoundError } = require('../../common/errors');
 
-const BATCH_CODE_RE = /^BATCH-[0-9]{4}-[0-9]{4,}$/; // cùng quy tắc CHECK chk_batches_batch_code_format
+const BATCH_CODE_RE = /^FR-[0-9]{4}-[0-9]{4,}$/; // cùng quy tắc CHECK chk_batches_batch_code_format
 const MAX_TOKEN_LENGTH = 200;
 
 // Mọi trường hợp "không có kết quả" dùng CÙNG một lỗi: token sai chữ ký, mã sai định dạng, mã không tồn tại.

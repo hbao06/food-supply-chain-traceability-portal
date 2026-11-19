@@ -1,6 +1,6 @@
 -- =============================================================================
 -- schema-current.sql – TỰ SINH, KHÔNG SỬA TAY (database/scripts/dump-schema.sh)
--- Toàn bộ schema sau migration 001 → 007 (007_query_indexes.sql), chỉ để ĐỌC / tra cứu.
+-- Toàn bộ schema sau migration 001 → 008 (008_batch_code_fr_prefix.sql), chỉ để ĐỌC / tra cứu.
 -- Tạo CSDL thật bằng: cd backend && npm run db:migrate   (không chạy file này)
 -- Chỉ có cấu trúc (bảng, ràng buộc, trigger, hàm, view, chỉ mục, quyền); KHÔNG có dữ liệu của
 -- bảng tra cứu roles, event_types – dữ liệu đó nằm trong migration 002, 004.
@@ -553,7 +553,7 @@ CREATE TABLE public.batches (
     organization_id bigint NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     product_id bigint,
-    CONSTRAINT chk_batches_batch_code_format CHECK (((batch_code)::text ~ '^BATCH-[0-9]{4}-[0-9]{4,}$'::text)),
+    CONSTRAINT chk_batches_batch_code_format CHECK (((batch_code)::text ~ '^FR-[0-9]{4}-[0-9]{4,}$'::text)),
     CONSTRAINT chk_batches_origin_not_blank CHECK ((btrim((origin)::text) <> ''::text)),
     CONSTRAINT chk_batches_product_not_blank CHECK ((btrim((product_name)::text) <> ''::text)),
     CONSTRAINT chk_batches_quantity_positive CHECK ((quantity > (0)::numeric))
@@ -569,7 +569,7 @@ COMMENT ON TABLE public.batches IS 'Lô thực phẩm. Không có DELETE; chỉ 
 -- Name: COLUMN batches.batch_code; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.batches.batch_code IS 'Mã công khai, dạng BATCH-YYYY-NNNN, in lên QR và nhập tay.';
+COMMENT ON COLUMN public.batches.batch_code IS 'Mã công khai, dạng FR-YYYY-NNNN, in lên QR và nhập tay.';
 
 --
 -- Name: COLUMN batches.product_name; Type: COMMENT; Schema: public; Owner: -

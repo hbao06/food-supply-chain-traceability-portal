@@ -12,7 +12,7 @@ const path = require('path');
 
 const SPEC_PATH = path.resolve(__dirname, '../../docs/openapi-spec.yaml');
 const ROUTE_NOT_FOUND = 'Không tìm thấy đường dẫn'; // thông báo của notFound trong common/errorHandler.js
-const SAMPLE = { qrToken: 'x', batchCode: 'BATCH-2026-0001' };
+const SAMPLE = { qrToken: 'x', batchCode: 'FR-2026-0001' };
 const METHODS = ['get', 'post', 'put', 'patch', 'delete'];
 
 // Đọc danh sách (method, path) từ phần `paths:` bằng cách quét dòng, không cần thư viện YAML.

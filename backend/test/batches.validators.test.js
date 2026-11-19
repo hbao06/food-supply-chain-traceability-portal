@@ -41,7 +41,7 @@ test('sửa lô: chỉ nhận productName/origin/quantity, cần ít nhất mộ
 });
 
 test('sửa lô: chặn batchCode, currentStatus, createdBy, organizationId, batchId', () => {
-  const bad = fieldsOf(() => v.validateUpdateBatch({ quantity: 1, batchCode: 'BATCH-2026-0001', currentStatus: 'SHIPPED', createdBy: 1, organizationId: 2, batchId: 9 }));
+  const bad = fieldsOf(() => v.validateUpdateBatch({ quantity: 1, batchCode: 'FR-2026-0001', currentStatus: 'SHIPPED', createdBy: 1, organizationId: 2, batchId: 9 }));
   assert.deepEqual(bad, ['batchCode', 'batchId', 'createdBy', 'currentStatus', 'organizationId']);
 });
 

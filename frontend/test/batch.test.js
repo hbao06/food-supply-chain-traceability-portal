@@ -68,7 +68,7 @@ test('batchConstants - PREVIEW_BATCHES has realistic sample batches', () => {
   assert.ok(PREVIEW_BATCHES.length >= 5)
   for (const b of PREVIEW_BATCHES) {
     assert.ok(b.batchId, 'Thiếu batchId')
-    assert.match(b.batchCode, /^BATCH-2026-\d{4}$/, 'Mã lô không đúng định dạng')
+    assert.match(b.batchCode, /^FR-2026-\d{4}$/, 'Mã lô không đúng định dạng')
     assert.ok(b.productName, 'Thiếu productName')
     assert.ok(b.origin, 'Thiếu origin')
     assert.ok(b.quantity > 0, 'Quantity phải > 0')

@@ -28,40 +28,69 @@ export function BatchList({
   onCreateBatch,
   onEditBatch,
 }) {
+  const isChainPartner = user?.role === 'PROCESSOR' || user?.role === 'DISTRIBUTOR'
+  const [listScope, setListScope] = useState('mine') // 'mine' | 'awaiting'
   const [batches, setBatches] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [filterStatus, setFilterStatus] = useState('') // '' = All
+  const [filterStatus, setFilterStatus] = useState('')
+  const [datePreset, setDatePreset] = useState('ALL') // 'ALL' | '7D' | '30D' | 'QUARTER' | 'CUSTOM'
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [page, setPage] = useState(1)
-  const [limit] = useState(10)
+  const [limit] = useState(8)
   const [total, setTotal] = useState(0)
   const [qrModalBatch, setQrModalBatch] = useState(null)
   const [refreshKey, setRefreshKey] = useState(0)
 
-  // Debounce search input
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedQuery(searchQuery)
-      setPage(1) // Reset to page 1 on new search
-    }, 300)
+      setPage(1)
+    }, 280)
     return () => clearTimeout(handler)
   }, [searchQuery])
 
-  // Reset page when filterStatus changes
   function handleFilterStatusChange(newStatus) {
     setFilterStatus(newStatus)
     setPage(1)
   }
 
-  // Client-side filtering when in preview mode
+  function handleScopeChange(nextScope) {
+    setListScope(nextScope)
+    setFilterStatus('')
+    setPage(1)
+  }
+
+  function matchDate(creationDate) {
+    if (datePreset === 'ALL') return true
+    if (!creationDate) return true
+    const d = new Date(creationDate)
+    const now = new Date()
+    if (datePreset === '7D') return d >= new Date(now.getTime() - 7 * 86400000)
+    if (datePreset === '30D') return d >= new Date(now.getTime() - 30 * 86400000)
+    if (datePreset === 'QUARTER') return d >= new Date(now.getTime() - 90 * 86400000)
+    if (datePreset === 'CUSTOM') {
+      if (startDate && d < new Date(startDate)) return false
+      if (endDate) {
+        const end = new Date(endDate)
+        end.setHours(23, 59, 59, 999)
+        if (d > end) return false
+      }
+      return true
+    }
+    return true
+  }
+
   const previewData = useMemo(() => {
     if (!preview) return null
     let items = [...PREVIEW_BATCHES]
     if (filterStatus) {
       items = items.filter((b) => b.currentStatus === filterStatus)
     }
+    items = items.filter((b) => matchDate(b.creationDate))
     if (debouncedQuery.trim()) {
       const q = debouncedQuery.toLowerCase().trim()
       items = items.filter(
@@ -76,9 +105,8 @@ export function BatchList({
       total: items.length,
       items: items.slice(start, start + limit),
     }
-  }, [preview, filterStatus, debouncedQuery, page, limit])
+  }, [preview, filterStatus, datePreset, startDate, endDate, debouncedQuery, page, limit])
 
-  // Fetch batches from API
   useEffect(() => {
     if (preview) return
     let active = true
@@ -87,6 +115,7 @@ export function BatchList({
       .listBatches(token, {
         status: filterStatus || undefined,
         q: debouncedQuery.trim() || undefined,
+        scope: isChainPartner ? listScope : undefined,
         page,
         limit,
       })
@@ -113,13 +142,17 @@ export function BatchList({
     return () => {
       active = false
     }
-  }, [token, filterStatus, debouncedQuery, page, limit, refreshKey, preview])
+  }, [token, filterStatus, debouncedQuery, listScope, isChainPartner, page, limit, refreshKey, preview])
 
-  const displayedBatches = preview ? previewData?.items || [] : batches
-  const displayedTotal = preview ? previewData?.total || 0 : total
+  const filteredLiveBatches = useMemo(() => {
+    if (preview) return []
+    return batches.filter((b) => matchDate(b.creationDate || b.createdAt))
+  }, [batches, datePreset, startDate, endDate, preview])
+
+  const displayedBatches = preview ? previewData?.items || [] : (datePreset === 'ALL' ? batches : filteredLiveBatches)
+  const displayedTotal = preview ? previewData?.total || 0 : (datePreset === 'ALL' ? total : filteredLiveBatches.length)
   const isEffectiveLoading = preview ? false : loading
 
-  // Aggregate stats
   const stats = useMemo(() => {
     const source = preview ? previewData?.items || PREVIEW_BATCHES : batches
     const totalCount = preview ? displayedTotal : total
@@ -136,135 +169,212 @@ export function BatchList({
 
   return (
     <div className="batch-list-container">
-      {/* Page Heading & Action */}
+      {/* Compact Page Header */}
       <div className="page-heading-row">
         <div>
-          <span className="eyebrow">QUẢN LÝ LÔ HÀNG NÔNG SẢN</span>
-          <h1>Danh sách lô thực phẩm</h1>
-          <p>
-            Theo dõi, tra cứu và quản lý vòng đời của từng lô hàng từ nông trại đến người tiêu dùng.
-          </p>
+          <h1>Quản lý lô thực phẩm</h1>
+          <p>Theo dõi, cấp tem QR chuẩn <code>FR-</code> và quản lý vòng đời lô hàng.</p>
         </div>
 
-        {isFarmer && (
-          <button
-            type="button"
-            className="button primary with-icon"
-            onClick={onCreateBatch}
-          >
-            <IconPlus /> Khởi tạo lô mới
-          </button>
-        )}
+        <div className="heading-actions-group">
+          {isChainPartner && (
+            <div className="scope-segmented" role="tablist" aria-label="Phạm vi lô hiển thị">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={listScope === 'mine'}
+                className={`scope-seg-btn ${listScope === 'mine' ? 'active' : ''}`}
+                onClick={() => handleScopeChange('mine')}
+              >
+                Lô đã tham gia
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={listScope === 'awaiting'}
+                className={`scope-seg-btn ${listScope === 'awaiting' ? 'active' : ''}`}
+                onClick={() => handleScopeChange('awaiting')}
+              >
+                Chờ tiếp nhận
+              </button>
+            </div>
+          )}
+
+          {isFarmer && (
+            <button
+              type="button"
+              className="button primary with-icon"
+              onClick={onCreateBatch}
+            >
+              <IconPlus /> Khởi tạo lô mới
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Metric Cards Row */}
+      {/* Compact Metric Strip */}
       <div className="batch-stats-strip">
         <div className="metric-pill-card">
+          <span className="metric-label">Tổng số lô</span>
           <div className="metric-value-wrap">
             <span className="metric-number">{stats.totalCount}</span>
             <span className="metric-tag total">Tất cả</span>
           </div>
-          <span className="metric-label">Tổng số lô hàng</span>
         </div>
-
         <div className="metric-pill-card">
+          <span className="metric-label">Tại nông trại</span>
           <div className="metric-value-wrap">
             <span className="metric-number emerald">{stats.createdCount}</span>
-            <span className="metric-tag emerald">Mới tạo</span>
+            <span className="metric-tag emerald">Khởi tạo</span>
           </div>
-          <span className="metric-label">Đang ở nông trại</span>
         </div>
-
         <div className="metric-pill-card">
+          <span className="metric-label">Trong chuỗi cung ứng</span>
           <div className="metric-value-wrap">
             <span className="metric-number blue">{stats.activeCount}</span>
             <span className="metric-tag blue">Đang xử lý</span>
           </div>
-          <span className="metric-label">Vận chuyển & Chế biến</span>
         </div>
-
         <div className="metric-pill-card">
+          <span className="metric-label">Phân phối thị trường</span>
           <div className="metric-value-wrap">
             <span className="metric-number teal">{stats.shippedCount}</span>
             <span className="metric-tag teal">Xuất kho</span>
           </div>
-          <span className="metric-label">Phân phối thị trường</span>
         </div>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="table-filter-toolbar">
-        {/* Search input */}
-        <div className="search-box-wrap">
-          <span className="search-icon" aria-hidden="true">
-            <IconSearch />
-          </span>
-          <input
-            type="text"
-            className="search-input"
-            placeholder="Tìm theo mã lô (BATCH-...) hoặc tên sản phẩm…"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          {searchQuery && (
+      {/* Unified Card: Search + Status Pills + Data Table */}
+      <div className="batches-card-container">
+        <div className="table-controls-header">
+          <div className="table-filter-toolbar">
+            <div className="search-box-wrap">
+              <span className="search-icon" aria-hidden="true">
+                <IconSearch />
+              </span>
+              <input
+                type="text"
+                className="search-input"
+                placeholder="Tìm theo mã lô (FR-2026-...) hoặc tên sản phẩm…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  className="clear-search-btn"
+                  onClick={() => setSearchQuery('')}
+                  aria-label="Xóa từ khóa tìm kiếm"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
             <button
               type="button"
-              className="clear-search-btn"
-              onClick={() => setSearchQuery('')}
-              aria-label="Xóa từ khóa tìm kiếm"
+              className="refresh-icon-btn"
+              onClick={() => setRefreshKey((k) => k + 1)}
+              title="Tải lại danh sách"
+              aria-label="Tải lại danh sách"
             >
-              ✕
+              <IconRefresh />
             </button>
-          )}
-        </div>
+          </div>
 
-        {/* Refresh button */}
-        <button
-          type="button"
-          className="refresh-icon-btn"
-          onClick={() => setRefreshKey((k) => k + 1)}
-          title="Tải lại danh sách"
-          aria-label="Tải lại danh sách"
-        >
-          <IconRefresh />
-        </button>
-      </div>
-
-      {/* Status Filter Tabs */}
-      <div className="status-tabs-row" role="tablist" aria-label="Bộ lọc trạng thái lô">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={filterStatus === ''}
-          className={`status-tab-chip ${filterStatus === '' ? 'active' : ''}`}
-          onClick={() => handleFilterStatusChange('')}
-        >
-          Tất cả trạng thái
-        </button>
-
-        {BATCH_STATUSES.map((st) => {
-          const meta = STATUS_META[st]
-          return (
+          <div className="status-tabs-row" role="tablist" aria-label="Bộ lọc trạng thái lô">
             <button
-              key={st}
               type="button"
               role="tab"
-              aria-selected={filterStatus === st}
-              className={`status-tab-chip ${filterStatus === st ? 'active' : ''}`}
-              onClick={() => handleFilterStatusChange(st)}
+              aria-selected={filterStatus === ''}
+              className={`status-tab-chip ${filterStatus === '' ? 'active' : ''}`}
+              onClick={() => handleFilterStatusChange('')}
             >
-              <span className={`tab-dot ${meta.badgeClass}`} />
-              {meta.label}
+              Tất cả
             </button>
-          )
-        })}
-      </div>
 
-      {/* Batches Table / Cards */}
-      <div className="batches-card-container">
+            {BATCH_STATUSES.map((st) => {
+              const meta = STATUS_META[st]
+              return (
+                <button
+                  key={st}
+                  type="button"
+                  role="tab"
+                  aria-selected={filterStatus === st}
+                  className={`status-tab-chip ${filterStatus === st ? 'active' : ''}`}
+                  onClick={() => handleFilterStatusChange(st)}
+                >
+                  <span className={`tab-dot ${meta.badgeClass}`} />
+                  {meta.shortLabel}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Thanh bộ lọc thời gian */}
+          <div className="table-time-filter-bar">
+            <span className="time-filter-label">Thời gian:</span>
+            <div className="time-chips-group">
+              <button
+                type="button"
+                className={`time-chip-btn ${datePreset === 'ALL' ? 'active' : ''}`}
+                onClick={() => setDatePreset('ALL')}
+              >
+                Tất cả
+              </button>
+              <button
+                type="button"
+                className={`time-chip-btn ${datePreset === '7D' ? 'active' : ''}`}
+                onClick={() => setDatePreset('7D')}
+              >
+                7 ngày qua
+              </button>
+              <button
+                type="button"
+                className={`time-chip-btn ${datePreset === '30D' ? 'active' : ''}`}
+                onClick={() => setDatePreset('30D')}
+              >
+                30 ngày qua
+              </button>
+              <button
+                type="button"
+                className={`time-chip-btn ${datePreset === 'QUARTER' ? 'active' : ''}`}
+                onClick={() => setDatePreset('QUARTER')}
+              >
+                Quý này
+              </button>
+              <button
+                type="button"
+                className={`time-chip-btn ${datePreset === 'CUSTOM' ? 'active' : ''}`}
+                onClick={() => setDatePreset('CUSTOM')}
+              >
+                Tùy chỉnh
+              </button>
+            </div>
+
+            {datePreset === 'CUSTOM' && (
+              <div className="custom-dates-wrap">
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  aria-label="Từ ngày"
+                />
+                <span className="date-sep">→</span>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  aria-label="Đến ngày"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
         {isEffectiveLoading ? (
           <div className="batches-loading-state" role="status">
-            <div className="spinner-emerald" />
+            <div className="spinner-olive" />
             <p>Đang tải danh sách lô hàng…</p>
           </div>
         ) : error ? (
@@ -283,11 +393,13 @@ export function BatchList({
         ) : displayedBatches.length === 0 ? (
           <div className="batches-empty-state">
             <div className="empty-icon-wrap"><IconBatches /></div>
-            <h3>Không tìm thấy lô thực phẩm nào</h3>
+            <h3>Không có lô thực phẩm phù hợp</h3>
             <p>
               {searchQuery || filterStatus
-                ? 'Không có lô nào khớp với điều kiện tìm kiếm hoặc bộ lọc hiện tại.'
-                : 'Chưa có lô thực phẩm nào được khởi tạo trong hệ thống.'}
+                ? 'Không tìm thấy lô hàng nào khớp với bộ lọc hiện tại.'
+                : listScope === 'awaiting'
+                ? 'Hiện chưa có lô hàng nào đang chờ đơn vị bạn tiếp nhận xử lý.'
+                : 'Chưa có lô thực phẩm nào trong phạm vi hiển thị của bạn.'}
             </p>
             <div className="empty-actions">
               {(searchQuery || filterStatus) && (
@@ -300,6 +412,15 @@ export function BatchList({
                   }}
                 >
                   Xóa bộ lọc
+                </button>
+              )}
+              {isChainPartner && listScope === 'mine' && (
+                <button
+                  type="button"
+                  className="button primary"
+                  onClick={() => handleScopeChange('awaiting')}
+                >
+                  Xem lô chờ tiếp nhận
                 </button>
               )}
               {isFarmer && (
@@ -315,14 +436,13 @@ export function BatchList({
           </div>
         ) : (
           <>
-            {/* Desktop Table View */}
             <div className="table-responsive-desktop">
               <table className="batches-table">
                 <thead>
                   <tr>
                     <th scope="col">Mã lô</th>
                     <th scope="col">Sản phẩm</th>
-                    <th scope="col">Nơi xuất xứ</th>
+                    <th scope="col">Xuất xứ</th>
                     <th scope="col" className="text-right">Sản lượng</th>
                     <th scope="col">Ngày tạo</th>
                     <th scope="col">Trạng thái</th>
@@ -371,7 +491,7 @@ export function BatchList({
                             <button
                               type="button"
                               className="action-icon-btn qr-btn"
-                              title="Xem mã QR"
+                              title="Xem và tải mã QR"
                               onClick={() => setQrModalBatch(batch)}
                             >
                               <IconQr /> QR
@@ -403,7 +523,6 @@ export function BatchList({
               </table>
             </div>
 
-            {/* Mobile Cards View */}
             <div className="batches-cards-mobile">
               {displayedBatches.map((batch) => {
                 const canEditRow = isFarmer && batch.currentStatus === 'CREATED'
@@ -458,7 +577,7 @@ export function BatchList({
                         className="button primary sm"
                         onClick={() => onOpenBatch(batch.batchId)}
                       >
-                        Xem chi tiết →
+                        Chi tiết →
                       </button>
                     </div>
                   </div>
@@ -466,7 +585,6 @@ export function BatchList({
               })}
             </div>
 
-            {/* Pagination Controls */}
             <div className="pagination-bar">
               <span className="pagination-info">
                 Hiển thị <strong>{(page - 1) * limit + 1}</strong> –{' '}
@@ -504,10 +622,11 @@ export function BatchList({
         )}
       </div>
 
-      {/* Quick QR Modal */}
       {qrModalBatch && (
         <BatchQrModal
           batch={qrModalBatch}
+          token={token}
+          preview={preview}
           onClose={() => setQrModalBatch(null)}
         />
       )}

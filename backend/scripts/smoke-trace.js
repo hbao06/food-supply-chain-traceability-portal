@@ -47,10 +47,10 @@ run(async () => {
 
   console.log('\n[Không tìm thấy: mọi trường hợp cùng một kết quả]');
   const tampered = await call('GET', `/api/trace/${encodeURIComponent(qrToken.slice(0, -2) + 'xx')}`);
-  const wrongCode = await call('GET', `/api/trace/${encodeURIComponent(qrToken.replace(batchCode, 'BATCH-2026-9999'))}`);
-  const unknown = await call('GET', '/api/trace/code/BATCH-2026-999999');
+  const wrongCode = await call('GET', `/api/trace/${encodeURIComponent(qrToken.replace(batchCode, 'FR-2026-9999'))}`);
+  const unknown = await call('GET', '/api/trace/code/FR-2026-999999');
   const malformed = await call('GET', '/api/trace/code/abc');
-  const injection = await call('GET', `/api/trace/code/${encodeURIComponent("BATCH-2026-0001'; DROP TABLE batches;--")}`);
+  const injection = await call('GET', `/api/trace/code/${encodeURIComponent("FR-2026-0001'; DROP TABLE batches;--")}`);
   const noSig = await call('GET', `/api/trace/${batchCode}`);
   for (const [name, r] of [['Chữ ký bị sửa', tampered], ['Mã lô trong token bị đổi', wrongCode], ['Mã lô không tồn tại', unknown], ['Mã lô sai định dạng', malformed], ['Chuỗi tấn công SQL', injection], ['Token thiếu chữ ký', noSig]]) {
     check(`${name} -> 404 NOT_FOUND`, r.status === 404 && r.body?.code === 'NOT_FOUND', r);

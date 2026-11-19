@@ -1,56 +1,115 @@
-import { IconSearch } from '../components/Icons.jsx'
+import { useState } from 'react'
+import { BrandLogo } from '../components/BrandAndFooter.jsx'
+import { IconQr, IconSearch, IconUser } from '../components/Icons.jsx'
 
 export function PublicHeader({
   navigate,
   isAuthenticated = false,
   showSearchLink = false,
   preview = false,
+  onSelectScanTab,
 }) {
+  const [menuOpen, setMenuOpen] = useState(false)
   const homePath = preview ? '/trace?preview=1' : '/trace'
 
-  return (
-    <header className="public-header">
-      <div className="public-header-inner">
-        <button
-          type="button"
-          className="public-brand-btn"
-          onClick={() => navigate(homePath)}
-          aria-label="Về trang tra cứu nguồn gốc Food Trace"
-        >
-          <span className="brand">
-            <span className="brand-mark" aria-hidden="true">FT</span>
-            <span>Food Trace</span>
-          </span>
-          <span className="public-pill-tag">Cổng công khai</span>
-        </button>
+  function goToSection(hash) {
+    setMenuOpen(false)
+    if (window.location.pathname !== '/' && window.location.pathname !== '/trace') {
+      navigate(homePath)
+      setTimeout(() => {
+        const el = document.querySelector(hash)
+        if (el) el.scrollIntoView({ behavior: 'smooth' })
+      }, 120)
+      return
+    }
+    const el = document.querySelector(hash)
+    if (el) el.scrollIntoView({ behavior: 'smooth' })
+  }
 
-        <div className="public-header-actions">
+  return (
+    <header className="public-header-bar">
+      <div className="header-container">
+        <div
+          className="header-brand"
+          onClick={() => navigate(homePath)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === 'Enter' && navigate(homePath)}
+        >
+          <BrandLogo invert />
+          <div className="header-brand-slogan">
+            <span className="brand-badge-vn">VIỆT NAM</span>
+            <span className="brand-subtext on-dark">Cổng Truy Xuất Nguồn Gốc Quốc Gia</span>
+          </div>
+        </div>
+
+        <nav className="header-nav-menu" aria-label="Menu chính">
+          <button
+            type="button"
+            className="header-nav-link"
+            onClick={() => navigate(homePath)}
+          >
+            Trang chủ
+          </button>
+          <button
+            type="button"
+            className="header-nav-link"
+            onClick={() => goToSection('#showcase')}
+          >
+            Nông sản
+          </button>
+          <button
+            type="button"
+            className="header-nav-link"
+            onClick={() => goToSection('#pillars')}
+          >
+            Quy trình
+          </button>
+          <button
+            type="button"
+            className="header-nav-link"
+            onClick={() => goToSection('#standards')}
+          >
+            Tiêu chuẩn
+          </button>
+          <button
+            type="button"
+            className="header-nav-link text-btn"
+            onClick={() => {
+              if (onSelectScanTab) onSelectScanTab()
+              else navigate(homePath)
+            }}
+          >
+            <IconQr /> Quét QR
+          </button>
+        </nav>
+
+        <div className="header-actions">
           {showSearchLink && (
             <button
               type="button"
-              className="button secondary sm with-icon"
+              className="btn-portal-login with-icon"
               onClick={() => navigate(homePath)}
             >
-              <IconSearch />
-              <span>Tra cứu mã khác</span>
+              <IconSearch /> Tra cứu mã khác
             </button>
           )}
 
           {isAuthenticated ? (
             <button
               type="button"
-              className="public-auth-link"
-              onClick={() => navigate('/batches')}
+              className="btn-portal-workspace"
+              onClick={() => navigate('/dashboard')}
             >
-              Không gian làm việc
+              Không gian làm việc →
             </button>
           ) : (
             <button
               type="button"
-              className="public-auth-link"
+              className="btn-portal-login"
               onClick={() => navigate('/login')}
             >
-              Đăng nhập
+              Đăng nhập đối tác
             </button>
           )}
         </div>

@@ -28,6 +28,7 @@ const PUBLIC_ROUTES = new Set([
   'authRouter POST /login',
   'traceRouter GET /code/:batchCode',
   'traceRouter GET /:qrToken',
+  'assistantRouter POST /chat',
   'healthRouter GET /ready',
 ]);
 
@@ -100,7 +101,7 @@ test('SEC-02: DTO người dùng / lô / sự kiện / audit chỉ có trường
 
   assertOnlyKeys(toUserDto({ ...LEAKY, user_id: '1', name: 'A', email: 'a@x.vn', role: 'FARMER', organization_id: '1', status: 'ACTIVE' }),
     ['userId', 'name', 'email', 'role', 'organizationId', 'status'], 'User');
-  assertOnlyKeys(toBatchDto({ ...LEAKY, batch_id: '1', batch_code: 'BATCH-2026-0001', product_name: 'X', origin: 'Y', quantity: '1',
+  assertOnlyKeys(toBatchDto({ ...LEAKY, batch_id: '1', batch_code: 'FR-2026-0001', product_name: 'X', origin: 'Y', quantity: '1',
     creation_date: new Date(0), current_status: 'CREATED', created_by: '2', organization_id: '1' }),
   ['batchId', 'batchCode', 'productName', 'origin', 'quantity', 'creationDate', 'currentStatus', 'createdBy', 'organizationId'], 'Batch');
   const ev = toEventDto({ ...LEAKY, event_id: '1', batch_id: '1', actor_id: '2', event_type: 'CREATED', timestamp: new Date(0),
@@ -179,7 +180,7 @@ test('SEC-06: nextBatchCode dùng đúng biểu thức của chỉ mục idx_bat
   const repo = require('../src/modules/batches/batches.repository');
   const calls = [];
   const db = { async query(sql, params) { calls.push(sql); return { rows: [{ year: 2026, max_seq: 9999 }] }; } };
-  assert.equal(await repo.nextBatchCode(db), 'BATCH-2026-10000');
+  assert.equal(await repo.nextBatchCode(db), 'FR-2026-10000');
   const sql = calls[0].replace(/\s+/g, ' ');
   assert.ok(sql.includes(`WHERE ${yearExpr} = EXTRACT(YEAR FROM now())::int`), 'điều kiện năm phải khớp biểu thức chỉ mục');
   assert.ok(sql.includes(`ORDER BY ${seqExpr} DESC LIMIT 1`), 'sắp xếp phải khớp biểu thức chỉ mục');
@@ -189,7 +190,7 @@ test('SEC-06: nextBatchCode dùng đúng biểu thức của chỉ mục idx_bat
 test('SEC-06: nextBatchCode năm mới bắt đầu từ 0001', async () => {
   const repo = require('../src/modules/batches/batches.repository');
   const db = { async query() { return { rows: [{ year: 2027, max_seq: 0 }] }; } };
-  assert.equal(await repo.nextBatchCode(db), 'BATCH-2027-0001');
+  assert.equal(await repo.nextBatchCode(db), 'FR-2027-0001');
 });
 
 test('SEC-06: tìm kiếm bằng đủ mã lô dùng so khớp đúng (chỉ mục UNIQUE), từ khóa khác dùng ILIKE', async () => {
@@ -200,13 +201,13 @@ test('SEC-06: tìm kiếm bằng đủ mã lô dùng so khớp đúng (chỉ m�
     await repo.listVisibleBatches(db, { role: 'ADMIN' }, { q, limit: 20, offset: 0 });
     return calls[1];
   };
-  const code = await run('batch-2026-0420');
+  const code = await run('fr-2026-0420');
   assert.match(code.sql, /\(b\.batch_code = \$1 OR b\.product_name ILIKE \$2\)/);
-  assert.deepEqual(code.params.slice(0, 2), ['BATCH-2026-0420', '%batch-2026-0420%']);
+  assert.deepEqual(code.params.slice(0, 2), ['FR-2026-0420', '%fr-2026-0420%']);
   const word = await run('50%_cà');
   assert.match(word.sql, /\(b\.product_name ILIKE \$1 OR b\.batch_code ILIKE \$1\)/);
   assert.equal(word.params[0], '%50\\%\\_cà%'); // ký tự đại diện của LIKE được thoát
-  assert.equal(repo.FULL_BATCH_CODE.test('BATCH-2026-04'), false); // mã chưa đủ -> tìm chứa chuỗi như cũ
+  assert.equal(repo.FULL_BATCH_CODE.test('FR-2026-04'), false); // mã chưa đủ -> tìm chứa chuỗi như cũ
 });
 
 // ---------------------------------------------------------------------------
