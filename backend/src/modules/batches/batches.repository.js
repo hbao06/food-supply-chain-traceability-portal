@@ -13,7 +13,7 @@ async function lockBatchCodeSequence(db) {
   await db.query('SELECT pg_advisory_xact_lock($1)', [BATCH_CODE_LOCK]);
 }
 
-// Mã lô: BATCH-<năm>-<số thứ tự 4 chữ số>, thứ tự tăng dần trong từng năm (CHECK chk_batches_batch_code_format).
+// Mã lô: FR-<năm>-<số thứ tự 4 chữ số>, thứ tự tăng dần trong từng năm (CHECK chk_batches_batch_code_format).
 // Biểu thức split_part(...)::int phải giữ ĐÚNG như chỉ mục idx_batches_code_year_seq (migration 007) để
 // PostgreSQL đọc số lớn nhất từ chỉ mục (~0,1 ms) thay vì quét cả bảng (W7-TV3, docs/security/query-optimization.md).
 async function nextBatchCode(db) {
@@ -25,7 +25,7 @@ async function nextBatchCode(db) {
                       LIMIT 1), 0) AS max_seq`
   );
   const { year, max_seq: maxSeq } = r.rows[0];
-  return `BATCH-${year}-${String(Number(maxSeq) + 1).padStart(4, '0')}`;
+  return `FR-${year}-${String(Number(maxSeq) + 1).padStart(4, '0')}`;
 }
 
 async function insertBatch(db, { batchCode, productName, origin, quantity, createdBy, organizationId }) {
@@ -68,18 +68,22 @@ async function findVisibleBatch(db, auth, batchId, { forUpdate = false, includeA
 }
 
 const escapeLike = (s) => s.replace(/[\\%_]/g, '\\$&');
-const FULL_BATCH_CODE = /^BATCH-[0-9]{4}-[0-9]{4,}$/i; // giống CHECK chk_batches_batch_code_format
+const FULL_BATCH_CODE = /^FR-[0-9]{4}-[0-9]{4,}$/i; // giống CHECK chk_batches_batch_code_format
 
-async function listVisibleBatches(db, auth, { status, q, limit, offset }) {
+async function listVisibleBatches(db, auth, { status, q, scope: listScope, limit, offset }) {
   const params = [];
-  const scope = batchReadScope(auth, { alias: 'b', startIndex: 1 }); // danh sách: không có includeAwaiting
+  const includeAwaiting = listScope === 'awaiting' || listScope === 'all';
+  const scope = batchReadScope(auth, { alias: 'b', startIndex: 1, includeAwaiting });
   params.push(...scope.params);
   const where = [scope.clause];
+  if (listScope === 'awaiting' && (auth.role === 'PROCESSOR' || auth.role === 'DISTRIBUTOR')) {
+    const { statusesAwaiting } = require('../../middleware/rbac');
+    params.push(statusesAwaiting(auth.role));
+    where.push(`b.current_status = ANY($${params.length}::text[])`);
+  }
   if (status) { params.push(status); where.push(`b.current_status = $${params.length}`); }
   if (q && FULL_BATCH_CODE.test(q)) {
     // Gõ đủ một mã lô (thường gặp nhất: chép từ nhãn / QR): so khớp đúng mã qua chỉ mục UNIQUE.
-    // ILIKE '%BATCH-2026-0420%' thì mọi lô đều có các bộ ba "BAT", "TCH", "-20"... nên chỉ mục trigram
-    // không lọc được và PostgreSQL quét cả bảng (~90 ms / 60 000 lô -> ~6 ms, W7-TV3).
     params.push(q.toUpperCase(), `%${escapeLike(q)}%`);
     where.push(`(b.batch_code = $${params.length - 1} OR b.product_name ILIKE $${params.length})`);
   } else if (q) {

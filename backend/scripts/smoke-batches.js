@@ -22,7 +22,7 @@ run(async () => {
   const c1 = await call('POST', '/api/batches', { token: a.farmerA.token, body: good });
   const b1 = c1.body;
   check('Farmer tạo lô -> 201', c1.status === 201, c1);
-  check('Mã lô đúng định dạng BATCH-YYYY-NNNN', /^BATCH-\d{4}-\d{4,}$/.test(b1?.batchCode || ''), b1?.batchCode);
+  check('Mã lô đúng định dạng FR-YYYY-NNNN', /^FR-\d{4}-\d{4,}$/.test(b1?.batchCode || ''), b1?.batchCode);
   check('Lô mới ở CREATED, thuộc đơn vị và người tạo', b1?.currentStatus === 'CREATED' && b1?.createdBy === a.farmerA.userId && b1?.organizationId === a.farmerA.orgId, b1);
   check('quantity trả về là số', b1?.quantity === 500, b1?.quantity);
   const c2 = await call('POST', '/api/batches', { token: a.farmerA.token, body: good });
@@ -66,7 +66,7 @@ run(async () => {
   check('Distributor sửa lô -> 403', (await call('PATCH', `/api/batches/${id}`, { token: a.distributor.token, body: { quantity: 1 } })).status === 403);
   const upd = await call('PATCH', `/api/batches/${id}`, { token: a.farmerA.token, body: { quantity: 480 } });
   check('Farmer A sửa số lượng -> 200', upd.status === 200 && upd.body?.quantity === 480, upd);
-  check('Không sửa được batchCode/currentStatus -> 400', (await call('PATCH', `/api/batches/${id}`, { token: a.farmerA.token, body: { batchCode: 'BATCH-2026-9999', currentStatus: 'SHIPPED' } })).status === 400);
+  check('Không sửa được batchCode/currentStatus -> 400', (await call('PATCH', `/api/batches/${id}`, { token: a.farmerA.token, body: { batchCode: 'FR-2026-9999', currentStatus: 'SHIPPED' } })).status === 400);
   check('Body rỗng -> 400', (await call('PATCH', `/api/batches/${id}`, { token: a.farmerA.token, body: {} })).status === 400);
   check('Số lượng sai -> 400', (await call('PATCH', `/api/batches/${id}`, { token: a.farmerA.token, body: { quantity: 0 } })).status === 400);
   const same = await call('PATCH', `/api/batches/${id}`, { token: a.farmerA.token, body: { quantity: 480 } });

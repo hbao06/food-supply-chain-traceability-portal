@@ -41,7 +41,7 @@ test('chịu được xuống dòng CRLF của Windows', () => {
 test('thay tham số đường dẫn bằng giá trị mẫu', () => {
   assert.equal(fill('/batches/{batchId}/events'), '/batches/1/events');
   assert.equal(fill('/trace/{qrToken}'), '/trace/x');
-  assert.equal(fill('/trace/code/{batchCode}'), '/trace/code/BATCH-2026-0001');
+  assert.equal(fill('/trace/code/{batchCode}'), '/trace/code/FR-2026-0001');
   assert.equal(fill('/users/{userId}/status'), '/users/1/status');
 });
 

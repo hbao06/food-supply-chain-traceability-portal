@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import QRCode from 'qrcode'
 import { api, ApiError } from '../api.js'
 import { BatchStatusBadge } from '../batches/BatchStatusBadge.jsx'
 import {
@@ -6,11 +7,14 @@ import {
   formatDateTime,
   formatRelativeTime,
 } from '../batches/batchConstants.js'
+import { PublicFooter } from '../components/BrandAndFooter.jsx'
 import {
   IconAlertTriangle,
   IconBuilding,
+  IconCheck,
   IconCheckCircle,
   IconClock,
+  IconDownload,
   IconMapPin,
   IconRefresh,
   IconSearch,
@@ -45,6 +49,8 @@ export function PublicTraceResult({
   const [retryTick, setRetryTick] = useState(0)
   const [quickCode, setQuickCode] = useState('')
   const [quickError, setQuickError] = useState('')
+  const [copiedLink, setCopiedLink] = useState(false)
+  const qrCanvasRef = useRef(null)
 
   const [state, setState] = useState(() => {
     if (prefetchedTrace) {
@@ -103,6 +109,26 @@ export function PublicTraceResult({
     }
   }, [identifier, mode, prefetchedTrace, preview, retryTick])
 
+  const shareUrl =
+    state.data && typeof window !== 'undefined'
+      ? `${window.location.origin}${buildTraceRoute(mode, identifier)}`
+      : ''
+
+  useEffect(() => {
+    if (!qrCanvasRef.current || !shareUrl) return
+    QRCode.toCanvas(
+      qrCanvasRef.current,
+      shareUrl,
+      {
+        width: 146,
+        margin: 2,
+        color: { dark: '#2D4316', light: '#FFFFFF' },
+        errorCorrectionLevel: 'H',
+      },
+      () => {}
+    )
+  }, [shareUrl])
+
   function handleRetry() {
     setState({ status: 'loading', data: null, error: null })
     setRetryTick((t) => t + 1)
@@ -119,11 +145,27 @@ export function PublicTraceResult({
     navigate(buildTraceRoute(parsed.mode, parsed.identifier, { preview }))
   }
 
+  function handleCopyShareLink() {
+    if (!shareUrl) return
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      setCopiedLink(true)
+      setTimeout(() => setCopiedLink(false), 2000)
+    })
+  }
+
+  function handleDownloadQr() {
+    if (!qrCanvasRef.current || !state.data) return
+    const link = document.createElement('a')
+    link.download = `QR-${state.data.batchCode}.png`
+    link.href = qrCanvasRef.current.toDataURL('image/png')
+    link.click()
+  }
+
   const searchHomePath = preview ? '/trace?preview=1' : '/trace'
   const progress = state.data ? getTraceProgress(state.data.currentStatus) : null
 
   return (
-    <div className="public-page">
+    <div className="public-portal-page">
       <PublicHeader
         navigate={navigate}
         isAuthenticated={isAuthenticated}
@@ -132,25 +174,12 @@ export function PublicTraceResult({
       />
 
       <main className="public-main public-result-main">
-        <div className="public-container">
-          {preview && (
-            <div className="preview-banner" role="status">
-              <strong><IconSparkles /> Chế độ xem trước công khai (Demo)</strong> — Dữ liệu đang hiển thị theo mô phỏng công khai chuẩn <code>PublicTrace</code> (ẩn thông tin định danh cá nhân và nhật ký nội bộ).
-            </div>
-          )}
-
+        <div className="pub-container">
           {state.status === 'loading' && (
             <section className="trace-status-card trace-loading-card" role="status" aria-live="polite">
-              <div className="trace-skeleton-header">
-                <div className="skeleton-line shimmer-short" />
-                <div className="skeleton-title shimmer-medium" />
-              </div>
-              <div className="trace-skeleton-grid">
-                <div className="skeleton-box shimmer-block" />
-                <div className="skeleton-box shimmer-block" />
-              </div>
+              <div className="spinner-olive" />
               <p className="trace-loading-text">
-                Đang tra cứu thông tin nguồn gốc và hành trình lô hàng…
+                Đang xác thực và tải hành trình nguồn gốc lô hàng…
               </p>
             </section>
           )}
@@ -176,27 +205,24 @@ export function PublicTraceResult({
               <div className="not-found-checklist">
                 <h2>Gợi ý kiểm tra</h2>
                 <ul>
-                  <li>Đối chiếu lại mã lô trên tem nhãn (ví dụ <code>BATCH-2026-0001</code>).</li>
+                  <li>Đối chiếu lại mã lô trên tem nhãn theo chuẩn <code>FR-2026-0001</code>.</li>
                   <li>Nếu quét bằng QR, đảm bảo đường dẫn QR trên bao bì không bị cắt hoặc chỉnh sửa ký tự.</li>
                 </ul>
               </div>
 
               <form className="not-found-quick-form" onSubmit={handleQuickLookup} noValidate>
-                <label htmlFor="retry-trace-code" className="sr-only-label">
-                  Nhập mã lô khác
-                </label>
                 <input
                   id="retry-trace-code"
                   type="text"
                   className="public-search-input compact"
-                  placeholder="Nhập mã lô khác (VD: BATCH-2026-0001)"
+                  placeholder="Nhập mã lô khác (VD: FR-2026-0002)"
                   value={quickCode}
                   onChange={(e) => {
                     setQuickCode(e.target.value)
                     if (quickError) setQuickError('')
                   }}
                 />
-                <button type="submit" className="button primary">
+                <button type="submit" className="btn-olive-pill">
                   Tra cứu lại
                 </button>
               </form>
@@ -257,21 +283,47 @@ export function PublicTraceResult({
 
           {state.status === 'success' && state.data && (
             <>
-              {/* Hero Summary Banner */}
+              {/* Compact Result Top Bar */}
+              <div className="trace-result-topbar">
+                <nav className="detail-breadcrumb" aria-label="Điều hướng phân cấp">
+                  <button type="button" className="breadcrumb-link" onClick={() => navigate(searchHomePath)}>
+                    ← Trang tra cứu
+                  </button>
+                  <span className="breadcrumb-separator">/</span>
+                  <span className="breadcrumb-current">{state.data.batchCode}</span>
+                </nav>
+
+                <form className="trace-topbar-quick" onSubmit={handleQuickLookup} noValidate>
+                  <input
+                    type="text"
+                    placeholder="Tra mã FR- khác..."
+                    value={quickCode}
+                    onChange={(e) => {
+                      setQuickCode(e.target.value)
+                      if (quickError) setQuickError('')
+                    }}
+                    aria-label="Tra cứu nhanh mã lô khác"
+                  />
+                  <button type="submit" className="btn-olive-pill sm">Tra cứu</button>
+                </form>
+              </div>
+
+              {/* Compact Hero Banner */}
               <header className="public-result-hero">
-                <div className="result-hero-badges">
-                  <span className="verified-public-badge">
-                    <IconCheckCircle />
-                    {mode === 'token' ? 'Xác thực qua mã QR hợp lệ' : 'Truy xuất công khai theo mã lô'}
-                  </span>
-                  <code className="result-batch-code-pill">{state.data.batchCode}</code>
-                </div>
                 <div className="result-hero-main">
                   <div>
-                    <span className="eyebrow">NGUỒN GỐC LÔ {state.data.batchCode}</span>
+                    <div className="result-hero-badges">
+                      <span className="verified-public-badge">
+                        <IconCheckCircle />
+                        {mode === 'token' ? 'Xác thực chữ ký QR hợp lệ' : 'Truy xuất công khai hợp lệ'}
+                      </span>
+                      <code className="result-batch-code-pill">{state.data.batchCode}</code>
+                    </div>
                     <h1>{state.data.productName}</h1>
                     <p className="result-hero-origin">
                       <IconMapPin /> Xuất xứ: <strong>{state.data.origin}</strong>
+                      <span className="hero-sep">·</span>
+                      <IconBuilding /> <strong>{state.data.organizationName}</strong>
                     </p>
                   </div>
                   <div className="result-hero-status-box">
@@ -281,81 +333,93 @@ export function PublicTraceResult({
                 </div>
               </header>
 
-              {/* Responsive 2-column layout: Batch Info FIRST, Timeline SECOND (guaranteed on 360px mobile) */}
+              {/* Balanced 2-Column Layout: Sticky Info + QR on Left, Compact Timeline on Right */}
               <div className="public-trace-layout">
-                {/* 1. THÔNG TIN LÔ */}
-                <section className="public-batch-info-card" aria-labelledby="public-batch-info-heading">
-                  <div className="public-card-header">
-                    <span className="section-index">01</span>
-                    <h2 id="public-batch-info-heading">Thông tin lô</h2>
-                  </div>
+                <aside className="public-batch-info-col">
+                  <section className="public-batch-info-card" aria-labelledby="public-batch-info-heading">
+                    <div className="public-card-header">
+                      <h2 id="public-batch-info-heading">Hồ sơ lô sản phẩm</h2>
+                      <code className="batch-code-tag">{state.data.batchCode}</code>
+                    </div>
 
-                  <dl className="public-facts-list">
-                    <div className="public-fact-row">
-                      <dt>Sản phẩm</dt>
-                      <dd>{state.data.productName}</dd>
-                    </div>
-                    <div className="public-fact-row">
-                      <dt>Mã lô</dt>
-                      <dd>
-                        <code className="batch-code-tag">{state.data.batchCode}</code>
-                      </dd>
-                    </div>
-                    <div className="public-fact-row">
-                      <dt>Nguồn gốc</dt>
-                      <dd>{state.data.origin}</dd>
-                    </div>
-                    <div className="public-fact-row">
-                      <dt>Đơn vị</dt>
-                      <dd>{state.data.organizationName}</dd>
-                    </div>
-                    <div className="public-fact-row">
-                      <dt>Trạng thái</dt>
-                      <dd>
-                        <BatchStatusBadge status={state.data.currentStatus} showDescription />
-                      </dd>
-                    </div>
-                  </dl>
-
-                  {progress && (
-                    <div className="public-progress-box">
-                      <div className="public-progress-meta">
-                        <span>Tiến độ chuỗi cung ứng</span>
-                        <strong>{progress.completedSteps}/{progress.totalSteps} bước</strong>
+                    <dl className="public-facts-list">
+                      <div className="public-fact-row">
+                        <dt>Sản phẩm</dt>
+                        <dd>{state.data.productName}</dd>
                       </div>
-                      <div className="chain-progress-track">
-                        <div
-                          className="chain-progress-fill"
-                          style={{ width: `${progress.percent}%` }}
-                          role="progressbar"
-                          aria-valuenow={progress.percent}
-                          aria-valuemin="0"
-                          aria-valuemax="100"
-                        />
+                      <div className="public-fact-row">
+                        <dt>Nguồn gốc</dt>
+                        <dd>{state.data.origin}</dd>
+                      </div>
+                      <div className="public-fact-row">
+                        <dt>Đơn vị sản xuất</dt>
+                        <dd>{state.data.organizationName}</dd>
+                      </div>
+                      <div className="public-fact-row">
+                        <dt>Giai đoạn</dt>
+                        <dd>
+                          <BatchStatusBadge status={state.data.currentStatus} />
+                        </dd>
+                      </div>
+                    </dl>
+
+                    {progress && (
+                      <div className="public-progress-box">
+                        <div className="public-progress-meta">
+                          <span>Tiến độ chuỗi cung ứng</span>
+                          <strong>{progress.completedSteps}/{progress.totalSteps} bước ({progress.percent}%)</strong>
+                        </div>
+                        <div className="chain-progress-track">
+                          <div
+                            className="chain-progress-fill"
+                            style={{ width: `${progress.percent}%` }}
+                            role="progressbar"
+                            aria-valuenow={progress.percent}
+                            aria-valuemin="0"
+                            aria-valuemax="100"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Live Scannable QR Stamp on Result Page */}
+                    <div className="public-result-qr-box">
+                      <div className="public-result-qr-canvas">
+                        <canvas ref={qrCanvasRef} aria-label={`Mã QR truy xuất lô ${state.data.batchCode}`} />
+                      </div>
+                      <div className="public-result-qr-actions">
+                        <strong>Mã QR chia sẻ nhanh</strong>
+                        <p>Quét bằng điện thoại hoặc tải ảnh tem QR để kiểm tra lại bất cứ lúc nào.</p>
+                        <div className="qr-mini-btn-row">
+                          <button type="button" className="button secondary sm with-icon" onClick={handleDownloadQr}>
+                            <IconDownload /> Tải PNG
+                          </button>
+                          <button type="button" className="button secondary sm with-icon" onClick={handleCopyShareLink}>
+                            {copiedLink ? <><IconCheck /> Đã chép</> : 'Chép link'}
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  )}
 
-                  <div className="public-privacy-note">
-                    <IconShield />
-                    <small>
-                      Chỉ hiển thị thông tin nguồn gốc và sự kiện được phép công khai. Dữ liệu tài khoản cá nhân và nhật ký quản trị được bảo mật.
-                    </small>
-                  </div>
-                </section>
+                    <div className="public-privacy-note">
+                      <IconShield />
+                      <small>
+                        Chỉ hiển thị thông tin nguồn gốc và sự kiện được phép công khai. Dữ liệu tài khoản cá nhân và nhật ký nội bộ được bảo mật.
+                      </small>
+                    </div>
+                  </section>
+                </aside>
 
-                {/* 2. HÀNH TRÌNH THỰC PHẨM (Timeline công khai từ cũ đến mới) */}
                 <section className="public-timeline-card" aria-labelledby="public-timeline-heading">
                   <div className="public-timeline-head">
                     <div>
-                      <span className="section-index">02</span>
-                      <h2 id="public-timeline-heading">Hành trình thực phẩm</h2>
+                      <h2 id="public-timeline-heading">Hành trình chuỗi cung ứng</h2>
                       <p className="public-timeline-sub">
-                        Biên niên các công đoạn đã được xác thực, sắp xếp theo thứ tự từ cũ đến mới.
+                        Các mốc xác thực được ghi nhận theo trình tự từ nông trại tới điểm bán.
                       </p>
                     </div>
                     <span className="timeline-count-pill">
-                      {state.data.events.length} mốc ghi nhận
+                      {state.data.events.length} / 6 mốc
                     </span>
                   </div>
 
@@ -369,7 +433,6 @@ export function PublicTraceResult({
                         const meta = STATUS_META[ev.eventType] || {}
                         const isLatest = index === state.data.events.length - 1
                         const relativeTime = formatRelativeTime(ev.timestamp)
-                        const stepNum = String(index + 1).padStart(2, '0')
 
                         return (
                           <li
@@ -385,7 +448,6 @@ export function PublicTraceResult({
                             <div className="public-timeline-body">
                               <div className="public-event-top">
                                 <div className="public-event-title-wrap">
-                                  <span className="public-step-num">{stepNum}</span>
                                   <h3 className="public-event-title">
                                     {meta.label || ev.eventType}
                                   </h3>
@@ -396,26 +458,18 @@ export function PublicTraceResult({
                                 </div>
 
                                 <div className="public-event-time">
-                                  <span>
-                                    <IconClock /> {formatDateTime(ev.timestamp)}
-                                  </span>
-                                  {relativeTime && (
-                                    <small>{relativeTime}</small>
-                                  )}
+                                  <span><IconClock /> {formatDateTime(ev.timestamp)}</span>
+                                  {relativeTime && <small>{relativeTime}</small>}
                                 </div>
                               </div>
 
                               <div className="public-event-facts">
                                 <div className="public-event-fact">
-                                  <span className="fact-k">
-                                    <IconBuilding /> Đơn vị thực hiện
-                                  </span>
+                                  <span className="fact-k"><IconBuilding /> Đơn vị</span>
                                   <strong className="fact-v">{ev.organizationName}</strong>
                                 </div>
                                 <div className="public-event-fact">
-                                  <span className="fact-k">
-                                    <IconMapPin /> Địa điểm
-                                  </span>
+                                  <span className="fact-k"><IconMapPin /> Địa điểm</span>
                                   <strong className="fact-v">{ev.location}</strong>
                                 </div>
                               </div>
@@ -445,9 +499,7 @@ export function PublicTraceResult({
         </div>
       </main>
 
-      <footer className="public-footer">
-        <p>© Food Trace · Cổng truy xuất nguồn gốc thực phẩm công khai</p>
-      </footer>
+      <PublicFooter navigate={navigate} preview={preview} />
     </div>
   )
 }

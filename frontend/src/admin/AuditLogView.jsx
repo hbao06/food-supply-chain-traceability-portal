@@ -32,6 +32,7 @@ export function AuditLogView({ token, preview = false, onOpenBatch }) {
 
   const [filterAction, setFilterAction] = useState('ALL')
   const [filterEntity, setFilterEntity] = useState('ALL')
+  const [datePreset, setDatePreset] = useState('ALL') // 'ALL' | '7D' | '30D' | 'QUARTER'
   const [searchQuery, setSearchQuery] = useState('')
   const [verifying, setVerifying] = useState(false)
   const [verifyResult, setVerifyResult] = useState(null)
@@ -121,9 +122,16 @@ export function AuditLogView({ token, preview = false, onOpenBatch }) {
   }
 
   const filteredLogs = useMemo(() => {
+    const now = new Date()
     return logs.filter((item) => {
       if (filterAction !== 'ALL' && item.action !== filterAction) return false
       if (filterEntity !== 'ALL' && item.entityType !== filterEntity) return false
+      if (datePreset !== 'ALL') {
+        const d = new Date(item.timestamp || item.createdAt)
+        if (datePreset === '7D' && d < new Date(now.getTime() - 7 * 86400000)) return false
+        if (datePreset === '30D' && d < new Date(now.getTime() - 30 * 86400000)) return false
+        if (datePreset === 'QUARTER' && d < new Date(now.getTime() - 90 * 86400000)) return false
+      }
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim()
         const batchCode = getAuditBatchCode(item)
@@ -154,7 +162,7 @@ export function AuditLogView({ token, preview = false, onOpenBatch }) {
       }
       return true
     })
-  }, [logs, filterAction, filterEntity, searchQuery])
+  }, [logs, filterAction, filterEntity, datePreset, searchQuery])
 
   return (
     <div className="audit-view-container">
@@ -302,6 +310,18 @@ export function AuditLogView({ token, preview = false, onOpenBatch }) {
             <option value="BATCH">Lô hàng (BATCH)</option>
             <option value="EVENT">Sự kiện (EVENT)</option>
             <option value="USER">Người dùng (USER)</option>
+          </select>
+
+          <select
+            className="filter-select"
+            value={datePreset}
+            onChange={(e) => setDatePreset(e.target.value)}
+            aria-label="Lọc theo thời gian"
+          >
+            <option value="ALL">Mọi mốc thời gian</option>
+            <option value="7D">7 ngày qua</option>
+            <option value="30D">30 ngày qua</option>
+            <option value="QUARTER">Quý này (90 ngày)</option>
           </select>
         </div>
       </div>

@@ -3,37 +3,62 @@ import QRCode from 'qrcode'
 import { api, ApiError, errorMessage } from '../api.js'
 import { IconMapPin, IconDownload, IconCheck } from '../components/Icons.jsx'
 
-export function BatchQrModal({ batch, token, onClose }) {
+export function BatchQrModal({ batch, token, preview = false, onClose, onOpenTrace }) {
   const canvasRef = useRef(null)
   const [copied, setCopied] = useState(false)
   const [downloading, setDownloading] = useState(false)
-  const [qrState, setQrState] = useState({ batchId: null, qrData: '', error: '' })
-  const qrLoading = qrState.batchId !== batch?.batchId
-  const qrData = qrLoading ? '' : qrState.qrData
+
+  const fallbackUrl = batch
+    ? (batch.qrData && !batch.qrData.includes('PREVIEW')
+        ? batch.qrData
+        : `${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173'}/trace/code/${encodeURIComponent(batch.batchCode)}`)
+    : ''
+
+  const [qrState, setQrState] = useState(() => ({
+    batchId: batch?.batchId ?? null,
+    qrData: (!token || preview) ? fallbackUrl : '',
+    error: '',
+  }))
+
+  const needsFetch = Boolean(token && !preview && batch?.batchId)
+  const qrLoading = needsFetch && qrState.batchId !== batch?.batchId
+  const qrData = qrLoading ? '' : (qrState.qrData || fallbackUrl)
   const qrError = qrLoading ? '' : qrState.error
 
   useEffect(() => {
+    if (!batch?.batchId || !token || preview) return
     let active = true
-    api.getBatchQr(token, batch?.batchId).then((data) => {
-      if (active) setQrState({ batchId: batch?.batchId, qrData: typeof data.qrData === 'string' ? data.qrData : '', error: '' })
+    api.getBatchQr(token, batch.batchId).then((data) => {
+      if (active) {
+        setQrState({
+          batchId: batch.batchId,
+          qrData: typeof data.qrData === 'string' && data.qrData ? data.qrData : fallbackUrl,
+          error: '',
+        })
+      }
     }).catch((err) => {
-      if (active) setQrState({ batchId: batch?.batchId, qrData: '', error: err instanceof ApiError ? errorMessage(err) : 'Không thể tải mã QR của lô hàng.' })
+      if (active) {
+        setQrState({
+          batchId: batch.batchId,
+          qrData: fallbackUrl,
+          error: fallbackUrl ? '' : (err instanceof ApiError ? errorMessage(err) : 'Không thể tải mã QR của lô hàng.'),
+        })
+      }
     })
     return () => { active = false }
-  }, [token, batch?.batchId])
+  }, [token, preview, batch?.batchId, fallbackUrl])
 
   useEffect(() => {
     if (!canvasRef.current || !qrData) return
-
     QRCode.toCanvas(
       canvasRef.current,
       qrData,
       {
-        width: 260,
+        width: 248,
         margin: 2,
         color: {
-          dark: '#0f3a2c', // Luxurious deep emerald
-          light: '#ffffff',
+          dark: '#2D4316',
+          light: '#FFFFFF',
         },
         errorCorrectionLevel: 'H',
       },
@@ -43,7 +68,6 @@ export function BatchQrModal({ batch, token, onClose }) {
     )
   }, [qrData])
 
-  // Handle ESC key to close
   useEffect(() => {
     function onKeyDown(e) {
       if (e.key === 'Escape') onClose()
@@ -61,47 +85,44 @@ export function BatchQrModal({ batch, token, onClose }) {
   }
 
   function handleDownloadPng() {
-    if (!canvasRef.current) return
+    if (!canvasRef.current || !batch) return
     setDownloading(true)
     try {
-      // Create a branded canvas with border and text
       const qrCanvas = canvasRef.current
       const cardCanvas = document.createElement('canvas')
       const ctx = cardCanvas.getContext('2d')
 
-      const padding = 24
-      const bannerHeight = 80
+      const padding = 28
+      const bannerHeight = 86
       cardCanvas.width = qrCanvas.width + padding * 2
       cardCanvas.height = qrCanvas.height + padding * 2 + bannerHeight
 
-      // Background
       ctx.fillStyle = '#ffffff'
-      ctx.roundRect ? ctx.roundRect(0, 0, cardCanvas.width, cardCanvas.height, 16) : ctx.rect(0, 0, cardCanvas.width, cardCanvas.height)
+      if (ctx.roundRect) {
+        ctx.roundRect(0, 0, cardCanvas.width, cardCanvas.height, 18)
+      } else {
+        ctx.rect(0, 0, cardCanvas.width, cardCanvas.height)
+      }
       ctx.fill()
 
-      // Border
-      ctx.strokeStyle = '#d6e4dc'
+      ctx.strokeStyle = '#DCE4CC'
       ctx.lineWidth = 2
       ctx.stroke()
 
-      // Draw QR Canvas
       ctx.drawImage(qrCanvas, padding, padding)
 
-      // Header branding line
-      ctx.fillStyle = '#155b42'
-      ctx.font = 'bold 15px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+      ctx.fillStyle = '#6B8824'
+      ctx.font = 'bold 14px Quicksand, "Segoe UI", sans-serif'
       ctx.textAlign = 'center'
-      ctx.fillText('FOOD TRACEABILITY PORTAL', cardCanvas.width / 2, padding + qrCanvas.height + 26)
+      ctx.fillText('FOOD TRACE · TEM TRUY XUẤT', cardCanvas.width / 2, padding + qrCanvas.height + 28)
 
-      // Batch Code
-      ctx.fillStyle = '#20332e'
-      ctx.font = '600 13px ui-monospace, SFMono-Regular, Consolas, monospace'
-      ctx.fillText(batch.batchCode, cardCanvas.width / 2, padding + qrCanvas.height + 48)
+      ctx.fillStyle = '#242B24'
+      ctx.font = '600 14px "JetBrains Mono", Consolas, monospace'
+      ctx.fillText(batch.batchCode, cardCanvas.width / 2, padding + qrCanvas.height + 50)
 
-      // Product Name
-      ctx.fillStyle = '#687b72'
-      ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-      ctx.fillText(batch.productName.slice(0, 32), cardCanvas.width / 2, padding + qrCanvas.height + 68)
+      ctx.fillStyle = '#606A5E'
+      ctx.font = '12px "Be Vietnam Pro", "Segoe UI", sans-serif'
+      ctx.fillText(String(batch.productName || '').slice(0, 34), cardCanvas.width / 2, padding + qrCanvas.height + 70)
 
       const link = document.createElement('a')
       link.download = `QR-${batch.batchCode}.png`
@@ -114,15 +135,27 @@ export function BatchQrModal({ batch, token, onClose }) {
     }
   }
 
+  function handleOpenTraceClick(e) {
+    if (!qrData) {
+      e.preventDefault()
+      return
+    }
+    if (onOpenTrace) {
+      e.preventDefault()
+      onOpenTrace(qrData)
+      onClose()
+    }
+  }
+
   if (!batch) return null
 
   return (
-    <div className="modal-overlay" onClick={onClose} role="dialog" aria-modal="true">
+    <div className="modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label={`Mã QR lô ${batch.batchCode}`}>
       <div className="qr-modal-card" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div>
-            <span className="eyebrow">TEM TRUY XUẤT NGUỒN GỐC</span>
-            <h3>Mã QR Lô Hàng</h3>
+            <span className="modal-kicker">TEM TRUY XUẤT NGUỒN GỐC</span>
+            <h3>Mã QR Lô {batch.batchCode}</h3>
           </div>
           <button
             type="button"
@@ -146,11 +179,11 @@ export function BatchQrModal({ batch, token, onClose }) {
 
           <div className="qr-batch-info">
             <h4>{batch.productName}</h4>
-            <p className="qr-batch-origin"><IconMapPin /> {batch.origin}</p>
+            {batch.origin && <p className="qr-batch-origin"><IconMapPin /> {batch.origin}</p>}
           </div>
 
           <div className="qr-url-box">
-            <span className="qr-url-text">{qrData || (qrLoading ? 'Đang tải liên kết…' : qrError)}</span>
+            <span className="qr-url-text" title={qrData}>{qrData || (qrLoading ? 'Đang tải liên kết…' : qrError)}</span>
             <button
               type="button"
               className="text-button copy-btn"
@@ -158,33 +191,31 @@ export function BatchQrModal({ batch, token, onClose }) {
               disabled={!qrData}
               title="Sao chép liên kết"
             >
-              {copied ? <><IconCheck /> Đã sao chép</> : 'Sao chép'}
+              {copied ? <><IconCheck /> Đã chép</> : 'Sao chép'}
             </button>
           </div>
 
           <p className="qr-notice">
-            Mã QR được mã hóa chữ ký số HMAC bảo mật. Người tiêu dùng và đối tác có thể quét trực tiếp
-            bằng camera điện thoại để xác thực chuỗi cung ứng.
+            Quét trực tiếp bằng camera điện thoại hoặc tải ảnh PNG về rồi thử tải lên tại mục <strong>Quét / Tải mã QR</strong> để xem toàn bộ hành trình lô hàng.
           </p>
         </div>
 
         <div className="modal-footer">
           <button
             type="button"
-            className="button secondary"
+            className="button secondary with-icon"
             onClick={handleDownloadPng}
             disabled={downloading || !qrData}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
           >
-            {downloading ? 'Đang chuẩn bị…' : (<><IconDownload /> Tải ảnh QR (PNG)</>)}
+            <IconDownload /> {downloading ? 'Đang tạo ảnh…' : 'Tải ảnh QR (PNG)'}
           </button>
           <a
             href={qrData || undefined}
-            target="_blank"
-            rel="noopener noreferrer"
+            target={onOpenTrace ? undefined : '_blank'}
+            rel={onOpenTrace ? undefined : 'noopener noreferrer'}
             className="button primary"
             aria-disabled={!qrData}
-            onClick={(event) => { if (!qrData) event.preventDefault() }}
+            onClick={handleOpenTraceClick}
           >
             Mở trang truy xuất ↗
           </a>

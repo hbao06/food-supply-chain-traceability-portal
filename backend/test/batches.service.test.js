@@ -9,7 +9,7 @@ function setup() {
   const state = { batches: [], qrs: [], events: [], audits: [], nextId: 1, txRolledBack: 0 };
   const repo = {
     async lockBatchCodeSequence() {},
-    async nextBatchCode() { return `BATCH-2026-${String(state.batches.length + 1).padStart(4, '0')}`; },
+    async nextBatchCode() { return `FR-2026-${String(state.batches.length + 1).padStart(4, '0')}`; },
     async insertBatch(_d, b) {
       const row = { batch_id: String(state.nextId++), batch_code: b.batchCode, product_name: b.productName, origin: b.origin,
         quantity: b.quantity.toFixed(2), creation_date: new Date('2026-11-02T10:00:00Z'), current_status: 'CREATED',
@@ -57,10 +57,10 @@ const input = { productName: 'Cà phê', origin: 'Đắk Lắk', quantity: 500 }
 test('tạo lô: mã lô, QR, sự kiện CREATED và 3 dòng audit trong cùng transaction', async () => {
   const { state, service } = setup();
   const b = await service.create(farmerA, input);
-  assert.deepEqual([b.batchId, b.batchCode, b.currentStatus, b.createdBy, b.organizationId, b.quantity], [1, 'BATCH-2026-0001', 'CREATED', 10, 1, 500]);
+  assert.deepEqual([b.batchId, b.batchCode, b.currentStatus, b.createdBy, b.organizationId, b.quantity], [1, 'FR-2026-0001', 'CREATED', 10, 1, 500]);
   assert.equal(state.qrs.length, 1);
   assert.ok(state.qrs[0].qr_data.includes(state.qrs[0].signatureHmac));
-  assert.equal(state.qrs[0].qr_data, `https://t.example.com/trace/BATCH-2026-0001.${state.qrs[0].signatureHmac}`);
+  assert.equal(state.qrs[0].qr_data, `https://t.example.com/trace/FR-2026-0001.${state.qrs[0].signatureHmac}`);
   assert.deepEqual(state.events.map((e) => [e.type, e.actorId, e.location]), [['CREATED', 10, 'Đắk Lắk']]);
   assert.deepEqual(state.audits.map((a) => `${a.action}:${a.entityType}`).sort(), ['CREATE:BATCH', 'CREATE:EVENT', 'CREATE:QR_CODE']);
 });
@@ -70,7 +70,7 @@ test('tạo lô: hai lô liên tiếp có mã khác nhau', async () => {
   const a = await service.create(farmerA, input);
   const b = await service.create(farmerA, input);
   assert.notEqual(a.batchCode, b.batchCode);
-  assert.equal(b.batchCode, 'BATCH-2026-0002');
+  assert.equal(b.batchCode, 'FR-2026-0002');
 });
 
 test('tạo lô: tài khoản không có đơn vị -> 403 NO_ORGANIZATION, không ghi gì', async () => {
@@ -90,7 +90,7 @@ test('tạo lô: lỗi ở bước audit hoàn tác cả lô, QR và sự kiện
 test('tạo lô: thiếu QR_HMAC_SECRET -> lỗi và hoàn tác, không có lô "mồ côi"', async () => {
   const { state } = setup();
   const noKey = createBatchService({ db: {}, withTransaction: async (fn) => fn({}), repo: {
-    lockBatchCodeSequence: async () => {}, nextBatchCode: async () => 'BATCH-2026-0001',
+    lockBatchCodeSequence: async () => {}, nextBatchCode: async () => 'FR-2026-0001',
     insertBatch: async () => { state.batches.push({}); return { batch_id: '1' }; } },
     qr: createQrTokenService({ secret: undefined }), insertAudit: async () => {} });
   await assert.rejects(noKey.create(farmerA, input), /QR_HMAC_SECRET/);
@@ -161,7 +161,7 @@ test('QR: có QR trả 200; ngoài phạm vi 404; không có QR 404', async () =
   const b = await service.create(farmerA, input);
   const q = await service.getQr(farmerA, b.batchId);
   assert.deepEqual([q.qrId, q.batchId], [1, 1]);
-  assert.ok(q.qrData.startsWith('https://t.example.com/trace/BATCH-2026-0001.'));
+  assert.ok(q.qrData.startsWith('https://t.example.com/trace/FR-2026-0001.'));
   assert.equal((await service.getQr(farmerB, b.batchId).catch((e) => e)).status, 404);
   state.qrs.length = 0;
   assert.equal((await service.getQr(farmerA, b.batchId).catch((e) => e)).status, 404);

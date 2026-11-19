@@ -54,7 +54,7 @@ test('audit - parseAuditLogsResponse parses backend { items, page, limit, total 
         entityType: 'BATCH',
         entityId: 12,
         oldValue: null,
-        newValue: { batchCode: 'BATCH-2026-0012', quantity: 500 },
+        newValue: { batchCode: 'FR-2026-0012', quantity: 500 },
         createdAt: '2026-11-16T08:30:00.000Z',
       },
       {
@@ -79,7 +79,7 @@ test('audit - parseAuditLogsResponse parses backend { items, page, limit, total 
   assert.equal(result.length, 2)
   assert.equal(result[0].auditId, 101)
   assert.equal(result[0].createdAt, '2026-11-16T08:30:00.000Z')
-  assert.equal(result[0].newValue.batchCode, 'BATCH-2026-0012')
+  assert.equal(result[0].newValue.batchCode, 'FR-2026-0012')
 
   // Fallback testing for other envelopes
   assert.deepEqual(parseAuditLogsResponse({ data: [result[0]] }), [result[0]])

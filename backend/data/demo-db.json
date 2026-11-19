@@ -1,0 +1,2380 @@
+{
+  "meta": {
+    "seededAt": "2026-11-18T09:32:32.129Z",
+    "traceBaseUrl": "http://localhost:5173",
+    "prefix": "FR-"
+  },
+  "seq": {
+    "organizations": 9,
+    "users": 12,
+    "products": 7,
+    "batches": 11,
+    "qr_codes": 11,
+    "supply_chain_events": 39,
+    "audit_logs": 82
+  },
+  "organizations": [
+    {
+      "organization_id": 1,
+      "name": "HTX Cà phê Cầu Đất",
+      "type": "FARM",
+      "address": "Cầu Đất, Đà Lạt, Lâm Đồng",
+      "created_at": "2026-10-19T09:32:33.129Z"
+    },
+    {
+      "organization_id": 2,
+      "name": "Nông trại Sầu riêng Cái Mơn",
+      "type": "FARM",
+      "address": "Chợ Lách, Bến Tre",
+      "created_at": "2026-10-19T09:32:34.129Z"
+    },
+    {
+      "organization_id": 3,
+      "name": "Công ty Chế biến Nông sản Sài Gòn",
+      "type": "PROCESSOR",
+      "address": "KCN Tân Bình, TP.HCM",
+      "created_at": "2026-10-19T09:32:35.129Z"
+    },
+    {
+      "organization_id": 4,
+      "name": "Vận tải Lạnh Miền Nam",
+      "type": "DISTRIBUTOR",
+      "address": "Quận 7, TP.HCM",
+      "created_at": "2026-10-19T09:32:36.129Z"
+    },
+    {
+      "organization_id": 5,
+      "name": "Phân phối Thực phẩm Sạch Hà Nội",
+      "type": "DISTRIBUTOR",
+      "address": "Long Biên, Hà Nội",
+      "created_at": "2026-10-19T09:32:37.129Z"
+    },
+    {
+      "organization_id": 6,
+      "name": "HTX Lúa gạo ST25 Mỹ Xuyên",
+      "type": "FARM",
+      "address": "Mỹ Xuyên, Sóc Trăng",
+      "created_at": "2026-10-19T09:32:38.129Z"
+    },
+    {
+      "organization_id": 7,
+      "name": "Nông trại Hạt điều Bù Đăng",
+      "type": "FARM",
+      "address": "Bù Đăng, Bình Phước",
+      "created_at": "2026-10-19T09:32:39.129Z"
+    },
+    {
+      "organization_id": 8,
+      "name": "HTX Thanh long Chợ Gạo",
+      "type": "FARM",
+      "address": "Chợ Gạo, Tiền Giang",
+      "created_at": "2026-10-19T09:32:40.129Z"
+    },
+    {
+      "organization_id": 9,
+      "name": "HTX Chè Ô Long Mộc Châu",
+      "type": "FARM",
+      "address": "Mộc Châu, Sơn La",
+      "created_at": "2026-10-19T09:32:41.129Z"
+    }
+  ],
+  "users": [
+    {
+      "user_id": 1,
+      "name": "Quản trị Demo",
+      "email": "admin_1@demo.local",
+      "password_hash": "$2b$10$Bs/7YvHCFZJoA8cOHh.ejeuB17zj5mmjX.qode4ZG01aQi1YEp1h.",
+      "role": "ADMIN",
+      "status": "ACTIVE",
+      "organization_id": null,
+      "created_at": "2026-10-24T09:32:33.129Z"
+    },
+    {
+      "user_id": 2,
+      "name": "Nguyễn Văn An",
+      "email": "farmer_a@demo.local",
+      "password_hash": "$2b$10$Bs/7YvHCFZJoA8cOHh.ejeuB17zj5mmjX.qode4ZG01aQi1YEp1h.",
+      "role": "FARMER",
+      "status": "ACTIVE",
+      "organization_id": 1,
+      "created_at": "2026-10-24T09:32:34.129Z"
+    },
+    {
+      "user_id": 3,
+      "name": "Trần Thị Bình",
+      "email": "farmer_b@demo.local",
+      "password_hash": "$2b$10$Bs/7YvHCFZJoA8cOHh.ejeuB17zj5mmjX.qode4ZG01aQi1YEp1h.",
+      "role": "FARMER",
+      "status": "ACTIVE",
+      "organization_id": 2,
+      "created_at": "2026-10-24T09:32:35.129Z"
+    },
+    {
+      "user_id": 4,
+      "name": "Lê Văn Chế",
+      "email": "processor_a@demo.local",
+      "password_hash": "$2b$10$Bs/7YvHCFZJoA8cOHh.ejeuB17zj5mmjX.qode4ZG01aQi1YEp1h.",
+      "role": "PROCESSOR",
+      "status": "ACTIVE",
+      "organization_id": 3,
+      "created_at": "2026-10-24T09:32:36.129Z"
+    },
+    {
+      "user_id": 5,
+      "name": "Phạm Văn Dũng",
+      "email": "distributor_a@demo.local",
+      "password_hash": "$2b$10$Bs/7YvHCFZJoA8cOHh.ejeuB17zj5mmjX.qode4ZG01aQi1YEp1h.",
+      "role": "DISTRIBUTOR",
+      "status": "ACTIVE",
+      "organization_id": 4,
+      "created_at": "2026-10-24T09:32:37.129Z"
+    },
+    {
+      "user_id": 6,
+      "name": "Hoàng Thị Em",
+      "email": "distributor_b@demo.local",
+      "password_hash": "$2b$10$Bs/7YvHCFZJoA8cOHh.ejeuB17zj5mmjX.qode4ZG01aQi1YEp1h.",
+      "role": "DISTRIBUTOR",
+      "status": "ACTIVE",
+      "organization_id": 5,
+      "created_at": "2026-10-24T09:32:38.129Z"
+    },
+    {
+      "user_id": 7,
+      "name": "Lâm Thị Cúc",
+      "email": "farmer_c@demo.local",
+      "password_hash": "$2b$10$Bs/7YvHCFZJoA8cOHh.ejeuB17zj5mmjX.qode4ZG01aQi1YEp1h.",
+      "role": "FARMER",
+      "status": "ACTIVE",
+      "organization_id": 6,
+      "created_at": "2026-10-24T09:32:39.129Z"
+    },
+    {
+      "user_id": 8,
+      "name": "Điểu Văn Dũng",
+      "email": "farmer_d@demo.local",
+      "password_hash": "$2b$10$Bs/7YvHCFZJoA8cOHh.ejeuB17zj5mmjX.qode4ZG01aQi1YEp1h.",
+      "role": "FARMER",
+      "status": "ACTIVE",
+      "organization_id": 7,
+      "created_at": "2026-10-24T09:32:40.129Z"
+    },
+    {
+      "user_id": 9,
+      "name": "Võ Minh Tâm",
+      "email": "farmer_e@demo.local",
+      "password_hash": "$2b$10$Bs/7YvHCFZJoA8cOHh.ejeuB17zj5mmjX.qode4ZG01aQi1YEp1h.",
+      "role": "FARMER",
+      "status": "ACTIVE",
+      "organization_id": 8,
+      "created_at": "2026-10-24T09:32:41.129Z"
+    },
+    {
+      "user_id": 10,
+      "name": "Hà Thị Mai",
+      "email": "farmer_f@demo.local",
+      "password_hash": "$2b$10$Bs/7YvHCFZJoA8cOHh.ejeuB17zj5mmjX.qode4ZG01aQi1YEp1h.",
+      "role": "FARMER",
+      "status": "ACTIVE",
+      "organization_id": 9,
+      "created_at": "2026-10-24T09:32:42.129Z"
+    },
+    {
+      "user_id": 11,
+      "name": "Đỗ Văn Chờ",
+      "email": "user_pending@demo.local",
+      "password_hash": "$2b$10$Bs/7YvHCFZJoA8cOHh.ejeuB17zj5mmjX.qode4ZG01aQi1YEp1h.",
+      "role": "FARMER",
+      "status": "PENDING",
+      "organization_id": null,
+      "created_at": "2026-10-24T09:32:43.129Z"
+    },
+    {
+      "user_id": 12,
+      "name": "Vũ Văn Khóa",
+      "email": "user_locked@demo.local",
+      "password_hash": "$2b$10$Bs/7YvHCFZJoA8cOHh.ejeuB17zj5mmjX.qode4ZG01aQi1YEp1h.",
+      "role": "DISTRIBUTOR",
+      "status": "LOCKED",
+      "organization_id": 4,
+      "created_at": "2026-10-24T09:32:44.129Z"
+    }
+  ],
+  "products": [
+    {
+      "product_id": 1,
+      "organization_id": 1,
+      "name": "Cà phê Arabica Cầu Đất",
+      "category": "Cà phê",
+      "unit": "kg",
+      "description": "Arabica trồng ở độ cao 1.600 m, sơ chế ướt"
+    },
+    {
+      "product_id": 2,
+      "organization_id": 1,
+      "name": "Cà phê Robusta rang xay",
+      "category": "Cà phê",
+      "unit": "kg",
+      "description": "Robusta rang mộc, xay sẵn"
+    },
+    {
+      "product_id": 3,
+      "organization_id": 2,
+      "name": "Sầu riêng Ri6",
+      "category": "Trái cây",
+      "unit": "kg",
+      "description": "Sầu riêng Ri6 chín cây"
+    },
+    {
+      "product_id": 4,
+      "organization_id": 6,
+      "name": "Gạo ST25 Sóc Trăng",
+      "category": "Lúa gạo",
+      "unit": "kg",
+      "description": "Gạo ST25 canh tác theo quy trình hữu cơ"
+    },
+    {
+      "product_id": 5,
+      "organization_id": 7,
+      "name": "Hạt điều rang muối Bình Phước",
+      "category": "Hạt dinh dưỡng",
+      "unit": "kg",
+      "description": "Hạt điều rang củi, nguyên hạt W320"
+    },
+    {
+      "product_id": 6,
+      "organization_id": 8,
+      "name": "Thanh long ruột đỏ VietGAP",
+      "category": "Trái cây",
+      "unit": "kg",
+      "description": "Thanh long ruột đỏ đạt chuẩn VietGAP"
+    },
+    {
+      "product_id": 7,
+      "organization_id": 9,
+      "name": "Chè Ô Long Mộc Châu",
+      "category": "Trà",
+      "unit": "kg",
+      "description": "Chè Ô Long búp một tôm hai lá"
+    }
+  ],
+  "batches": [
+    {
+      "batch_id": 1,
+      "batch_code": "FR-2026-0001",
+      "product_id": 1,
+      "product_name": "Cà phê Arabica Cầu Đất",
+      "origin": "Cầu Đất, Đà Lạt, Lâm Đồng",
+      "quantity": "500.00",
+      "creation_date": "2026-11-16T09:32:32.129Z",
+      "current_status": "CREATED",
+      "created_by": 2,
+      "organization_id": 1
+    },
+    {
+      "batch_id": 2,
+      "batch_code": "FR-2026-0002",
+      "product_id": 2,
+      "product_name": "Cà phê Robusta rang xay",
+      "origin": "Cầu Đất, Đà Lạt, Lâm Đồng",
+      "quantity": "300.00",
+      "creation_date": "2026-11-06T09:32:32.129Z",
+      "current_status": "SHIPPED",
+      "created_by": 2,
+      "organization_id": 1
+    },
+    {
+      "batch_id": 3,
+      "batch_code": "FR-2026-0003",
+      "product_id": 1,
+      "product_name": "Cà phê Arabica Cầu Đất",
+      "origin": "Cầu Đất, Đà Lạt, Lâm Đồng",
+      "quantity": "200.00",
+      "creation_date": "2026-11-12T09:32:32.129Z",
+      "current_status": "RECEIVED",
+      "created_by": 2,
+      "organization_id": 1
+    },
+    {
+      "batch_id": 4,
+      "batch_code": "FR-2026-0004",
+      "product_id": 1,
+      "product_name": "Cà phê Arabica Cầu Đất",
+      "origin": "Cầu Đất, Đà Lạt, Lâm Đồng",
+      "quantity": "120.00",
+      "creation_date": "2026-11-15T09:32:32.129Z",
+      "current_status": "TRANSPORTED",
+      "created_by": 2,
+      "organization_id": 1
+    },
+    {
+      "batch_id": 5,
+      "batch_code": "FR-2026-0005",
+      "product_id": 2,
+      "product_name": "Cà phê Robusta rang xay",
+      "origin": "Cầu Đất, Đà Lạt, Lâm Đồng",
+      "quantity": "250.00",
+      "creation_date": "2026-11-10T09:32:32.129Z",
+      "current_status": "PROCESSED",
+      "created_by": 2,
+      "organization_id": 1
+    },
+    {
+      "batch_id": 6,
+      "batch_code": "FR-2026-0101",
+      "product_id": 3,
+      "product_name": "Sầu riêng Ri6",
+      "origin": "Chợ Lách, Bến Tre",
+      "quantity": "1000.00",
+      "creation_date": "2026-11-09T09:32:32.129Z",
+      "current_status": "PACKAGED",
+      "created_by": 3,
+      "organization_id": 2
+    },
+    {
+      "batch_id": 7,
+      "batch_code": "FR-2026-0102",
+      "product_id": 3,
+      "product_name": "Sầu riêng Ri6",
+      "origin": "Chợ Lách, Bến Tre",
+      "quantity": "150.00",
+      "creation_date": "2026-11-17T09:32:32.129Z",
+      "current_status": "CREATED",
+      "created_by": 3,
+      "organization_id": 2
+    },
+    {
+      "batch_id": 8,
+      "batch_code": "FR-2026-0201",
+      "product_id": 4,
+      "product_name": "Gạo ST25 Sóc Trăng",
+      "origin": "Mỹ Xuyên, Sóc Trăng",
+      "quantity": "5000.00",
+      "creation_date": "2026-11-04T09:32:32.129Z",
+      "current_status": "SHIPPED",
+      "created_by": 7,
+      "organization_id": 6
+    },
+    {
+      "batch_id": 9,
+      "batch_code": "FR-2026-0202",
+      "product_id": 5,
+      "product_name": "Hạt điều rang muối Bình Phước",
+      "origin": "Bù Đăng, Bình Phước",
+      "quantity": "800.00",
+      "creation_date": "2026-11-08T09:32:32.129Z",
+      "current_status": "PACKAGED",
+      "created_by": 8,
+      "organization_id": 7
+    },
+    {
+      "batch_id": 10,
+      "batch_code": "FR-2026-0203",
+      "product_id": 6,
+      "product_name": "Thanh long ruột đỏ VietGAP",
+      "origin": "Chợ Gạo, Tiền Giang",
+      "quantity": "2000.00",
+      "creation_date": "2026-11-13T09:32:32.129Z",
+      "current_status": "RECEIVED",
+      "created_by": 9,
+      "organization_id": 8
+    },
+    {
+      "batch_id": 11,
+      "batch_code": "FR-2026-0204",
+      "product_id": 7,
+      "product_name": "Chè Ô Long Mộc Châu",
+      "origin": "Mộc Châu, Sơn La",
+      "quantity": "350.00",
+      "creation_date": "2026-11-14T09:32:32.129Z",
+      "current_status": "RECEIVED",
+      "created_by": 10,
+      "organization_id": 9
+    }
+  ],
+  "qr_codes": [
+    {
+      "qr_id": 1,
+      "batch_id": 1,
+      "qr_data": "http://localhost:5173/trace/FR-2026-0001.pQrr0MsxTuXFtZ-v8PV1t5DRMue88KBxTMt1oh0F1aI",
+      "signature_hmac": "pQrr0MsxTuXFtZ-v8PV1t5DRMue88KBxTMt1oh0F1aI",
+      "created_at": "2026-11-16T09:32:32.129Z"
+    },
+    {
+      "qr_id": 2,
+      "batch_id": 2,
+      "qr_data": "http://localhost:5173/trace/FR-2026-0002.nilpSnyuZm_BI2kqYVqtDxVSZ4PWJJRZCgy0pDG_fzc",
+      "signature_hmac": "nilpSnyuZm_BI2kqYVqtDxVSZ4PWJJRZCgy0pDG_fzc",
+      "created_at": "2026-11-06T09:32:32.129Z"
+    },
+    {
+      "qr_id": 3,
+      "batch_id": 3,
+      "qr_data": "http://localhost:5173/trace/FR-2026-0003.9Hv0o5XEgoKffKktE_s6hEzP0UYmzEeMybuC3-D394k",
+      "signature_hmac": "9Hv0o5XEgoKffKktE_s6hEzP0UYmzEeMybuC3-D394k",
+      "created_at": "2026-11-12T09:32:32.129Z"
+    },
+    {
+      "qr_id": 4,
+      "batch_id": 4,
+      "qr_data": "http://localhost:5173/trace/FR-2026-0004.lHak0k4OLnnScujSS2qEBwxVdnMFEYLOi0JG0xKHt4Y",
+      "signature_hmac": "lHak0k4OLnnScujSS2qEBwxVdnMFEYLOi0JG0xKHt4Y",
+      "created_at": "2026-11-15T09:32:32.129Z"
+    },
+    {
+      "qr_id": 5,
+      "batch_id": 5,
+      "qr_data": "http://localhost:5173/trace/FR-2026-0005.nWOn4By0-IlfuKT-do51UmFUGYvtRlrGp1h4f2rnnA0",
+      "signature_hmac": "nWOn4By0-IlfuKT-do51UmFUGYvtRlrGp1h4f2rnnA0",
+      "created_at": "2026-11-10T09:32:32.129Z"
+    },
+    {
+      "qr_id": 6,
+      "batch_id": 6,
+      "qr_data": "http://localhost:5173/trace/FR-2026-0101.qxlnFwwr7Hjr0WBKs1Ab92YnmVCnk_5gdYdlLQA0Yms",
+      "signature_hmac": "qxlnFwwr7Hjr0WBKs1Ab92YnmVCnk_5gdYdlLQA0Yms",
+      "created_at": "2026-11-09T09:32:32.129Z"
+    },
+    {
+      "qr_id": 7,
+      "batch_id": 7,
+      "qr_data": "http://localhost:5173/trace/FR-2026-0102.Earvr3Wx4CuLEtXUotM647c6whP0w7hIJqfgvepaClo",
+      "signature_hmac": "Earvr3Wx4CuLEtXUotM647c6whP0w7hIJqfgvepaClo",
+      "created_at": "2026-11-17T09:32:32.129Z"
+    },
+    {
+      "qr_id": 8,
+      "batch_id": 8,
+      "qr_data": "http://localhost:5173/trace/FR-2026-0201._1V2eeq3Xl3eX-bYa5hNTmQDb7Mhcnv82z6N4GvCueg",
+      "signature_hmac": "_1V2eeq3Xl3eX-bYa5hNTmQDb7Mhcnv82z6N4GvCueg",
+      "created_at": "2026-11-04T09:32:32.129Z"
+    },
+    {
+      "qr_id": 9,
+      "batch_id": 9,
+      "qr_data": "http://localhost:5173/trace/FR-2026-0202.gjp4PKkkyS_dqFuDAlJfRQTGdxBHYLq5NE0OZyvfehE",
+      "signature_hmac": "gjp4PKkkyS_dqFuDAlJfRQTGdxBHYLq5NE0OZyvfehE",
+      "created_at": "2026-11-08T09:32:32.129Z"
+    },
+    {
+      "qr_id": 10,
+      "batch_id": 10,
+      "qr_data": "http://localhost:5173/trace/FR-2026-0203.aacwa4swtr-vAzudzbJWYBnT7DSaRLPYTF26hIsHhqQ",
+      "signature_hmac": "aacwa4swtr-vAzudzbJWYBnT7DSaRLPYTF26hIsHhqQ",
+      "created_at": "2026-11-13T09:32:32.129Z"
+    },
+    {
+      "qr_id": 11,
+      "batch_id": 11,
+      "qr_data": "http://localhost:5173/trace/FR-2026-0204.SzXeV6mRn9f0QJJxfoJkxpVtfCmEiPAhWr1Zkx_K6do",
+      "signature_hmac": "SzXeV6mRn9f0QJJxfoJkxpVtfCmEiPAhWr1Zkx_K6do",
+      "created_at": "2026-11-14T09:32:32.129Z"
+    }
+  ],
+  "supply_chain_events": [
+    {
+      "event_id": 1,
+      "batch_id": 1,
+      "actor_id": 2,
+      "event_type": "CREATED",
+      "timestamp": "2026-11-16T09:32:32.129Z",
+      "location": "Cầu Đất, Đà Lạt, Lâm Đồng",
+      "description": "Thu hoạch, khởi tạo lô và dán mã định danh",
+      "chain_seq": 1,
+      "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "row_hash": "14155bd1e3ac80d4c44381b16a4ebe042f6a3efdabb9fc80a38212d69424eeb7"
+    },
+    {
+      "event_id": 2,
+      "batch_id": 2,
+      "actor_id": 2,
+      "event_type": "CREATED",
+      "timestamp": "2026-11-06T09:32:32.129Z",
+      "location": "Cầu Đất, Đà Lạt, Lâm Đồng",
+      "description": "Thu hoạch, khởi tạo lô và dán mã định danh",
+      "chain_seq": 1,
+      "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "row_hash": "dcad71d904724cd8221075048f016f8eee3a59f018473be0ba678f9c77eb5303"
+    },
+    {
+      "event_id": 3,
+      "batch_id": 2,
+      "actor_id": 5,
+      "event_type": "TRANSPORTED",
+      "timestamp": "2026-11-07T09:32:32.129Z",
+      "location": "QL20, Đà Lạt → TP.HCM",
+      "description": "Xe lạnh bảo quản 2–8°C",
+      "chain_seq": 2,
+      "prev_hash": "dcad71d904724cd8221075048f016f8eee3a59f018473be0ba678f9c77eb5303",
+      "row_hash": "31b1b6a23538f396404b84f8456e2b62639f8dd591c02fc98f3bed3eafe08fb2"
+    },
+    {
+      "event_id": 4,
+      "batch_id": 2,
+      "actor_id": 5,
+      "event_type": "RECEIVED",
+      "timestamp": "2026-11-08T09:32:32.129Z",
+      "location": "Kho Quận 7, TP.HCM",
+      "description": "Tiếp nhận đủ 300 kg, đạt độ ẩm chuẩn",
+      "chain_seq": 3,
+      "prev_hash": "31b1b6a23538f396404b84f8456e2b62639f8dd591c02fc98f3bed3eafe08fb2",
+      "row_hash": "5f4883b6088f71914daa4a31d776dc285c336b2a96048c7c60ec790095f4bba4"
+    },
+    {
+      "event_id": 5,
+      "batch_id": 2,
+      "actor_id": 4,
+      "event_type": "PROCESSED",
+      "timestamp": "2026-11-09T09:32:32.129Z",
+      "location": "Xưởng Tân Bình, TP.HCM",
+      "description": "Rang mộc 220°C theo quy trình HACCP",
+      "chain_seq": 4,
+      "prev_hash": "5f4883b6088f71914daa4a31d776dc285c336b2a96048c7c60ec790095f4bba4",
+      "row_hash": "7ff7585535ad3247f1c585255ce5ab38ef34445dcb9fc8e476fe2583dd29f76c"
+    },
+    {
+      "event_id": 6,
+      "batch_id": 2,
+      "actor_id": 4,
+      "event_type": "PACKAGED",
+      "timestamp": "2026-11-10T09:32:32.129Z",
+      "location": "Xưởng Tân Bình, TP.HCM",
+      "description": "Đóng túi van một chiều 500 g và dán tem QR",
+      "chain_seq": 5,
+      "prev_hash": "7ff7585535ad3247f1c585255ce5ab38ef34445dcb9fc8e476fe2583dd29f76c",
+      "row_hash": "a4e02a0b8363069fc32779cf199f32f8374999954ae424d4ee6199444b0ee32d"
+    },
+    {
+      "event_id": 7,
+      "batch_id": 2,
+      "actor_id": 5,
+      "event_type": "SHIPPED",
+      "timestamp": "2026-11-11T09:32:32.129Z",
+      "location": "Hệ thống Siêu thị Quận 1, TP.HCM",
+      "description": "Xuất kho phân phối điểm bán lẻ",
+      "chain_seq": 6,
+      "prev_hash": "a4e02a0b8363069fc32779cf199f32f8374999954ae424d4ee6199444b0ee32d",
+      "row_hash": "c882fd45ae6e69f23682f692c365b9cb70bb70a9ee685060f62bba8e6d9b9ccd"
+    },
+    {
+      "event_id": 8,
+      "batch_id": 3,
+      "actor_id": 2,
+      "event_type": "CREATED",
+      "timestamp": "2026-11-12T09:32:32.129Z",
+      "location": "Cầu Đất, Đà Lạt, Lâm Đồng",
+      "description": "Thu hoạch, khởi tạo lô và dán mã định danh",
+      "chain_seq": 1,
+      "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "row_hash": "80d3ae226dfbd5e0c121ba521b3ef83028e8953124144756a26a591f36c974db"
+    },
+    {
+      "event_id": 9,
+      "batch_id": 3,
+      "actor_id": 5,
+      "event_type": "TRANSPORTED",
+      "timestamp": "2026-11-13T09:32:32.129Z",
+      "location": "QL20, Đà Lạt → TP.HCM",
+      "description": null,
+      "chain_seq": 2,
+      "prev_hash": "80d3ae226dfbd5e0c121ba521b3ef83028e8953124144756a26a591f36c974db",
+      "row_hash": "da7707cbe95e12ca92448ce8a31b7e35ca92dc88eadc66c2c44a5e16cb856f99"
+    },
+    {
+      "event_id": 10,
+      "batch_id": 3,
+      "actor_id": 5,
+      "event_type": "RECEIVED",
+      "timestamp": "2026-11-14T09:32:32.129Z",
+      "location": "Kho Quận 7, TP.HCM",
+      "description": "Đã kiểm định sơ bộ, chờ chuyển xưởng chế biến",
+      "chain_seq": 3,
+      "prev_hash": "da7707cbe95e12ca92448ce8a31b7e35ca92dc88eadc66c2c44a5e16cb856f99",
+      "row_hash": "39917c9577f02de63ba72d78017f0683c603b2916c33ff0b5be78348f9c76a51"
+    },
+    {
+      "event_id": 11,
+      "batch_id": 4,
+      "actor_id": 2,
+      "event_type": "CREATED",
+      "timestamp": "2026-11-15T09:32:32.129Z",
+      "location": "Cầu Đất, Đà Lạt, Lâm Đồng",
+      "description": "Thu hoạch, khởi tạo lô và dán mã định danh",
+      "chain_seq": 1,
+      "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "row_hash": "ab2b9c64ba0646faa363ed5542e9cf62cad1b00a1ad73567c0d9ebde474ebe03"
+    },
+    {
+      "event_id": 12,
+      "batch_id": 4,
+      "actor_id": 6,
+      "event_type": "TRANSPORTED",
+      "timestamp": "2026-11-16T09:32:32.129Z",
+      "location": "QL20 → QL1A, Đà Lạt → Hà Nội",
+      "description": "Xe lạnh bảo quản 2–8°C",
+      "chain_seq": 2,
+      "prev_hash": "ab2b9c64ba0646faa363ed5542e9cf62cad1b00a1ad73567c0d9ebde474ebe03",
+      "row_hash": "ab459ac8080604e2445bb277ee30cd03dbb100b123c7d48bdef2c5fa8610a573"
+    },
+    {
+      "event_id": 13,
+      "batch_id": 5,
+      "actor_id": 2,
+      "event_type": "CREATED",
+      "timestamp": "2026-11-10T09:32:32.129Z",
+      "location": "Cầu Đất, Đà Lạt, Lâm Đồng",
+      "description": "Thu hoạch, khởi tạo lô và dán mã định danh",
+      "chain_seq": 1,
+      "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "row_hash": "6cf44af331a770d3d5bb31a866b3c95b60045a881712cfbc39b7cf43abdde501"
+    },
+    {
+      "event_id": 14,
+      "batch_id": 5,
+      "actor_id": 5,
+      "event_type": "TRANSPORTED",
+      "timestamp": "2026-11-11T09:32:32.129Z",
+      "location": "QL20, Đà Lạt → TP.HCM",
+      "description": null,
+      "chain_seq": 2,
+      "prev_hash": "6cf44af331a770d3d5bb31a866b3c95b60045a881712cfbc39b7cf43abdde501",
+      "row_hash": "5f991c9dc0b3392ff37c3f692a8131bf9e68de64d30d1f0bd77233e820aa9e38"
+    },
+    {
+      "event_id": 15,
+      "batch_id": 5,
+      "actor_id": 5,
+      "event_type": "RECEIVED",
+      "timestamp": "2026-11-12T09:32:32.129Z",
+      "location": "Kho Quận 7, TP.HCM",
+      "description": null,
+      "chain_seq": 3,
+      "prev_hash": "5f991c9dc0b3392ff37c3f692a8131bf9e68de64d30d1f0bd77233e820aa9e38",
+      "row_hash": "0ec39e2ac0d8ca69d731db87aec8f3a2570d19e9850f7afd8b73cc663218500a"
+    },
+    {
+      "event_id": 16,
+      "batch_id": 5,
+      "actor_id": 4,
+      "event_type": "PROCESSED",
+      "timestamp": "2026-11-13T09:32:32.129Z",
+      "location": "Xưởng Tân Bình, TP.HCM",
+      "description": "Rang vừa 210°C, sàng lọc hạt tiêu chuẩn",
+      "chain_seq": 4,
+      "prev_hash": "0ec39e2ac0d8ca69d731db87aec8f3a2570d19e9850f7afd8b73cc663218500a",
+      "row_hash": "f901dc9764ffb30d7885ac490e1e89d0dc6319e98edf56f03b69dd9f7d60aac9"
+    },
+    {
+      "event_id": 17,
+      "batch_id": 6,
+      "actor_id": 3,
+      "event_type": "CREATED",
+      "timestamp": "2026-11-09T09:32:32.129Z",
+      "location": "Chợ Lách, Bến Tre",
+      "description": "Thu hoạch, khởi tạo lô và dán mã định danh",
+      "chain_seq": 1,
+      "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "row_hash": "b672d9e6dc92a1c29992b09b4805342913be9c613d8e0b3077d84b6e3b01f7c5"
+    },
+    {
+      "event_id": 18,
+      "batch_id": 6,
+      "actor_id": 5,
+      "event_type": "TRANSPORTED",
+      "timestamp": "2026-11-10T09:32:32.129Z",
+      "location": "QL57, Bến Tre → TP.HCM",
+      "description": "Xe lạnh bảo quản 2–5°C",
+      "chain_seq": 2,
+      "prev_hash": "b672d9e6dc92a1c29992b09b4805342913be9c613d8e0b3077d84b6e3b01f7c5",
+      "row_hash": "87f2a671e47ed0e5e4cf4fe9a8bff3615ccaeb9b83f81e7ecbdc8531c418d05c"
+    },
+    {
+      "event_id": 19,
+      "batch_id": 6,
+      "actor_id": 5,
+      "event_type": "RECEIVED",
+      "timestamp": "2026-11-11T09:32:32.129Z",
+      "location": "Kho Quận 7, TP.HCM",
+      "description": null,
+      "chain_seq": 3,
+      "prev_hash": "87f2a671e47ed0e5e4cf4fe9a8bff3615ccaeb9b83f81e7ecbdc8531c418d05c",
+      "row_hash": "4f80417e8e2f6df31f3fa21c34a7c92b35756bcb0db0060366f906f4d0ebb900"
+    },
+    {
+      "event_id": 20,
+      "batch_id": 6,
+      "actor_id": 4,
+      "event_type": "PROCESSED",
+      "timestamp": "2026-11-12T09:32:32.129Z",
+      "location": "Xưởng Tân Bình, TP.HCM",
+      "description": "Tách múi, cấp đông nhanh IQF",
+      "chain_seq": 4,
+      "prev_hash": "4f80417e8e2f6df31f3fa21c34a7c92b35756bcb0db0060366f906f4d0ebb900",
+      "row_hash": "4e523e5729d67100355ae53532f7ac09dbc427e76098758309f6bbebba73bee2"
+    },
+    {
+      "event_id": 21,
+      "batch_id": 6,
+      "actor_id": 4,
+      "event_type": "PACKAGED",
+      "timestamp": "2026-11-13T09:32:32.129Z",
+      "location": "Xưởng Tân Bình, TP.HCM",
+      "description": "Đóng hộp 400 g đạt chuẩn xuất khẩu",
+      "chain_seq": 5,
+      "prev_hash": "4e523e5729d67100355ae53532f7ac09dbc427e76098758309f6bbebba73bee2",
+      "row_hash": "66a2bd3b8fb3c51d4edcc512f0edbdfd1ceb0fdcd901ffad8bed2c304a71e21e"
+    },
+    {
+      "event_id": 22,
+      "batch_id": 7,
+      "actor_id": 3,
+      "event_type": "CREATED",
+      "timestamp": "2026-11-17T09:32:32.129Z",
+      "location": "Chợ Lách, Bến Tre",
+      "description": "Thu hoạch, khởi tạo lô và dán mã định danh",
+      "chain_seq": 1,
+      "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "row_hash": "5809c2a9ac693e85d224d6b8a1f9f8be922690da7a4fdbb8adc7736f3ee701b7"
+    },
+    {
+      "event_id": 23,
+      "batch_id": 8,
+      "actor_id": 7,
+      "event_type": "CREATED",
+      "timestamp": "2026-11-04T09:32:32.129Z",
+      "location": "Mỹ Xuyên, Sóc Trăng",
+      "description": "Thu hoạch, khởi tạo lô và dán mã định danh",
+      "chain_seq": 1,
+      "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "row_hash": "0be4a78d67a1630c120cf50ece49f244dc43bce6043ccf0de1170289c0458eab"
+    },
+    {
+      "event_id": 24,
+      "batch_id": 8,
+      "actor_id": 5,
+      "event_type": "TRANSPORTED",
+      "timestamp": "2026-11-05T09:32:32.129Z",
+      "location": "QL1A, Sóc Trăng → TP.HCM",
+      "description": "Xe tải thùng kín, bao 25 kg",
+      "chain_seq": 2,
+      "prev_hash": "0be4a78d67a1630c120cf50ece49f244dc43bce6043ccf0de1170289c0458eab",
+      "row_hash": "17073520771b799be6b4ab8ca3ffc28a34a2c411a64dc71fd7c60387118be562"
+    },
+    {
+      "event_id": 25,
+      "batch_id": 8,
+      "actor_id": 5,
+      "event_type": "RECEIVED",
+      "timestamp": "2026-11-06T09:32:32.129Z",
+      "location": "Kho Quận 7, TP.HCM",
+      "description": "Kiểm tra độ ẩm 14%",
+      "chain_seq": 3,
+      "prev_hash": "17073520771b799be6b4ab8ca3ffc28a34a2c411a64dc71fd7c60387118be562",
+      "row_hash": "1a4aadc51f8f129aee50fda2e3cab05c9e51dbc203df8e8805583e8ff353c384"
+    },
+    {
+      "event_id": 26,
+      "batch_id": 8,
+      "actor_id": 4,
+      "event_type": "PROCESSED",
+      "timestamp": "2026-11-07T09:32:32.129Z",
+      "location": "Xưởng Tân Bình, TP.HCM",
+      "description": "Xát trắng, đánh bóng, tách tạp chất",
+      "chain_seq": 4,
+      "prev_hash": "1a4aadc51f8f129aee50fda2e3cab05c9e51dbc203df8e8805583e8ff353c384",
+      "row_hash": "4dc7e531de13b9be23e802b392523509afe5f2713f93f9a0a0aac38c2e4639ac"
+    },
+    {
+      "event_id": 27,
+      "batch_id": 8,
+      "actor_id": 4,
+      "event_type": "PACKAGED",
+      "timestamp": "2026-11-08T09:32:32.129Z",
+      "location": "Xưởng Tân Bình, TP.HCM",
+      "description": "Đóng túi hút chân không 5 kg",
+      "chain_seq": 5,
+      "prev_hash": "4dc7e531de13b9be23e802b392523509afe5f2713f93f9a0a0aac38c2e4639ac",
+      "row_hash": "025797039dc4979b168e218cdf9a3492aeec98159480999fa602fb79312d4130"
+    },
+    {
+      "event_id": 28,
+      "batch_id": 8,
+      "actor_id": 5,
+      "event_type": "SHIPPED",
+      "timestamp": "2026-11-09T09:32:32.129Z",
+      "location": "Hệ thống siêu thị Quận 3, TP.HCM",
+      "description": "Giao điểm bán lẻ",
+      "chain_seq": 6,
+      "prev_hash": "025797039dc4979b168e218cdf9a3492aeec98159480999fa602fb79312d4130",
+      "row_hash": "56d4c16478698abb91f47d2a9bf37b3cc28391fbfe2d2d5e56886c91b6ce24f3"
+    },
+    {
+      "event_id": 29,
+      "batch_id": 9,
+      "actor_id": 8,
+      "event_type": "CREATED",
+      "timestamp": "2026-11-08T09:32:32.129Z",
+      "location": "Bù Đăng, Bình Phước",
+      "description": "Thu hoạch, khởi tạo lô và dán mã định danh",
+      "chain_seq": 1,
+      "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "row_hash": "d055195ea2bdead5adb773cff103e978577b27cc78459e43e21e8ff8f3d6c9a6"
+    },
+    {
+      "event_id": 30,
+      "batch_id": 9,
+      "actor_id": 5,
+      "event_type": "TRANSPORTED",
+      "timestamp": "2026-11-09T09:32:32.129Z",
+      "location": "QL14, Bình Phước → TP.HCM",
+      "description": null,
+      "chain_seq": 2,
+      "prev_hash": "d055195ea2bdead5adb773cff103e978577b27cc78459e43e21e8ff8f3d6c9a6",
+      "row_hash": "904a52e374861c5a6ebc389c3012b3139928320683e2fbb9259d101228301ca8"
+    },
+    {
+      "event_id": 31,
+      "batch_id": 9,
+      "actor_id": 5,
+      "event_type": "RECEIVED",
+      "timestamp": "2026-11-10T09:32:32.129Z",
+      "location": "Kho Quận 7, TP.HCM",
+      "description": "Phân loại cỡ hạt W320",
+      "chain_seq": 3,
+      "prev_hash": "904a52e374861c5a6ebc389c3012b3139928320683e2fbb9259d101228301ca8",
+      "row_hash": "281b2622e4afa0c8c31a06645f6be9c782703d83e3e1585bbbbe564a368eeac1"
+    },
+    {
+      "event_id": 32,
+      "batch_id": 9,
+      "actor_id": 4,
+      "event_type": "PROCESSED",
+      "timestamp": "2026-11-11T09:32:32.129Z",
+      "location": "Xưởng Tân Bình, TP.HCM",
+      "description": "Rang củi, ướp muối nhẹ",
+      "chain_seq": 4,
+      "prev_hash": "281b2622e4afa0c8c31a06645f6be9c782703d83e3e1585bbbbe564a368eeac1",
+      "row_hash": "20d01546de54faa976831fc66ec56252d10dcec837c5baaeb84c585bb4b0206d"
+    },
+    {
+      "event_id": 33,
+      "batch_id": 9,
+      "actor_id": 4,
+      "event_type": "PACKAGED",
+      "timestamp": "2026-11-12T09:32:32.129Z",
+      "location": "Xưởng Tân Bình, TP.HCM",
+      "description": "Hũ thủy tinh 500 g",
+      "chain_seq": 5,
+      "prev_hash": "20d01546de54faa976831fc66ec56252d10dcec837c5baaeb84c585bb4b0206d",
+      "row_hash": "9553fc6cbe1921b1db3998852957947ed5b88042478d6682edd0245e159e78fe"
+    },
+    {
+      "event_id": 34,
+      "batch_id": 10,
+      "actor_id": 9,
+      "event_type": "CREATED",
+      "timestamp": "2026-11-13T09:32:32.129Z",
+      "location": "Chợ Gạo, Tiền Giang",
+      "description": "Thu hoạch, khởi tạo lô và dán mã định danh",
+      "chain_seq": 1,
+      "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "row_hash": "17a1d5f0c0af716f72313c395ce482c9cbf3b92a7e91dfb25b11ac2b19a24bfa"
+    },
+    {
+      "event_id": 35,
+      "batch_id": 10,
+      "actor_id": 5,
+      "event_type": "TRANSPORTED",
+      "timestamp": "2026-11-14T09:32:32.129Z",
+      "location": "QL1A, Tiền Giang → TP.HCM",
+      "description": "Xe lạnh 8–10°C",
+      "chain_seq": 2,
+      "prev_hash": "17a1d5f0c0af716f72313c395ce482c9cbf3b92a7e91dfb25b11ac2b19a24bfa",
+      "row_hash": "d1a6a4296c43bc051fbca1cbcc75fbc167775169edc0d6469fd6c3be5b1875dc"
+    },
+    {
+      "event_id": 36,
+      "batch_id": 10,
+      "actor_id": 5,
+      "event_type": "RECEIVED",
+      "timestamp": "2026-11-15T09:32:32.129Z",
+      "location": "Kho Quận 7, TP.HCM",
+      "description": "Kiểm tra ngoại quan, độ ngọt Brix 15",
+      "chain_seq": 3,
+      "prev_hash": "d1a6a4296c43bc051fbca1cbcc75fbc167775169edc0d6469fd6c3be5b1875dc",
+      "row_hash": "6d0da66d1951d24eb3a3504b01dc1392073cafba768bb6700966bcd46fff3852"
+    },
+    {
+      "event_id": 37,
+      "batch_id": 11,
+      "actor_id": 10,
+      "event_type": "CREATED",
+      "timestamp": "2026-11-14T09:32:32.129Z",
+      "location": "Mộc Châu, Sơn La",
+      "description": "Thu hoạch, khởi tạo lô và dán mã định danh",
+      "chain_seq": 1,
+      "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "row_hash": "68cd26cd99b0e7bef6190a9af51679c570292de1237dbe176e234f78c701edc0"
+    },
+    {
+      "event_id": 38,
+      "batch_id": 11,
+      "actor_id": 6,
+      "event_type": "TRANSPORTED",
+      "timestamp": "2026-11-15T09:32:32.129Z",
+      "location": "QL6, Sơn La → Hà Nội",
+      "description": null,
+      "chain_seq": 2,
+      "prev_hash": "68cd26cd99b0e7bef6190a9af51679c570292de1237dbe176e234f78c701edc0",
+      "row_hash": "d49e9ddaefa28f0d292ad6881a3c8cadef66f844c885c3c82349c6a11630ba62"
+    },
+    {
+      "event_id": 39,
+      "batch_id": 11,
+      "actor_id": 6,
+      "event_type": "RECEIVED",
+      "timestamp": "2026-11-16T09:32:32.129Z",
+      "location": "Kho Long Biên, Hà Nội",
+      "description": null,
+      "chain_seq": 3,
+      "prev_hash": "d49e9ddaefa28f0d292ad6881a3c8cadef66f844c885c3c82349c6a11630ba62",
+      "row_hash": "efdf4efddfbf25b612404624079d6a70726a519a14cc4868bb87396d04497118"
+    }
+  ],
+  "audit_logs": [
+    {
+      "audit_id": 1,
+      "actor_id": null,
+      "action": "CREATE",
+      "entity_type": "ORGANIZATION",
+      "entity_id": 1,
+      "old_value": null,
+      "new_value": {
+        "name": "HTX Cà phê Cầu Đất",
+        "type": "FARM",
+        "source": "seed"
+      },
+      "created_at": "2026-10-19T09:32:33.129Z",
+      "chain_seq": 1,
+      "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "row_hash": "d916846388b798af30d7c09b7429a9355d9560feba6032f0aff3f8ad8616831c"
+    },
+    {
+      "audit_id": 2,
+      "actor_id": null,
+      "action": "CREATE",
+      "entity_type": "ORGANIZATION",
+      "entity_id": 2,
+      "old_value": null,
+      "new_value": {
+        "name": "Nông trại Sầu riêng Cái Mơn",
+        "type": "FARM",
+        "source": "seed"
+      },
+      "created_at": "2026-10-19T09:32:34.129Z",
+      "chain_seq": 2,
+      "prev_hash": "d916846388b798af30d7c09b7429a9355d9560feba6032f0aff3f8ad8616831c",
+      "row_hash": "b87c2998a6c19bb8fd6d89eb8cacc11c20e6262a5b5ae40ffb3b900b37ae7b64"
+    },
+    {
+      "audit_id": 3,
+      "actor_id": null,
+      "action": "CREATE",
+      "entity_type": "ORGANIZATION",
+      "entity_id": 3,
+      "old_value": null,
+      "new_value": {
+        "name": "Công ty Chế biến Nông sản Sài Gòn",
+        "type": "PROCESSOR",
+        "source": "seed"
+      },
+      "created_at": "2026-10-19T09:32:35.129Z",
+      "chain_seq": 3,
+      "prev_hash": "b87c2998a6c19bb8fd6d89eb8cacc11c20e6262a5b5ae40ffb3b900b37ae7b64",
+      "row_hash": "aa6e01a1eb3de71bf54e2075b90d114dd391e214bac60894af8f4ad95c2578c4"
+    },
+    {
+      "audit_id": 4,
+      "actor_id": null,
+      "action": "CREATE",
+      "entity_type": "ORGANIZATION",
+      "entity_id": 4,
+      "old_value": null,
+      "new_value": {
+        "name": "Vận tải Lạnh Miền Nam",
+        "type": "DISTRIBUTOR",
+        "source": "seed"
+      },
+      "created_at": "2026-10-19T09:32:36.129Z",
+      "chain_seq": 4,
+      "prev_hash": "aa6e01a1eb3de71bf54e2075b90d114dd391e214bac60894af8f4ad95c2578c4",
+      "row_hash": "e6d92f30ae6d1f1f33060102ac05c3af9b8ea7cc9f748086e5aa08a0b1749d35"
+    },
+    {
+      "audit_id": 5,
+      "actor_id": null,
+      "action": "CREATE",
+      "entity_type": "ORGANIZATION",
+      "entity_id": 5,
+      "old_value": null,
+      "new_value": {
+        "name": "Phân phối Thực phẩm Sạch Hà Nội",
+        "type": "DISTRIBUTOR",
+        "source": "seed"
+      },
+      "created_at": "2026-10-19T09:32:37.129Z",
+      "chain_seq": 5,
+      "prev_hash": "e6d92f30ae6d1f1f33060102ac05c3af9b8ea7cc9f748086e5aa08a0b1749d35",
+      "row_hash": "4b84ce01d9a1191dad6d04ebfe506a55801cdac1978f6ff661055e59c26dd7bd"
+    },
+    {
+      "audit_id": 6,
+      "actor_id": null,
+      "action": "CREATE",
+      "entity_type": "ORGANIZATION",
+      "entity_id": 6,
+      "old_value": null,
+      "new_value": {
+        "name": "HTX Lúa gạo ST25 Mỹ Xuyên",
+        "type": "FARM",
+        "source": "seed"
+      },
+      "created_at": "2026-10-19T09:32:38.129Z",
+      "chain_seq": 6,
+      "prev_hash": "4b84ce01d9a1191dad6d04ebfe506a55801cdac1978f6ff661055e59c26dd7bd",
+      "row_hash": "911761ffaf8e71ee4c771573cd69a92790ffed50479b41c42bda68102547d709"
+    },
+    {
+      "audit_id": 7,
+      "actor_id": null,
+      "action": "CREATE",
+      "entity_type": "ORGANIZATION",
+      "entity_id": 7,
+      "old_value": null,
+      "new_value": {
+        "name": "Nông trại Hạt điều Bù Đăng",
+        "type": "FARM",
+        "source": "seed"
+      },
+      "created_at": "2026-10-19T09:32:39.129Z",
+      "chain_seq": 7,
+      "prev_hash": "911761ffaf8e71ee4c771573cd69a92790ffed50479b41c42bda68102547d709",
+      "row_hash": "0f6a181d0676b12506ec386425b5b53bd6491eeec6460592ab9220685bd576ef"
+    },
+    {
+      "audit_id": 8,
+      "actor_id": null,
+      "action": "CREATE",
+      "entity_type": "ORGANIZATION",
+      "entity_id": 8,
+      "old_value": null,
+      "new_value": {
+        "name": "HTX Thanh long Chợ Gạo",
+        "type": "FARM",
+        "source": "seed"
+      },
+      "created_at": "2026-10-19T09:32:40.129Z",
+      "chain_seq": 8,
+      "prev_hash": "0f6a181d0676b12506ec386425b5b53bd6491eeec6460592ab9220685bd576ef",
+      "row_hash": "ffff7041ba97c6a39883082e9d95dc500151161a910180876bcc20b4dd11f562"
+    },
+    {
+      "audit_id": 9,
+      "actor_id": null,
+      "action": "CREATE",
+      "entity_type": "ORGANIZATION",
+      "entity_id": 9,
+      "old_value": null,
+      "new_value": {
+        "name": "HTX Chè Ô Long Mộc Châu",
+        "type": "FARM",
+        "source": "seed"
+      },
+      "created_at": "2026-10-19T09:32:41.129Z",
+      "chain_seq": 9,
+      "prev_hash": "ffff7041ba97c6a39883082e9d95dc500151161a910180876bcc20b4dd11f562",
+      "row_hash": "9590f3e6d87127bc47e8454fe665677fa2fa9f1bbb3b03444612c93cf5c24720"
+    },
+    {
+      "audit_id": 10,
+      "actor_id": null,
+      "action": "CREATE",
+      "entity_type": "USER",
+      "entity_id": 1,
+      "old_value": null,
+      "new_value": {
+        "name": "Quản trị Demo",
+        "role": "ADMIN",
+        "status": "ACTIVE",
+        "source": "seed"
+      },
+      "created_at": "2026-10-24T09:32:33.129Z",
+      "chain_seq": 10,
+      "prev_hash": "9590f3e6d87127bc47e8454fe665677fa2fa9f1bbb3b03444612c93cf5c24720",
+      "row_hash": "b3f6054a95c7e97ddf9cdc037b45fbc66866de45aa2a1b20c3a97fae5495333b"
+    },
+    {
+      "audit_id": 11,
+      "actor_id": null,
+      "action": "CREATE",
+      "entity_type": "USER",
+      "entity_id": 2,
+      "old_value": null,
+      "new_value": {
+        "name": "Nguyễn Văn An",
+        "role": "FARMER",
+        "status": "ACTIVE",
+        "source": "seed"
+      },
+      "created_at": "2026-10-24T09:32:34.129Z",
+      "chain_seq": 11,
+      "prev_hash": "b3f6054a95c7e97ddf9cdc037b45fbc66866de45aa2a1b20c3a97fae5495333b",
+      "row_hash": "940523d457b8b36e690bfe2f1e022904fb8c57b4c18df24cd02c3bba496b8330"
+    },
+    {
+      "audit_id": 12,
+      "actor_id": null,
+      "action": "CREATE",
+      "entity_type": "USER",
+      "entity_id": 3,
+      "old_value": null,
+      "new_value": {
+        "name": "Trần Thị Bình",
+        "role": "FARMER",
+        "status": "ACTIVE",
+        "source": "seed"
+      },
+      "created_at": "2026-10-24T09:32:35.129Z",
+      "chain_seq": 12,
+      "prev_hash": "940523d457b8b36e690bfe2f1e022904fb8c57b4c18df24cd02c3bba496b8330",
+      "row_hash": "b8b9f6bb947bf9e209a4596973033df82397325bd36074f226dbe848c305a910"
+    },
+    {
+      "audit_id": 13,
+      "actor_id": null,
+      "action": "CREATE",
+      "entity_type": "USER",
+      "entity_id": 4,
+      "old_value": null,
+      "new_value": {
+        "name": "Lê Văn Chế",
+        "role": "PROCESSOR",
+        "status": "ACTIVE",
+        "source": "seed"
+      },
+      "created_at": "2026-10-24T09:32:36.129Z",
+      "chain_seq": 13,
+      "prev_hash": "b8b9f6bb947bf9e209a4596973033df82397325bd36074f226dbe848c305a910",
+      "row_hash": "36b10fba53b04467a50a18816b233e7bde249b134adf695a2f11866fd2771f89"
+    },
+    {
+      "audit_id": 14,
+      "actor_id": null,
+      "action": "CREATE",
+      "entity_type": "USER",
+      "entity_id": 5,
+      "old_value": null,
+      "new_value": {
+        "name": "Phạm Văn Dũng",
+        "role": "DISTRIBUTOR",
+        "status": "ACTIVE",
+        "source": "seed"
+      },
+      "created_at": "2026-10-24T09:32:37.129Z",
+      "chain_seq": 14,
+      "prev_hash": "36b10fba53b04467a50a18816b233e7bde249b134adf695a2f11866fd2771f89",
+      "row_hash": "92c0883fb4192cc5cc03f4d2c5828e81415dbce55a30b21f595d812c7fe11421"
+    },
+    {
+      "audit_id": 15,
+      "actor_id": null,
+      "action": "CREATE",
+      "entity_type": "USER",
+      "entity_id": 6,
+      "old_value": null,
+      "new_value": {
+        "name": "Hoàng Thị Em",
+        "role": "DISTRIBUTOR",
+        "status": "ACTIVE",
+        "source": "seed"
+      },
+      "created_at": "2026-10-24T09:32:38.129Z",
+      "chain_seq": 15,
+      "prev_hash": "92c0883fb4192cc5cc03f4d2c5828e81415dbce55a30b21f595d812c7fe11421",
+      "row_hash": "93787edba103c99fa67502ff1f3510d9fef886436b23f05361e661c4ec97bdb8"
+    },
+    {
+      "audit_id": 16,
+      "actor_id": null,
+      "action": "CREATE",
+      "entity_type": "USER",
+      "entity_id": 7,
+      "old_value": null,
+      "new_value": {
+        "name": "Lâm Thị Cúc",
+        "role": "FARMER",
+        "status": "ACTIVE",
+        "source": "seed"
+      },
+      "created_at": "2026-10-24T09:32:39.129Z",
+      "chain_seq": 16,
+      "prev_hash": "93787edba103c99fa67502ff1f3510d9fef886436b23f05361e661c4ec97bdb8",
+      "row_hash": "599dc1b66485e32bf16771e1f75672774af6bcc51977a6951bd2394045722910"
+    },
+    {
+      "audit_id": 17,
+      "actor_id": null,
+      "action": "CREATE",
+      "entity_type": "USER",
+      "entity_id": 8,
+      "old_value": null,
+      "new_value": {
+        "name": "Điểu Văn Dũng",
+        "role": "FARMER",
+        "status": "ACTIVE",
+        "source": "seed"
+      },
+      "created_at": "2026-10-24T09:32:40.129Z",
+      "chain_seq": 17,
+      "prev_hash": "599dc1b66485e32bf16771e1f75672774af6bcc51977a6951bd2394045722910",
+      "row_hash": "ca8bd7d2ad79ed6985e358ebae3641eb1b9cf4b3cc1c78d6d7c1f254ec807cde"
+    },
+    {
+      "audit_id": 18,
+      "actor_id": null,
+      "action": "CREATE",
+      "entity_type": "USER",
+      "entity_id": 9,
+      "old_value": null,
+      "new_value": {
+        "name": "Võ Minh Tâm",
+        "role": "FARMER",
+        "status": "ACTIVE",
+        "source": "seed"
+      },
+      "created_at": "2026-10-24T09:32:41.129Z",
+      "chain_seq": 18,
+      "prev_hash": "ca8bd7d2ad79ed6985e358ebae3641eb1b9cf4b3cc1c78d6d7c1f254ec807cde",
+      "row_hash": "bbfbec58cd79959fe1b28c7e2669fe4ca5731d44003164cf64472b6d2f5eb372"
+    },
+    {
+      "audit_id": 19,
+      "actor_id": null,
+      "action": "CREATE",
+      "entity_type": "USER",
+      "entity_id": 10,
+      "old_value": null,
+      "new_value": {
+        "name": "Hà Thị Mai",
+        "role": "FARMER",
+        "status": "ACTIVE",
+        "source": "seed"
+      },
+      "created_at": "2026-10-24T09:32:42.129Z",
+      "chain_seq": 19,
+      "prev_hash": "bbfbec58cd79959fe1b28c7e2669fe4ca5731d44003164cf64472b6d2f5eb372",
+      "row_hash": "c96fd1331aebd5ff4ff7ca18e03b151b22f79715a4d0a482aca2aa8326b856ed"
+    },
+    {
+      "audit_id": 20,
+      "actor_id": null,
+      "action": "CREATE",
+      "entity_type": "USER",
+      "entity_id": 11,
+      "old_value": null,
+      "new_value": {
+        "name": "Đỗ Văn Chờ",
+        "role": "FARMER",
+        "status": "PENDING",
+        "source": "seed"
+      },
+      "created_at": "2026-10-24T09:32:43.129Z",
+      "chain_seq": 20,
+      "prev_hash": "c96fd1331aebd5ff4ff7ca18e03b151b22f79715a4d0a482aca2aa8326b856ed",
+      "row_hash": "695de268d63ceb1fbbe979f7203087fc0ee41b5e7e7f184fd083651d87a27bc2"
+    },
+    {
+      "audit_id": 21,
+      "actor_id": null,
+      "action": "CREATE",
+      "entity_type": "USER",
+      "entity_id": 12,
+      "old_value": null,
+      "new_value": {
+        "name": "Vũ Văn Khóa",
+        "role": "DISTRIBUTOR",
+        "status": "LOCKED",
+        "source": "seed"
+      },
+      "created_at": "2026-10-24T09:32:44.129Z",
+      "chain_seq": 21,
+      "prev_hash": "695de268d63ceb1fbbe979f7203087fc0ee41b5e7e7f184fd083651d87a27bc2",
+      "row_hash": "c5d2b03a89b51271d05bba5afd5f3c00dd795e6b7ee7ef308d0fc57090053a9f"
+    },
+    {
+      "audit_id": 22,
+      "actor_id": 2,
+      "action": "CREATE",
+      "entity_type": "BATCH",
+      "entity_id": 1,
+      "old_value": null,
+      "new_value": {
+        "batchCode": "FR-2026-0001",
+        "quantity": 500,
+        "source": "seed"
+      },
+      "created_at": "2026-11-16T09:32:32.129Z",
+      "chain_seq": 22,
+      "prev_hash": "c5d2b03a89b51271d05bba5afd5f3c00dd795e6b7ee7ef308d0fc57090053a9f",
+      "row_hash": "6b96dc7543cd55c7a5579a604f90f3222383f811dd4cbf383fd323a30fafd093"
+    },
+    {
+      "audit_id": 23,
+      "actor_id": 2,
+      "action": "CREATE",
+      "entity_type": "QR_CODE",
+      "entity_id": 1,
+      "old_value": null,
+      "new_value": {
+        "batchId": 1,
+        "source": "seed"
+      },
+      "created_at": "2026-11-16T09:32:32.129Z",
+      "chain_seq": 23,
+      "prev_hash": "6b96dc7543cd55c7a5579a604f90f3222383f811dd4cbf383fd323a30fafd093",
+      "row_hash": "8b59b027fd0109786ada9bfc9e2261e4db1deacb4c86d81e7d90002e58c6d06a"
+    },
+    {
+      "audit_id": 24,
+      "actor_id": 2,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 1,
+      "old_value": null,
+      "new_value": {
+        "batchId": 1,
+        "batchCode": "FR-2026-0001",
+        "eventType": "CREATED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-16T09:32:32.129Z",
+      "chain_seq": 24,
+      "prev_hash": "8b59b027fd0109786ada9bfc9e2261e4db1deacb4c86d81e7d90002e58c6d06a",
+      "row_hash": "336637636b91b233d39a7c11c5d58cdb255f4898728d5c6579a64dd6258355c2"
+    },
+    {
+      "audit_id": 25,
+      "actor_id": 2,
+      "action": "CREATE",
+      "entity_type": "BATCH",
+      "entity_id": 2,
+      "old_value": null,
+      "new_value": {
+        "batchCode": "FR-2026-0002",
+        "quantity": 300,
+        "source": "seed"
+      },
+      "created_at": "2026-11-06T09:32:32.129Z",
+      "chain_seq": 25,
+      "prev_hash": "336637636b91b233d39a7c11c5d58cdb255f4898728d5c6579a64dd6258355c2",
+      "row_hash": "2e4ea4fb361dd6c36e86e542256cd51bae38244d73d6bfb340b6c3e73c060c8a"
+    },
+    {
+      "audit_id": 26,
+      "actor_id": 2,
+      "action": "CREATE",
+      "entity_type": "QR_CODE",
+      "entity_id": 2,
+      "old_value": null,
+      "new_value": {
+        "batchId": 2,
+        "source": "seed"
+      },
+      "created_at": "2026-11-06T09:32:32.129Z",
+      "chain_seq": 26,
+      "prev_hash": "2e4ea4fb361dd6c36e86e542256cd51bae38244d73d6bfb340b6c3e73c060c8a",
+      "row_hash": "16bf2df5014bc9d4e7112ddc5373314464bcc72a31f3d59cd2a94d876c056853"
+    },
+    {
+      "audit_id": 27,
+      "actor_id": 2,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 2,
+      "old_value": null,
+      "new_value": {
+        "batchId": 2,
+        "batchCode": "FR-2026-0002",
+        "eventType": "CREATED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-06T09:32:32.129Z",
+      "chain_seq": 27,
+      "prev_hash": "16bf2df5014bc9d4e7112ddc5373314464bcc72a31f3d59cd2a94d876c056853",
+      "row_hash": "d7a3f247f0d6676007f8911c35d7c77a8596b1ddcc68e0b2838f90b6acdafa26"
+    },
+    {
+      "audit_id": 28,
+      "actor_id": 5,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 3,
+      "old_value": null,
+      "new_value": {
+        "batchId": 2,
+        "batchCode": "FR-2026-0002",
+        "eventType": "TRANSPORTED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-07T09:32:32.129Z",
+      "chain_seq": 28,
+      "prev_hash": "d7a3f247f0d6676007f8911c35d7c77a8596b1ddcc68e0b2838f90b6acdafa26",
+      "row_hash": "864752935274b0189c5ee274847bbdf9af2d9c221582fbe356c5c0bfa4af66b8"
+    },
+    {
+      "audit_id": 29,
+      "actor_id": 5,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 4,
+      "old_value": null,
+      "new_value": {
+        "batchId": 2,
+        "batchCode": "FR-2026-0002",
+        "eventType": "RECEIVED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-08T09:32:32.129Z",
+      "chain_seq": 29,
+      "prev_hash": "864752935274b0189c5ee274847bbdf9af2d9c221582fbe356c5c0bfa4af66b8",
+      "row_hash": "18087708a9154438e042a054d0b7d71bd8bc1f1c4ab008ebcc5f4afe3300238f"
+    },
+    {
+      "audit_id": 30,
+      "actor_id": 4,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 5,
+      "old_value": null,
+      "new_value": {
+        "batchId": 2,
+        "batchCode": "FR-2026-0002",
+        "eventType": "PROCESSED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-09T09:32:32.129Z",
+      "chain_seq": 30,
+      "prev_hash": "18087708a9154438e042a054d0b7d71bd8bc1f1c4ab008ebcc5f4afe3300238f",
+      "row_hash": "426e505b885b5e594eabc48aa076103c090dd34632c78a8bff94ce67ad2946d8"
+    },
+    {
+      "audit_id": 31,
+      "actor_id": 4,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 6,
+      "old_value": null,
+      "new_value": {
+        "batchId": 2,
+        "batchCode": "FR-2026-0002",
+        "eventType": "PACKAGED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-10T09:32:32.129Z",
+      "chain_seq": 31,
+      "prev_hash": "426e505b885b5e594eabc48aa076103c090dd34632c78a8bff94ce67ad2946d8",
+      "row_hash": "58429033fed51fa3d7d44524275cb8a38a7947c1da8b48c0848d024337f84b44"
+    },
+    {
+      "audit_id": 32,
+      "actor_id": 5,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 7,
+      "old_value": null,
+      "new_value": {
+        "batchId": 2,
+        "batchCode": "FR-2026-0002",
+        "eventType": "SHIPPED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-11T09:32:32.129Z",
+      "chain_seq": 32,
+      "prev_hash": "58429033fed51fa3d7d44524275cb8a38a7947c1da8b48c0848d024337f84b44",
+      "row_hash": "a1dda69d34f68706f3689e0ec06dd40d5426e8949e0954adbac60ae2f6baa537"
+    },
+    {
+      "audit_id": 33,
+      "actor_id": 2,
+      "action": "CREATE",
+      "entity_type": "BATCH",
+      "entity_id": 3,
+      "old_value": null,
+      "new_value": {
+        "batchCode": "FR-2026-0003",
+        "quantity": 200,
+        "source": "seed"
+      },
+      "created_at": "2026-11-12T09:32:32.129Z",
+      "chain_seq": 33,
+      "prev_hash": "a1dda69d34f68706f3689e0ec06dd40d5426e8949e0954adbac60ae2f6baa537",
+      "row_hash": "7fa77621a48ae7e74d90a6aa1b00d58558982b9966f8f6719f6c2869eec501f8"
+    },
+    {
+      "audit_id": 34,
+      "actor_id": 2,
+      "action": "CREATE",
+      "entity_type": "QR_CODE",
+      "entity_id": 3,
+      "old_value": null,
+      "new_value": {
+        "batchId": 3,
+        "source": "seed"
+      },
+      "created_at": "2026-11-12T09:32:32.129Z",
+      "chain_seq": 34,
+      "prev_hash": "7fa77621a48ae7e74d90a6aa1b00d58558982b9966f8f6719f6c2869eec501f8",
+      "row_hash": "3758550a4a4b9de78b9eec6d82700f4876ebc2059a963afd3a7bc579c3ad7fd9"
+    },
+    {
+      "audit_id": 35,
+      "actor_id": 2,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 8,
+      "old_value": null,
+      "new_value": {
+        "batchId": 3,
+        "batchCode": "FR-2026-0003",
+        "eventType": "CREATED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-12T09:32:32.129Z",
+      "chain_seq": 35,
+      "prev_hash": "3758550a4a4b9de78b9eec6d82700f4876ebc2059a963afd3a7bc579c3ad7fd9",
+      "row_hash": "25d278ca7ea85c4f98153c8ae8dea98c451e5f90505099ef52123ff1109e11a4"
+    },
+    {
+      "audit_id": 36,
+      "actor_id": 5,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 9,
+      "old_value": null,
+      "new_value": {
+        "batchId": 3,
+        "batchCode": "FR-2026-0003",
+        "eventType": "TRANSPORTED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-13T09:32:32.129Z",
+      "chain_seq": 36,
+      "prev_hash": "25d278ca7ea85c4f98153c8ae8dea98c451e5f90505099ef52123ff1109e11a4",
+      "row_hash": "e9ce3da09ece7730dee9aec120d9ff552cf7e5be99391d29037ca9d844dd5320"
+    },
+    {
+      "audit_id": 37,
+      "actor_id": 5,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 10,
+      "old_value": null,
+      "new_value": {
+        "batchId": 3,
+        "batchCode": "FR-2026-0003",
+        "eventType": "RECEIVED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-14T09:32:32.129Z",
+      "chain_seq": 37,
+      "prev_hash": "e9ce3da09ece7730dee9aec120d9ff552cf7e5be99391d29037ca9d844dd5320",
+      "row_hash": "e51c601f0a15b096ecc530649ca1ed7f569f87215374ecc575216a8d02b353ff"
+    },
+    {
+      "audit_id": 38,
+      "actor_id": 2,
+      "action": "CREATE",
+      "entity_type": "BATCH",
+      "entity_id": 4,
+      "old_value": null,
+      "new_value": {
+        "batchCode": "FR-2026-0004",
+        "quantity": 120,
+        "source": "seed"
+      },
+      "created_at": "2026-11-15T09:32:32.129Z",
+      "chain_seq": 38,
+      "prev_hash": "e51c601f0a15b096ecc530649ca1ed7f569f87215374ecc575216a8d02b353ff",
+      "row_hash": "5bad949eaf844e8dd4bceb81d5be09a8652380640fdca9cf7347261064cd59af"
+    },
+    {
+      "audit_id": 39,
+      "actor_id": 2,
+      "action": "CREATE",
+      "entity_type": "QR_CODE",
+      "entity_id": 4,
+      "old_value": null,
+      "new_value": {
+        "batchId": 4,
+        "source": "seed"
+      },
+      "created_at": "2026-11-15T09:32:32.129Z",
+      "chain_seq": 39,
+      "prev_hash": "5bad949eaf844e8dd4bceb81d5be09a8652380640fdca9cf7347261064cd59af",
+      "row_hash": "d2f912df21ded572dc45d4aeadf606a9330703f3784ae6b02d9860a4416e943c"
+    },
+    {
+      "audit_id": 40,
+      "actor_id": 2,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 11,
+      "old_value": null,
+      "new_value": {
+        "batchId": 4,
+        "batchCode": "FR-2026-0004",
+        "eventType": "CREATED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-15T09:32:32.129Z",
+      "chain_seq": 40,
+      "prev_hash": "d2f912df21ded572dc45d4aeadf606a9330703f3784ae6b02d9860a4416e943c",
+      "row_hash": "d448e23221c416469856b58e0a6697e1b12d264046c65d49666e1a6351c8926f"
+    },
+    {
+      "audit_id": 41,
+      "actor_id": 6,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 12,
+      "old_value": null,
+      "new_value": {
+        "batchId": 4,
+        "batchCode": "FR-2026-0004",
+        "eventType": "TRANSPORTED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-16T09:32:32.129Z",
+      "chain_seq": 41,
+      "prev_hash": "d448e23221c416469856b58e0a6697e1b12d264046c65d49666e1a6351c8926f",
+      "row_hash": "5178ecafe2b08029687b7e0f4b65a165078c6f2908228ac022047669599dc8a7"
+    },
+    {
+      "audit_id": 42,
+      "actor_id": 2,
+      "action": "CREATE",
+      "entity_type": "BATCH",
+      "entity_id": 5,
+      "old_value": null,
+      "new_value": {
+        "batchCode": "FR-2026-0005",
+        "quantity": 250,
+        "source": "seed"
+      },
+      "created_at": "2026-11-10T09:32:32.129Z",
+      "chain_seq": 42,
+      "prev_hash": "5178ecafe2b08029687b7e0f4b65a165078c6f2908228ac022047669599dc8a7",
+      "row_hash": "e46be7e4cba5bcc91868faad0cdb88c1eeff199c97b9ca9a638d4c1fc6ebdd5c"
+    },
+    {
+      "audit_id": 43,
+      "actor_id": 2,
+      "action": "CREATE",
+      "entity_type": "QR_CODE",
+      "entity_id": 5,
+      "old_value": null,
+      "new_value": {
+        "batchId": 5,
+        "source": "seed"
+      },
+      "created_at": "2026-11-10T09:32:32.129Z",
+      "chain_seq": 43,
+      "prev_hash": "e46be7e4cba5bcc91868faad0cdb88c1eeff199c97b9ca9a638d4c1fc6ebdd5c",
+      "row_hash": "85ae61be21e5943eacef0e4b4f2d913de52626a6a24bc288381370dceb93f7be"
+    },
+    {
+      "audit_id": 44,
+      "actor_id": 2,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 13,
+      "old_value": null,
+      "new_value": {
+        "batchId": 5,
+        "batchCode": "FR-2026-0005",
+        "eventType": "CREATED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-10T09:32:32.129Z",
+      "chain_seq": 44,
+      "prev_hash": "85ae61be21e5943eacef0e4b4f2d913de52626a6a24bc288381370dceb93f7be",
+      "row_hash": "e74ecb89175a5bb83ab1285151c609380e4d0d9c90d19fbd5d256f8ad0c5fc88"
+    },
+    {
+      "audit_id": 45,
+      "actor_id": 5,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 14,
+      "old_value": null,
+      "new_value": {
+        "batchId": 5,
+        "batchCode": "FR-2026-0005",
+        "eventType": "TRANSPORTED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-11T09:32:32.129Z",
+      "chain_seq": 45,
+      "prev_hash": "e74ecb89175a5bb83ab1285151c609380e4d0d9c90d19fbd5d256f8ad0c5fc88",
+      "row_hash": "953e5753ff2c9a181a51145f2564c3655ab905c540359030b604c14c6be854b8"
+    },
+    {
+      "audit_id": 46,
+      "actor_id": 5,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 15,
+      "old_value": null,
+      "new_value": {
+        "batchId": 5,
+        "batchCode": "FR-2026-0005",
+        "eventType": "RECEIVED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-12T09:32:32.129Z",
+      "chain_seq": 46,
+      "prev_hash": "953e5753ff2c9a181a51145f2564c3655ab905c540359030b604c14c6be854b8",
+      "row_hash": "01024a5dd0ef8338f0dd917dff5353e0126650ce61740405245044aa40f6c306"
+    },
+    {
+      "audit_id": 47,
+      "actor_id": 4,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 16,
+      "old_value": null,
+      "new_value": {
+        "batchId": 5,
+        "batchCode": "FR-2026-0005",
+        "eventType": "PROCESSED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-13T09:32:32.129Z",
+      "chain_seq": 47,
+      "prev_hash": "01024a5dd0ef8338f0dd917dff5353e0126650ce61740405245044aa40f6c306",
+      "row_hash": "4385e55a688515baa8d710a72f616664f565430fb3de59009f9487c7af777852"
+    },
+    {
+      "audit_id": 48,
+      "actor_id": 3,
+      "action": "CREATE",
+      "entity_type": "BATCH",
+      "entity_id": 6,
+      "old_value": null,
+      "new_value": {
+        "batchCode": "FR-2026-0101",
+        "quantity": 1000,
+        "source": "seed"
+      },
+      "created_at": "2026-11-09T09:32:32.129Z",
+      "chain_seq": 48,
+      "prev_hash": "4385e55a688515baa8d710a72f616664f565430fb3de59009f9487c7af777852",
+      "row_hash": "b23bcf4e5254d002c4a0dbb5d3a23d9e67c61177fd42b0034cb31ede7b209fd0"
+    },
+    {
+      "audit_id": 49,
+      "actor_id": 3,
+      "action": "CREATE",
+      "entity_type": "QR_CODE",
+      "entity_id": 6,
+      "old_value": null,
+      "new_value": {
+        "batchId": 6,
+        "source": "seed"
+      },
+      "created_at": "2026-11-09T09:32:32.129Z",
+      "chain_seq": 49,
+      "prev_hash": "b23bcf4e5254d002c4a0dbb5d3a23d9e67c61177fd42b0034cb31ede7b209fd0",
+      "row_hash": "306a50ba98ed6bf725bf3c97643b7ed79c7e9cab5bb9966480a41c004e00fae4"
+    },
+    {
+      "audit_id": 50,
+      "actor_id": 3,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 17,
+      "old_value": null,
+      "new_value": {
+        "batchId": 6,
+        "batchCode": "FR-2026-0101",
+        "eventType": "CREATED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-09T09:32:32.129Z",
+      "chain_seq": 50,
+      "prev_hash": "306a50ba98ed6bf725bf3c97643b7ed79c7e9cab5bb9966480a41c004e00fae4",
+      "row_hash": "fafd26c9349c3eef3b3263463bbf180281163ab0936f575f201383d223097f4d"
+    },
+    {
+      "audit_id": 51,
+      "actor_id": 5,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 18,
+      "old_value": null,
+      "new_value": {
+        "batchId": 6,
+        "batchCode": "FR-2026-0101",
+        "eventType": "TRANSPORTED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-10T09:32:32.129Z",
+      "chain_seq": 51,
+      "prev_hash": "fafd26c9349c3eef3b3263463bbf180281163ab0936f575f201383d223097f4d",
+      "row_hash": "1f13b0ec7c206aab1a78f1055cd5af2bf081601209e9e2d9055ad4744f300901"
+    },
+    {
+      "audit_id": 52,
+      "actor_id": 5,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 19,
+      "old_value": null,
+      "new_value": {
+        "batchId": 6,
+        "batchCode": "FR-2026-0101",
+        "eventType": "RECEIVED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-11T09:32:32.129Z",
+      "chain_seq": 52,
+      "prev_hash": "1f13b0ec7c206aab1a78f1055cd5af2bf081601209e9e2d9055ad4744f300901",
+      "row_hash": "1343d0e55da1ae84bff99e9bc2de53a0100a520b4cdf6e391aaf949d277366c8"
+    },
+    {
+      "audit_id": 53,
+      "actor_id": 4,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 20,
+      "old_value": null,
+      "new_value": {
+        "batchId": 6,
+        "batchCode": "FR-2026-0101",
+        "eventType": "PROCESSED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-12T09:32:32.129Z",
+      "chain_seq": 53,
+      "prev_hash": "1343d0e55da1ae84bff99e9bc2de53a0100a520b4cdf6e391aaf949d277366c8",
+      "row_hash": "dcbceec5caca69a8e8f6eb5095b4fa5be7e5b40be03db33bc23ae61dab3899e5"
+    },
+    {
+      "audit_id": 54,
+      "actor_id": 4,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 21,
+      "old_value": null,
+      "new_value": {
+        "batchId": 6,
+        "batchCode": "FR-2026-0101",
+        "eventType": "PACKAGED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-13T09:32:32.129Z",
+      "chain_seq": 54,
+      "prev_hash": "dcbceec5caca69a8e8f6eb5095b4fa5be7e5b40be03db33bc23ae61dab3899e5",
+      "row_hash": "734f9fdb15303d7ac04038b326727e49ee677d9e6dd26d08db4d901dd7896c5b"
+    },
+    {
+      "audit_id": 55,
+      "actor_id": 3,
+      "action": "CREATE",
+      "entity_type": "BATCH",
+      "entity_id": 7,
+      "old_value": null,
+      "new_value": {
+        "batchCode": "FR-2026-0102",
+        "quantity": 150,
+        "source": "seed"
+      },
+      "created_at": "2026-11-17T09:32:32.129Z",
+      "chain_seq": 55,
+      "prev_hash": "734f9fdb15303d7ac04038b326727e49ee677d9e6dd26d08db4d901dd7896c5b",
+      "row_hash": "e51049b5b7145715934cd92b523d16cb6a9dcfff2a563245ee0d71a5c9a137af"
+    },
+    {
+      "audit_id": 56,
+      "actor_id": 3,
+      "action": "CREATE",
+      "entity_type": "QR_CODE",
+      "entity_id": 7,
+      "old_value": null,
+      "new_value": {
+        "batchId": 7,
+        "source": "seed"
+      },
+      "created_at": "2026-11-17T09:32:32.129Z",
+      "chain_seq": 56,
+      "prev_hash": "e51049b5b7145715934cd92b523d16cb6a9dcfff2a563245ee0d71a5c9a137af",
+      "row_hash": "b09679a64feb11393ff8ba2a322a8471bf9ace13e3fd42a58e15dbb46d1fab26"
+    },
+    {
+      "audit_id": 57,
+      "actor_id": 3,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 22,
+      "old_value": null,
+      "new_value": {
+        "batchId": 7,
+        "batchCode": "FR-2026-0102",
+        "eventType": "CREATED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-17T09:32:32.129Z",
+      "chain_seq": 57,
+      "prev_hash": "b09679a64feb11393ff8ba2a322a8471bf9ace13e3fd42a58e15dbb46d1fab26",
+      "row_hash": "607110936c6a9c205f775a116b46fca12f777e6143338cb57e11c6f9b518811b"
+    },
+    {
+      "audit_id": 58,
+      "actor_id": 7,
+      "action": "CREATE",
+      "entity_type": "BATCH",
+      "entity_id": 8,
+      "old_value": null,
+      "new_value": {
+        "batchCode": "FR-2026-0201",
+        "quantity": 5000,
+        "source": "seed"
+      },
+      "created_at": "2026-11-04T09:32:32.129Z",
+      "chain_seq": 58,
+      "prev_hash": "607110936c6a9c205f775a116b46fca12f777e6143338cb57e11c6f9b518811b",
+      "row_hash": "9a77fa18236dd8b3c46340dee5ca8201eca252511c6cbe931e70b96fc9c1a35d"
+    },
+    {
+      "audit_id": 59,
+      "actor_id": 7,
+      "action": "CREATE",
+      "entity_type": "QR_CODE",
+      "entity_id": 8,
+      "old_value": null,
+      "new_value": {
+        "batchId": 8,
+        "source": "seed"
+      },
+      "created_at": "2026-11-04T09:32:32.129Z",
+      "chain_seq": 59,
+      "prev_hash": "9a77fa18236dd8b3c46340dee5ca8201eca252511c6cbe931e70b96fc9c1a35d",
+      "row_hash": "a4489f07596accc06ee6c735ac075b740c8053c7b09a8e5cdbb5d8a1b82c04e2"
+    },
+    {
+      "audit_id": 60,
+      "actor_id": 7,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 23,
+      "old_value": null,
+      "new_value": {
+        "batchId": 8,
+        "batchCode": "FR-2026-0201",
+        "eventType": "CREATED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-04T09:32:32.129Z",
+      "chain_seq": 60,
+      "prev_hash": "a4489f07596accc06ee6c735ac075b740c8053c7b09a8e5cdbb5d8a1b82c04e2",
+      "row_hash": "a8c9f94b2df7314e62b6920a7fa690922198dc97222a2635ec5821765665c2b8"
+    },
+    {
+      "audit_id": 61,
+      "actor_id": 5,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 24,
+      "old_value": null,
+      "new_value": {
+        "batchId": 8,
+        "batchCode": "FR-2026-0201",
+        "eventType": "TRANSPORTED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-05T09:32:32.129Z",
+      "chain_seq": 61,
+      "prev_hash": "a8c9f94b2df7314e62b6920a7fa690922198dc97222a2635ec5821765665c2b8",
+      "row_hash": "15eeb2450d65e719f13215c22035416d35bad97e883ff18976d927528462d46b"
+    },
+    {
+      "audit_id": 62,
+      "actor_id": 5,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 25,
+      "old_value": null,
+      "new_value": {
+        "batchId": 8,
+        "batchCode": "FR-2026-0201",
+        "eventType": "RECEIVED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-06T09:32:32.129Z",
+      "chain_seq": 62,
+      "prev_hash": "15eeb2450d65e719f13215c22035416d35bad97e883ff18976d927528462d46b",
+      "row_hash": "a4b69b02463571d99de074c415d042f649c7892ccb1e1d50bf3dccd41bb00496"
+    },
+    {
+      "audit_id": 63,
+      "actor_id": 4,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 26,
+      "old_value": null,
+      "new_value": {
+        "batchId": 8,
+        "batchCode": "FR-2026-0201",
+        "eventType": "PROCESSED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-07T09:32:32.129Z",
+      "chain_seq": 63,
+      "prev_hash": "a4b69b02463571d99de074c415d042f649c7892ccb1e1d50bf3dccd41bb00496",
+      "row_hash": "1eb66e016a08b065f46343ddfef9afd35c384c3ff18cff913b1336eb9ff3f292"
+    },
+    {
+      "audit_id": 64,
+      "actor_id": 4,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 27,
+      "old_value": null,
+      "new_value": {
+        "batchId": 8,
+        "batchCode": "FR-2026-0201",
+        "eventType": "PACKAGED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-08T09:32:32.129Z",
+      "chain_seq": 64,
+      "prev_hash": "1eb66e016a08b065f46343ddfef9afd35c384c3ff18cff913b1336eb9ff3f292",
+      "row_hash": "1ddf52505e2a7665ee6e1856d686ad237d1b0c74f30c5c002f5d25aa18a15328"
+    },
+    {
+      "audit_id": 65,
+      "actor_id": 5,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 28,
+      "old_value": null,
+      "new_value": {
+        "batchId": 8,
+        "batchCode": "FR-2026-0201",
+        "eventType": "SHIPPED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-09T09:32:32.129Z",
+      "chain_seq": 65,
+      "prev_hash": "1ddf52505e2a7665ee6e1856d686ad237d1b0c74f30c5c002f5d25aa18a15328",
+      "row_hash": "56f513329d268ebcea8d999dfeb1e9b11a6a9a2155b404c243b063c43803ef86"
+    },
+    {
+      "audit_id": 66,
+      "actor_id": 8,
+      "action": "CREATE",
+      "entity_type": "BATCH",
+      "entity_id": 9,
+      "old_value": null,
+      "new_value": {
+        "batchCode": "FR-2026-0202",
+        "quantity": 800,
+        "source": "seed"
+      },
+      "created_at": "2026-11-08T09:32:32.129Z",
+      "chain_seq": 66,
+      "prev_hash": "56f513329d268ebcea8d999dfeb1e9b11a6a9a2155b404c243b063c43803ef86",
+      "row_hash": "8216e946ba8443c06ef6cfdfef4e8d3bc29df532536967cea35344b87fe4b842"
+    },
+    {
+      "audit_id": 67,
+      "actor_id": 8,
+      "action": "CREATE",
+      "entity_type": "QR_CODE",
+      "entity_id": 9,
+      "old_value": null,
+      "new_value": {
+        "batchId": 9,
+        "source": "seed"
+      },
+      "created_at": "2026-11-08T09:32:32.129Z",
+      "chain_seq": 67,
+      "prev_hash": "8216e946ba8443c06ef6cfdfef4e8d3bc29df532536967cea35344b87fe4b842",
+      "row_hash": "0c2e9ece944415146b64aa04e0f3446903cb86ae7e6043b7db17a44902b59ad3"
+    },
+    {
+      "audit_id": 68,
+      "actor_id": 8,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 29,
+      "old_value": null,
+      "new_value": {
+        "batchId": 9,
+        "batchCode": "FR-2026-0202",
+        "eventType": "CREATED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-08T09:32:32.129Z",
+      "chain_seq": 68,
+      "prev_hash": "0c2e9ece944415146b64aa04e0f3446903cb86ae7e6043b7db17a44902b59ad3",
+      "row_hash": "d36d0dc42ba53e1fea7eb84bda34dd0b6c6eacf7ecb161b5cdacb13455a441ba"
+    },
+    {
+      "audit_id": 69,
+      "actor_id": 5,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 30,
+      "old_value": null,
+      "new_value": {
+        "batchId": 9,
+        "batchCode": "FR-2026-0202",
+        "eventType": "TRANSPORTED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-09T09:32:32.129Z",
+      "chain_seq": 69,
+      "prev_hash": "d36d0dc42ba53e1fea7eb84bda34dd0b6c6eacf7ecb161b5cdacb13455a441ba",
+      "row_hash": "03c4a4470782bcdb5468b267b2b5a2e05b7e9374e07306dfe7f80cc22d83ede3"
+    },
+    {
+      "audit_id": 70,
+      "actor_id": 5,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 31,
+      "old_value": null,
+      "new_value": {
+        "batchId": 9,
+        "batchCode": "FR-2026-0202",
+        "eventType": "RECEIVED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-10T09:32:32.129Z",
+      "chain_seq": 70,
+      "prev_hash": "03c4a4470782bcdb5468b267b2b5a2e05b7e9374e07306dfe7f80cc22d83ede3",
+      "row_hash": "0359d92d4294d8d9db39bd5aaca1b3c5e3c31819686e0685b1fd1b2dbc0d77fe"
+    },
+    {
+      "audit_id": 71,
+      "actor_id": 4,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 32,
+      "old_value": null,
+      "new_value": {
+        "batchId": 9,
+        "batchCode": "FR-2026-0202",
+        "eventType": "PROCESSED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-11T09:32:32.129Z",
+      "chain_seq": 71,
+      "prev_hash": "0359d92d4294d8d9db39bd5aaca1b3c5e3c31819686e0685b1fd1b2dbc0d77fe",
+      "row_hash": "493d0b82ebf774a937168df562badf8d4b531e4b093c0a9fc4c9024bd8554e59"
+    },
+    {
+      "audit_id": 72,
+      "actor_id": 4,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 33,
+      "old_value": null,
+      "new_value": {
+        "batchId": 9,
+        "batchCode": "FR-2026-0202",
+        "eventType": "PACKAGED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-12T09:32:32.129Z",
+      "chain_seq": 72,
+      "prev_hash": "493d0b82ebf774a937168df562badf8d4b531e4b093c0a9fc4c9024bd8554e59",
+      "row_hash": "7f41ee940690b65de2a7c28c718f47e128d1221807a14c12cbd26a583e96536e"
+    },
+    {
+      "audit_id": 73,
+      "actor_id": 9,
+      "action": "CREATE",
+      "entity_type": "BATCH",
+      "entity_id": 10,
+      "old_value": null,
+      "new_value": {
+        "batchCode": "FR-2026-0203",
+        "quantity": 2000,
+        "source": "seed"
+      },
+      "created_at": "2026-11-13T09:32:32.129Z",
+      "chain_seq": 73,
+      "prev_hash": "7f41ee940690b65de2a7c28c718f47e128d1221807a14c12cbd26a583e96536e",
+      "row_hash": "65ef8e079aac076bf9905ac5a08760f16a84be973b1e2269afc20e5d974f1662"
+    },
+    {
+      "audit_id": 74,
+      "actor_id": 9,
+      "action": "CREATE",
+      "entity_type": "QR_CODE",
+      "entity_id": 10,
+      "old_value": null,
+      "new_value": {
+        "batchId": 10,
+        "source": "seed"
+      },
+      "created_at": "2026-11-13T09:32:32.129Z",
+      "chain_seq": 74,
+      "prev_hash": "65ef8e079aac076bf9905ac5a08760f16a84be973b1e2269afc20e5d974f1662",
+      "row_hash": "3e30d1656ff9f328b17520d1c94640fd9980d0d0138f2a0c9ef36e1032b26622"
+    },
+    {
+      "audit_id": 75,
+      "actor_id": 9,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 34,
+      "old_value": null,
+      "new_value": {
+        "batchId": 10,
+        "batchCode": "FR-2026-0203",
+        "eventType": "CREATED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-13T09:32:32.129Z",
+      "chain_seq": 75,
+      "prev_hash": "3e30d1656ff9f328b17520d1c94640fd9980d0d0138f2a0c9ef36e1032b26622",
+      "row_hash": "4119bfecf1921418e6975538512ff6811dc2c0ba6f97a35b6079618e00edb51e"
+    },
+    {
+      "audit_id": 76,
+      "actor_id": 5,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 35,
+      "old_value": null,
+      "new_value": {
+        "batchId": 10,
+        "batchCode": "FR-2026-0203",
+        "eventType": "TRANSPORTED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-14T09:32:32.129Z",
+      "chain_seq": 76,
+      "prev_hash": "4119bfecf1921418e6975538512ff6811dc2c0ba6f97a35b6079618e00edb51e",
+      "row_hash": "8a3f709256048e5692908e4f69cdc49889b7457fea57b029107ee73d8e64d209"
+    },
+    {
+      "audit_id": 77,
+      "actor_id": 5,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 36,
+      "old_value": null,
+      "new_value": {
+        "batchId": 10,
+        "batchCode": "FR-2026-0203",
+        "eventType": "RECEIVED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-15T09:32:32.129Z",
+      "chain_seq": 77,
+      "prev_hash": "8a3f709256048e5692908e4f69cdc49889b7457fea57b029107ee73d8e64d209",
+      "row_hash": "e275cd6c90d4f3d173fd412d027f961fc02e3841cf9c5b9c32f11c9bce099da6"
+    },
+    {
+      "audit_id": 78,
+      "actor_id": 10,
+      "action": "CREATE",
+      "entity_type": "BATCH",
+      "entity_id": 11,
+      "old_value": null,
+      "new_value": {
+        "batchCode": "FR-2026-0204",
+        "quantity": 350,
+        "source": "seed"
+      },
+      "created_at": "2026-11-14T09:32:32.129Z",
+      "chain_seq": 78,
+      "prev_hash": "e275cd6c90d4f3d173fd412d027f961fc02e3841cf9c5b9c32f11c9bce099da6",
+      "row_hash": "f97bc678ceeb967aec8497ba2b4173fbe81ac74b36dd7f5e2d7833c89e733a43"
+    },
+    {
+      "audit_id": 79,
+      "actor_id": 10,
+      "action": "CREATE",
+      "entity_type": "QR_CODE",
+      "entity_id": 11,
+      "old_value": null,
+      "new_value": {
+        "batchId": 11,
+        "source": "seed"
+      },
+      "created_at": "2026-11-14T09:32:32.129Z",
+      "chain_seq": 79,
+      "prev_hash": "f97bc678ceeb967aec8497ba2b4173fbe81ac74b36dd7f5e2d7833c89e733a43",
+      "row_hash": "e119c75ea4fa9d5ecc805873f5d0eda451b195ff3c4fde597a0b8130a33e6fb7"
+    },
+    {
+      "audit_id": 80,
+      "actor_id": 10,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 37,
+      "old_value": null,
+      "new_value": {
+        "batchId": 11,
+        "batchCode": "FR-2026-0204",
+        "eventType": "CREATED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-14T09:32:32.129Z",
+      "chain_seq": 80,
+      "prev_hash": "e119c75ea4fa9d5ecc805873f5d0eda451b195ff3c4fde597a0b8130a33e6fb7",
+      "row_hash": "4e7ccd06370ba1d35e2fcad17bd404f044c9d05f8cb0301bba87dff5d721846a"
+    },
+    {
+      "audit_id": 81,
+      "actor_id": 6,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 38,
+      "old_value": null,
+      "new_value": {
+        "batchId": 11,
+        "batchCode": "FR-2026-0204",
+        "eventType": "TRANSPORTED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-15T09:32:32.129Z",
+      "chain_seq": 81,
+      "prev_hash": "4e7ccd06370ba1d35e2fcad17bd404f044c9d05f8cb0301bba87dff5d721846a",
+      "row_hash": "fde09e29188d30ad8e64e6bb0fe7b95e7adc2abbbc24a87c034e8e328aef47d2"
+    },
+    {
+      "audit_id": 82,
+      "actor_id": 6,
+      "action": "CREATE",
+      "entity_type": "EVENT",
+      "entity_id": 39,
+      "old_value": null,
+      "new_value": {
+        "batchId": 11,
+        "batchCode": "FR-2026-0204",
+        "eventType": "RECEIVED",
+        "source": "seed"
+      },
+      "created_at": "2026-11-16T09:32:32.129Z",
+      "chain_seq": 82,
+      "prev_hash": "fde09e29188d30ad8e64e6bb0fe7b95e7adc2abbbc24a87c034e8e328aef47d2",
+      "row_hash": "c0e76f0eb1d767010a42f4d27ead2af95b2916112b1b98e025eb4b3a8cd3ede1"
+    }
+  ]
+}

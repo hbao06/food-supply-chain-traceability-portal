@@ -75,6 +75,13 @@ function validateListQuery(query = {}) {
   const errors = [];
   const out = { status: undefined, q: undefined, page: 1, limit: 20 };
 
+  if (query.scope !== undefined) {
+    if (typeof query.scope !== 'string' || !['mine', 'awaiting', 'all'].includes(query.scope)) {
+      errors.push({ field: 'scope', message: 'scope phải là một trong: mine, awaiting, all' });
+    } else if (query.scope !== 'mine') {
+      out.scope = query.scope;
+    }
+  }
   if (query.status !== undefined) {
     if (typeof query.status !== 'string' || !STATUSES.includes(query.status)) {
       errors.push({ field: 'status', message: `Trạng thái phải là một trong: ${STATUSES.join(', ')}` });

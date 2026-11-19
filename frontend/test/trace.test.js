@@ -16,16 +16,16 @@ test('traceUtils - parseTraceRoute resolves public trace search and result route
   assert.deepEqual(parseTraceRoute('/trace?preview=1'), { name: 'trace-search' })
   assert.deepEqual(parseTraceRoute('/trace/code'), { name: 'trace-search' })
 
-  assert.deepEqual(parseTraceRoute('/trace/code/BATCH-2026-0001'), {
+  assert.deepEqual(parseTraceRoute('/trace/code/FR-2026-0001'), {
     name: 'trace-result',
     mode: 'code',
-    identifier: 'BATCH-2026-0001',
+    identifier: 'FR-2026-0001',
   })
 
-  assert.deepEqual(parseTraceRoute('/trace/BATCH-2026-0001.c3167123984dfb1?preview=1'), {
+  assert.deepEqual(parseTraceRoute('/trace/FR-2026-0001.c3167123984dfb1?preview=1'), {
     name: 'trace-result',
     mode: 'token',
-    identifier: 'BATCH-2026-0001.c3167123984dfb1',
+    identifier: 'FR-2026-0001.c3167123984dfb1',
   })
 
   assert.equal(parseTraceRoute('/login'), null)
@@ -37,27 +37,27 @@ test('traceUtils - parseTraceInput trims whitespace, rejects empty, and parses U
   assert.equal(parseTraceInput('   \t\n  ').valid, false)
   assert.equal(parseTraceInput('A'.repeat(256)).valid, false)
 
-  const codeResult = parseTraceInput('  BATCH-2026-0001  ')
+  const codeResult = parseTraceInput('  FR-2026-0001  ')
   assert.equal(codeResult.valid, true)
   assert.equal(codeResult.mode, 'code')
-  assert.equal(codeResult.identifier, 'BATCH-2026-0001')
-  assert.equal(codeResult.route, '/trace/code/BATCH-2026-0001')
+  assert.equal(codeResult.identifier, 'FR-2026-0001')
+  assert.equal(codeResult.route, '/trace/code/FR-2026-0001')
 
-  const tokenResult = parseTraceInput('BATCH-2026-0001.hmacSig123')
+  const tokenResult = parseTraceInput('FR-2026-0001.hmacSig123')
   assert.equal(tokenResult.valid, true)
   assert.equal(tokenResult.mode, 'token')
-  assert.equal(tokenResult.identifier, 'BATCH-2026-0001.hmacSig123')
-  assert.equal(tokenResult.route, '/trace/BATCH-2026-0001.hmacSig123')
+  assert.equal(tokenResult.identifier, 'FR-2026-0001.hmacSig123')
+  assert.equal(tokenResult.route, '/trace/FR-2026-0001.hmacSig123')
 
-  const urlToken = parseTraceInput('https://foodtrace.vn/trace/BATCH-2026-0002.sigXYZ')
+  const urlToken = parseTraceInput('https://foodtrace.vn/trace/FR-2026-0002.sigXYZ')
   assert.equal(urlToken.valid, true)
   assert.equal(urlToken.mode, 'token')
-  assert.equal(urlToken.identifier, 'BATCH-2026-0002.sigXYZ')
+  assert.equal(urlToken.identifier, 'FR-2026-0002.sigXYZ')
 
-  const urlCode = parseTraceInput('http://localhost:5173/trace/code/BATCH-2026-0003')
+  const urlCode = parseTraceInput('http://localhost:5173/trace/code/FR-2026-0003')
   assert.equal(urlCode.valid, true)
   assert.equal(urlCode.mode, 'code')
-  assert.equal(urlCode.identifier, 'BATCH-2026-0003')
+  assert.equal(urlCode.identifier, 'FR-2026-0003')
 
   const invalidUrl = parseTraceInput('https://example.com/other/path')
   assert.equal(invalidUrl.valid, false)
@@ -119,29 +119,29 @@ test('traceUtils - sanitizePublicTrace strips internal fields and sorts events o
 })
 
 test('traceUtils - getPreviewPublicTrace resolves valid code/token and rejects tampered token', () => {
-  const byCode = getPreviewPublicTrace({ mode: 'code', identifier: 'batch-2026-0001' })
+  const byCode = getPreviewPublicTrace({ mode: 'code', identifier: 'fr-2026-0001' })
   assert.ok(byCode)
-  assert.equal(byCode.batchCode, 'BATCH-2026-0001')
+  assert.equal(byCode.batchCode, 'FR-2026-0001')
   assert.equal(byCode.events.length, 1)
   assert.equal('actorName' in byCode.events[0], false)
 
   const byToken = getPreviewPublicTrace({
     mode: 'token',
-    identifier: 'BATCH-2026-0006.4c5d6e7f8a9b01',
+    identifier: 'FR-2026-0002.8f01b921a2c34d',
   })
   assert.ok(byToken)
-  assert.equal(byToken.batchCode, 'BATCH-2026-0006')
+  assert.equal(byToken.batchCode, 'FR-2026-0002')
   assert.equal(byToken.events.length, 6)
 
   // Tampered token (1 char modified) -> null (404)
   const tampered = getPreviewPublicTrace({
     mode: 'token',
-    identifier: 'BATCH-2026-0006.4c5d6e7f8a9b02',
+    identifier: 'FR-2026-0002.8f01b921a2c34e',
   })
   assert.equal(tampered, null)
 
   // Unknown batch code -> null (404)
-  assert.equal(getPreviewPublicTrace({ mode: 'code', identifier: 'BATCH-2026-9999' }), null)
+  assert.equal(getPreviewPublicTrace({ mode: 'code', identifier: 'FR-2026-9999' }), null)
 })
 
 test('traceUtils - classifyTraceError distinguishes 404, 429, and network/5xx errors', () => {

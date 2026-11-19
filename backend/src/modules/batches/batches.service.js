@@ -48,8 +48,8 @@ function createBatchService({ db, withTransaction, repo, qr, insertAudit }) {
     });
   }
 
-  async function list(auth, { status, q, page, limit }) {
-    const { rows, total } = await repo.listVisibleBatches(db, auth, { status, q, limit, offset: (page - 1) * limit });
+  async function list(auth, { status, q, scope, page, limit }) {
+    const { rows, total } = await repo.listVisibleBatches(db, auth, { status, q, scope, limit, offset: (page - 1) * limit });
     return { items: rows.map(toBatchDto), page, limit, total };
   }
 

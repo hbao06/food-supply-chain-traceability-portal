@@ -6,7 +6,7 @@ const { canRecordEvent, nextEventType, statusesAwaiting } = require('../src/midd
 
 // ---- CSDL giả: mô phỏng phạm vi (batchReadScope), trigger đồng bộ trạng thái và append-only ----
 function setup() {
-  const state = { batch: { batch_id: '1', batch_code: 'BATCH-2026-0001', product_name: 'Cà phê', origin: 'Đắk Lắk', quantity: '500.00',
+  const state = { batch: { batch_id: '1', batch_code: 'FR-2026-0001', product_name: 'Cà phê', origin: 'Đắk Lắk', quantity: '500.00',
       creation_date: new Date('2026-11-02T08:00:00Z'), current_status: 'CREATED', created_by: '10', organization_id: '1' },
     events: [{ event_id: '1', batch_id: '1', actor_id: '10', event_type: 'CREATED', timestamp: new Date('2026-11-02T08:00:00Z'), location: 'Đắk Lắk', description: null, actor_name: 'Farmer A', organization_name: 'Nông trại A', orgId: 1 }],
     audits: [], clock: 0, calls: 0, txRolledBack: 0 };

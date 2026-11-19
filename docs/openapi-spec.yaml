@@ -198,7 +198,7 @@ paths:
       description: |
         Creates the batch, its QR code and the CREATED event in one transaction, and writes the audit log.
         Only FARMER can create batches (403 for other roles). The server generates the unique
-        `batchCode` in the form BATCH-YYYY-NNNN; the client never sends it. The batch belongs to the
+        `batchCode` in the form FR-YYYY-NNNN; the client never sends it. The batch belongs to the
         organization of the caller. A FARMER account without an organization gets 403 (NO_ORGANIZATION).
       operationId: createBatch
       security:
@@ -781,8 +781,8 @@ paths:
           description: Human-readable unique batch code
           schema:
             type: string
-            pattern: '^BATCH-[0-9]{4}-[0-9]{4,}$'
-            example: BATCH-2026-0001
+            pattern: '^FR-[0-9]{4}-[0-9]{4,}$'
+            example: FR-2026-0001
       responses:
         "200":
           description: Public provenance
@@ -1085,7 +1085,7 @@ components:
         batchCode:
           type: string
           description: Human-readable unique code
-          example: BATCH-2026-0001
+          example: FR-2026-0001
         productName:
           type: string
           example: Organic Coffee
@@ -1210,7 +1210,7 @@ components:
       properties:
         batchCode:
           type: string
-          example: BATCH-2026-0001
+          example: FR-2026-0001
         productName:
           type: string
         origin:

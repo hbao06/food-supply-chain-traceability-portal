@@ -101,8 +101,8 @@ test('timeline - PREVIEW_EVENTS contains required 4 core factors for each event 
   }
 })
 
-test('timeline - Batch 106 has all 6 supply chain stages completed in order', () => {
-  const events = PREVIEW_EVENTS[106]
+test('timeline - Batch 102 (FR-2026-0002) has all 6 supply chain stages completed in order', () => {
+  const events = PREVIEW_EVENTS[102]
   assert.equal(events.length, 6)
   const sequence = events.map((e) => e.eventType)
   assert.deepEqual(sequence, [

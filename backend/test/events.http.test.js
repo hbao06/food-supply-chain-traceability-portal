@@ -2,7 +2,7 @@
 
 // Test HTTP/API cho module Events và Timeline (W6-TV4) — kèm mã TC trong docs/test/test-plan.md:
 //   TC-EVT-01 toàn vẹn thứ tự chuỗi, TC-EVT-02 thời điểm/trường giả mạo, TC-EVT-03 sự kiện trùng,
-//   TC-EVT-04 sai vai trò; TC-BATCH-15/16/17 cho timeline.
+//   TC-EVT-04 sai vai trò; TC-FR-15/16/17 cho timeline.
 // Chạy bằng node --test với CSDL giả trong bộ nhớ (mẫu theo batches.http.test.js, không cần PostgreSQL).
 // Repo giả mô phỏng đúng 2 hành vi của CSDL thật mà service phụ thuộc:
 //   - trigger check_event_rules tự đồng bộ batches.current_status sau khi INSERT sự kiện;
@@ -53,7 +53,7 @@ function pushEvent(batchId, actorId, eventType, minutesAgo = 0) {
 // Tạo lô thuộc đơn vị 1 ở trạng thái cho trước, kèm đủ sự kiện của các bước đã qua (mới -> cũ theo thời gian).
 function seedBatch(status = 'CREATED') {
   const id = batches.length + 1;
-  const row = { batch_id: String(id), batch_code: `BATCH-${new Date().getFullYear()}-${String(id).padStart(4, '0')}`,
+  const row = { batch_id: String(id), batch_code: `FR-${new Date().getFullYear()}-${String(id).padStart(4, '0')}`,
     product_name: 'Cà phê', origin: 'Đắk Lắk', quantity: '500.00',
     creation_date: new Date(Date.now() - CHAIN.indexOf(status) * 60000).toISOString(),
     current_status: status, created_by: '10', organization_id: '1' };
@@ -260,7 +260,7 @@ test('ghi sự kiện: chưa đăng nhập → 401; tài khoản PENDING → 403
   assert.equal(events.length, 3);
 });
 
-test('TC-BATCH-16: timeline của lô vừa tạo có đúng 1 sự kiện CREATED → 200', async () => {
+test('TC-FR-16: timeline của lô vừa tạo có đúng 1 sự kiện CREATED → 200', async () => {
   seedBatch('CREATED');
   const result = await request('GET', '/api/batches/1/timeline', { token: tokenFor(10) });
   assert.equal(result.status, 200);
@@ -271,7 +271,7 @@ test('TC-BATCH-16: timeline của lô vừa tạo có đúng 1 sự kiện CREAT
   assert.equal(result.body.events[0].actorName, 'Nguyễn Văn An');
 });
 
-test('TC-BATCH-15: timeline trong phạm vi trả sự kiện cũ → mới, đủ người ghi/đơn vị/địa điểm/thời gian → 200', async () => {
+test('TC-FR-15: timeline trong phạm vi trả sự kiện cũ → mới, đủ người ghi/đơn vị/địa điểm/thời gian → 200', async () => {
   seedBatch('PACKAGED');
   const timeline = await request('GET', '/api/batches/1/timeline', { token: tokenFor(13) });
   assert.equal(timeline.status, 200);
@@ -290,14 +290,14 @@ test('TC-BATCH-15: timeline trong phạm vi trả sự kiện cũ → mới, đ�
   assert.deepEqual(list.body.map((event) => event.eventType), CHAIN.slice(0, 5));
 });
 
-test('TC-BATCH-15: lô đang chờ vai trò mình thì vai trò đó xem được timeline → 200', async () => {
+test('TC-FR-15: lô đang chờ vai trò mình thì vai trò đó xem được timeline → 200', async () => {
   seedBatch('CREATED');
   assert.equal((await request('GET', '/api/batches/1/timeline', { token: tokenFor(14) })).status, 200);
   seedBatch('RECEIVED');
   assert.equal((await request('GET', '/api/batches/2/timeline', { token: tokenFor(13) })).status, 200);
 });
 
-test('TC-BATCH-17: timeline ngoài phạm vi → 404; chưa đăng nhập → 401', async () => {
+test('TC-FR-17: timeline ngoài phạm vi → 404; chưa đăng nhập → 401', async () => {
   seedBatch('CREATED');
   expectError(await request('GET', '/api/batches/1/timeline', { token: tokenFor(11) }), 404, 'NOT_FOUND');
   expectError(await request('GET', '/api/batches/1/events', { token: tokenFor(11) }), 404, 'NOT_FOUND');

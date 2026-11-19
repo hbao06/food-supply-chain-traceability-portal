@@ -39,7 +39,7 @@ let rows, qrs, events, audits, queue, server, baseUrl;
 
 const repo = {
   async lockBatchCodeSequence() {},
-  async nextBatchCode() { return `BATCH-${new Date().getFullYear()}-${String(rows.length + 1).padStart(4, '0')}`; },
+  async nextBatchCode() { return `FR-${new Date().getFullYear()}-${String(rows.length + 1).padStart(4, '0')}`; },
   async insertBatch(_db, batch) {
     const row = { batch_id: String(rows.length + 1), batch_code: batch.batchCode, product_name: batch.productName,
       origin: batch.origin, quantity: batch.quantity.toFixed(2), creation_date: new Date().toISOString(),
@@ -198,7 +198,7 @@ test('TC-QR-01: Farmer tạo lô hợp lệ → 201, đúng một QR có token H
   assert.equal(events[0].event_type, 'CREATED');
   assert.equal(audits.length, 3);
   const token = qrs[0].qr_data.split('/trace/')[1];
-  assert.match(token, /^BATCH-[0-9]{4}-[0-9]{4,}\.[A-Za-z0-9_-]+$/);
+  assert.match(token, /^FR-[0-9]{4}-[0-9]{4,}\.[A-Za-z0-9_-]+$/);
   assert.equal(qr.verify(token), rows[0].batch_code);
   assert.ok(qrs[0].qr_data.endsWith(`/trace/${token}`));
 });
@@ -219,7 +219,7 @@ test('E2E-QR: tạo lô → lấy QR qua API → token xác minh về đúng mã
   const qrResult = await request('GET', `/api/batches/${created.body.batchId}/qr`, { token: tokenFor(10) });
   assert.equal(qrResult.status, 200);
   const token = qrResult.body.qrData.split('/trace/')[1];
-  assert.match(token, /^BATCH-[0-9]{4}-[0-9]{4,}\.[A-Za-z0-9_-]+$/);
+  assert.match(token, /^FR-[0-9]{4}-[0-9]{4,}\.[A-Za-z0-9_-]+$/);
   assert.ok(qrResult.body.qrData.endsWith(`/${created.body.batchCode}.${token.split('.')[1]}`));
   assert.equal(qr.verify(token), created.body.batchCode);
 });
@@ -336,7 +336,7 @@ test('TC-QR-14: DTO công khai không lộ email, mã người dùng/người gh
 test('TC-QR-15: token không tồn tại hoặc sai chữ ký trả 404 với thông báo chung', async () => {
   const { token } = await createBatch();
   const badSignature = `${token.slice(0, -1)}${token.endsWith('A') ? 'B' : 'A'}`;
-  for (const candidate of ['BATCH-2026-9999.invalid-signature', badSignature]) {
+  for (const candidate of ['FR-2026-9999.invalid-signature', badSignature]) {
     const result = await request('GET', `/trace/${encodeURIComponent(candidate)}`);
     assert.equal(result.status, 404);
     assert.equal(result.body.message, 'Không tìm thấy thông tin truy xuất hợp lệ');
@@ -344,12 +344,15 @@ test('TC-QR-15: token không tồn tại hoặc sai chữ ký trả 404 với th
   }
 });
 test('TC-QR-16: mã lô không tồn tại trả 404 với thông báo chung', async () => {
-  const result = await request('GET', '/trace/code/BATCH-2026-9999');
+  const result = await request('GET', '/trace/code/FR-2026-9999');
   assert.equal(result.status, 404);
   assert.equal(result.body.message, 'Không tìm thấy thông tin truy xuất hợp lệ');
 });
 test('TC-QR-17: yêu cầu thứ 61 từ một IP trong một phút trả 429', async () => {
   const { token } = await createBatch();
   const results = await Promise.all(Array.from({ length: 61 }, () => rawRequest('GET', `/trace/${encodeURIComponent(token)}`)));
-  assert.equal(results[60].status, 429);
+  const status200 = results.filter((r) => r.status === 200).length;
+  const status429 = results.filter((r) => r.status === 429).length;
+  assert.equal(status200, 60);
+  assert.equal(status429, 1);
 });

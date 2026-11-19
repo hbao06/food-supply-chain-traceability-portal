@@ -4,7 +4,7 @@
 // bỏ biển số xe khỏi mô tả sự kiện, không ghi email vào audit; CSDL đã seed bản cũ thì chạy lại để thêm lô còn thiếu).
 // Theo bảng "Dữ liệu mẫu" trong docs/test/test-plan.md mục 3 (TV4):
 //   farmer_a, farmer_b, processor_a, distributor_a, admin_1, user_pending, user_locked,
-//   BATCH-2026-0001 (A, CREATED, có QR), BATCH-2026-0002 (A, đã rời CREATED), BATCH-2026-0101 (B).
+//   FR-2026-0001 (A, CREATED, có QR), FR-2026-0002 (A, đã rời CREATED), FR-2026-0101 (B).
 //
 // Mọi dòng đi qua đúng các ràng buộc và trigger của CSDL (vai trò, thứ tự sự kiện, append-only...),
 // nên dữ liệu mẫu cũng là một lần kiểm tra schema. Chạy trong MỘT transaction (scripts/seed-demo.js).
@@ -21,6 +21,10 @@ const ORGS = [
   { key: 'proc', name: 'Công ty Chế biến Nông sản Sài Gòn', type: 'PROCESSOR', address: 'KCN Tân Bình, TP.HCM' },
   { key: 'distA', name: 'Vận tải Lạnh Miền Nam', type: 'DISTRIBUTOR', address: 'Quận 7, TP.HCM' },
   { key: 'distB', name: 'Phân phối Thực phẩm Sạch Hà Nội', type: 'DISTRIBUTOR', address: 'Long Biên, Hà Nội' },
+  { key: 'farmC', name: 'HTX Lúa gạo ST25 Mỹ Xuyên', type: 'FARM', address: 'Mỹ Xuyên, Sóc Trăng' },
+  { key: 'farmD', name: 'Nông trại Hạt điều Bù Đăng', type: 'FARM', address: 'Bù Đăng, Bình Phước' },
+  { key: 'farmE', name: 'HTX Thanh long Chợ Gạo', type: 'FARM', address: 'Chợ Gạo, Tiền Giang' },
+  { key: 'farmF', name: 'HTX Chè Ô Long Mộc Châu', type: 'FARM', address: 'Mộc Châu, Sơn La' },
 ];
 
 // key = mã trong test plan. Email dùng miền demo.local để không trùng tài khoản thật.
@@ -31,6 +35,10 @@ const USERS = [
   { key: 'processor_a', name: 'Lê Văn Chế', email: 'processor_a@demo.local', role: 'PROCESSOR', status: 'ACTIVE', org: 'proc' },
   { key: 'distributor_a', name: 'Phạm Văn Dũng', email: 'distributor_a@demo.local', role: 'DISTRIBUTOR', status: 'ACTIVE', org: 'distA' },
   { key: 'distributor_b', name: 'Hoàng Thị Em', email: 'distributor_b@demo.local', role: 'DISTRIBUTOR', status: 'ACTIVE', org: 'distB' },
+  { key: 'farmer_c', name: 'Lâm Thị Cúc', email: 'farmer_c@demo.local', role: 'FARMER', status: 'ACTIVE', org: 'farmC' },
+  { key: 'farmer_d', name: 'Điểu Văn Dũng', email: 'farmer_d@demo.local', role: 'FARMER', status: 'ACTIVE', org: 'farmD' },
+  { key: 'farmer_e', name: 'Võ Minh Tâm', email: 'farmer_e@demo.local', role: 'FARMER', status: 'ACTIVE', org: 'farmE' },
+  { key: 'farmer_f', name: 'Hà Thị Mai', email: 'farmer_f@demo.local', role: 'FARMER', status: 'ACTIVE', org: 'farmF' },
   { key: 'user_pending', name: 'Đỗ Văn Chờ', email: 'user_pending@demo.local', role: 'FARMER', status: 'PENDING', org: null },
   { key: 'user_locked', name: 'Vũ Văn Khóa', email: 'user_locked@demo.local', role: 'DISTRIBUTOR', status: 'LOCKED', org: 'distA' },
 ];
@@ -39,45 +47,75 @@ const PRODUCTS = [
   { key: 'arabica', org: 'farmA', name: 'Cà phê Arabica Cầu Đất', category: 'Cà phê', unit: 'kg', description: 'Arabica trồng ở độ cao 1.600 m, sơ chế ướt' },
   { key: 'robusta', org: 'farmA', name: 'Cà phê Robusta rang xay', category: 'Cà phê', unit: 'kg', description: 'Robusta rang mộc, xay sẵn' },
   { key: 'durian', org: 'farmB', name: 'Sầu riêng Ri6', category: 'Trái cây', unit: 'kg', description: 'Sầu riêng Ri6 chín cây' },
+  { key: 'rice', org: 'farmC', name: 'Gạo ST25 Sóc Trăng', category: 'Lúa gạo', unit: 'kg', description: 'Gạo ST25 canh tác theo quy trình hữu cơ' },
+  { key: 'cashew', org: 'farmD', name: 'Hạt điều rang muối Bình Phước', category: 'Hạt dinh dưỡng', unit: 'kg', description: 'Hạt điều rang củi, nguyên hạt W320' },
+  { key: 'dragon', org: 'farmE', name: 'Thanh long ruột đỏ VietGAP', category: 'Trái cây', unit: 'kg', description: 'Thanh long ruột đỏ đạt chuẩn VietGAP' },
+  { key: 'tea', org: 'farmF', name: 'Chè Ô Long Mộc Châu', category: 'Trà', unit: 'kg', description: 'Chè Ô Long búp một tôm hai lá' },
 ];
 
 // days: số ngày trước hôm nay của lúc tạo lô; mỗi bước sau cách nhau 1 ngày.
 const BATCHES = [
-  { code: 'BATCH-2026-0001', product: 'arabica', farmer: 'farmer_a', origin: 'Cầu Đất, Đà Lạt', quantity: 500, days: 2,
+  { code: 'FR-2026-0001', product: 'arabica', farmer: 'farmer_a', origin: 'Cầu Đất, Đà Lạt, Lâm Đồng', quantity: 500, days: 2,
     steps: [] },
-  { code: 'BATCH-2026-0002', product: 'robusta', farmer: 'farmer_a', origin: 'Cầu Đất, Đà Lạt', quantity: 300, days: 12,
+  { code: 'FR-2026-0002', product: 'robusta', farmer: 'farmer_a', origin: 'Cầu Đất, Đà Lạt, Lâm Đồng', quantity: 300, days: 12,
     steps: [
-      ['TRANSPORTED', 'distributor_a', 'QL20, Đà Lạt → TP.HCM', 'Xe lạnh 2–8°C'],
-      ['RECEIVED', 'distributor_a', 'Kho Quận 7, TP.HCM', 'Nhận đủ 300 kg'],
-      ['PROCESSED', 'processor_a', 'Xưởng Tân Bình', 'Rang mộc 220°C'],
-      ['PACKAGED', 'processor_a', 'Xưởng Tân Bình', 'Đóng túi 500 g'],
-      ['SHIPPED', 'distributor_a', 'Siêu thị Quận 1, TP.HCM', 'Giao siêu thị'],
+      ['TRANSPORTED', 'distributor_a', 'QL20, Đà Lạt → TP.HCM', 'Xe lạnh bảo quản 2–8°C'],
+      ['RECEIVED', 'distributor_a', 'Kho Quận 7, TP.HCM', 'Tiếp nhận đủ 300 kg, đạt độ ẩm chuẩn'],
+      ['PROCESSED', 'processor_a', 'Xưởng Tân Bình, TP.HCM', 'Rang mộc 220°C theo quy trình HACCP'],
+      ['PACKAGED', 'processor_a', 'Xưởng Tân Bình, TP.HCM', 'Đóng túi van một chiều 500 g và dán tem QR'],
+      ['SHIPPED', 'distributor_a', 'Hệ thống Siêu thị Quận 1, TP.HCM', 'Xuất kho phân phối điểm bán lẻ'],
     ] },
-  { code: 'BATCH-2026-0003', product: 'arabica', farmer: 'farmer_a', origin: 'Cầu Đất, Đà Lạt', quantity: 200, days: 6,
+  { code: 'FR-2026-0003', product: 'arabica', farmer: 'farmer_a', origin: 'Cầu Đất, Đà Lạt, Lâm Đồng', quantity: 200, days: 6,
     steps: [
       ['TRANSPORTED', 'distributor_a', 'QL20, Đà Lạt → TP.HCM', null],
-      ['RECEIVED', 'distributor_a', 'Kho Quận 7, TP.HCM', 'Chờ chuyển xưởng chế biến'],
+      ['RECEIVED', 'distributor_a', 'Kho Quận 7, TP.HCM', 'Đã kiểm định sơ bộ, chờ chuyển xưởng chế biến'],
     ] },
   // W8: hai lô thêm để demo đủ 6 trạng thái và để Distributor B (Hà Nội) có dữ liệu.
-  { code: 'BATCH-2026-0004', product: 'arabica', farmer: 'farmer_a', origin: 'Cầu Đất, Đà Lạt', quantity: 120, days: 3,
+  { code: 'FR-2026-0004', product: 'arabica', farmer: 'farmer_a', origin: 'Cầu Đất, Đà Lạt, Lâm Đồng', quantity: 120, days: 3,
     steps: [
-      ['TRANSPORTED', 'distributor_b', 'QL20 → QL1A, Đà Lạt → Hà Nội', 'Xe lạnh 2–8°C'],
+      ['TRANSPORTED', 'distributor_b', 'QL20 → QL1A, Đà Lạt → Hà Nội', 'Xe lạnh bảo quản 2–8°C'],
     ] },
-  { code: 'BATCH-2026-0005', product: 'robusta', farmer: 'farmer_a', origin: 'Cầu Đất, Đà Lạt', quantity: 250, days: 8,
+  { code: 'FR-2026-0005', product: 'robusta', farmer: 'farmer_a', origin: 'Cầu Đất, Đà Lạt, Lâm Đồng', quantity: 250, days: 8,
     steps: [
       ['TRANSPORTED', 'distributor_a', 'QL20, Đà Lạt → TP.HCM', null],
       ['RECEIVED', 'distributor_a', 'Kho Quận 7, TP.HCM', null],
-      ['PROCESSED', 'processor_a', 'Xưởng Tân Bình', 'Rang vừa 210°C'],
+      ['PROCESSED', 'processor_a', 'Xưởng Tân Bình, TP.HCM', 'Rang vừa 210°C, sàng lọc hạt tiêu chuẩn'],
     ] },
-  { code: 'BATCH-2026-0101', product: 'durian', farmer: 'farmer_b', origin: 'Chợ Lách, Bến Tre', quantity: 1000, days: 9,
+  { code: 'FR-2026-0101', product: 'durian', farmer: 'farmer_b', origin: 'Chợ Lách, Bến Tre', quantity: 1000, days: 9,
     steps: [
-      ['TRANSPORTED', 'distributor_a', 'QL57, Bến Tre → TP.HCM', 'Xe lạnh 2–5°C'],
+      ['TRANSPORTED', 'distributor_a', 'QL57, Bến Tre → TP.HCM', 'Xe lạnh bảo quản 2–5°C'],
       ['RECEIVED', 'distributor_a', 'Kho Quận 7, TP.HCM', null],
-      ['PROCESSED', 'processor_a', 'Xưởng Tân Bình', 'Tách múi, cấp đông'],
-      ['PACKAGED', 'processor_a', 'Xưởng Tân Bình', 'Hộp 400 g'],
+      ['PROCESSED', 'processor_a', 'Xưởng Tân Bình, TP.HCM', 'Tách múi, cấp đông nhanh IQF'],
+      ['PACKAGED', 'processor_a', 'Xưởng Tân Bình, TP.HCM', 'Đóng hộp 400 g đạt chuẩn xuất khẩu'],
     ] },
-  { code: 'BATCH-2026-0102', product: 'durian', farmer: 'farmer_b', origin: 'Chợ Lách, Bến Tre', quantity: 150, days: 1,
+  { code: 'FR-2026-0102', product: 'durian', farmer: 'farmer_b', origin: 'Chợ Lách, Bến Tre', quantity: 150, days: 1,
     steps: [] },
+  // Nông sản đa dạng ngoài cà phê (gạo, hạt điều, thanh long, chè)
+  { code: 'FR-2026-0201', product: 'rice', farmer: 'farmer_c', origin: 'Mỹ Xuyên, Sóc Trăng', quantity: 5000, days: 14,
+    steps: [
+      ['TRANSPORTED', 'distributor_a', 'QL1A, Sóc Trăng → TP.HCM', 'Xe tải thùng kín, bao 25 kg'],
+      ['RECEIVED', 'distributor_a', 'Kho Quận 7, TP.HCM', 'Kiểm tra độ ẩm 14%'],
+      ['PROCESSED', 'processor_a', 'Xưởng Tân Bình, TP.HCM', 'Xát trắng, đánh bóng, tách tạp chất'],
+      ['PACKAGED', 'processor_a', 'Xưởng Tân Bình, TP.HCM', 'Đóng túi hút chân không 5 kg'],
+      ['SHIPPED', 'distributor_a', 'Hệ thống siêu thị Quận 3, TP.HCM', 'Giao điểm bán lẻ'],
+    ] },
+  { code: 'FR-2026-0202', product: 'cashew', farmer: 'farmer_d', origin: 'Bù Đăng, Bình Phước', quantity: 800, days: 10,
+    steps: [
+      ['TRANSPORTED', 'distributor_a', 'QL14, Bình Phước → TP.HCM', null],
+      ['RECEIVED', 'distributor_a', 'Kho Quận 7, TP.HCM', 'Phân loại cỡ hạt W320'],
+      ['PROCESSED', 'processor_a', 'Xưởng Tân Bình, TP.HCM', 'Rang củi, ướp muối nhẹ'],
+      ['PACKAGED', 'processor_a', 'Xưởng Tân Bình, TP.HCM', 'Hũ thủy tinh 500 g'],
+    ] },
+  { code: 'FR-2026-0203', product: 'dragon', farmer: 'farmer_e', origin: 'Chợ Gạo, Tiền Giang', quantity: 2000, days: 5,
+    steps: [
+      ['TRANSPORTED', 'distributor_a', 'QL1A, Tiền Giang → TP.HCM', 'Xe lạnh 8–10°C'],
+      ['RECEIVED', 'distributor_a', 'Kho Quận 7, TP.HCM', 'Kiểm tra ngoại quan, độ ngọt Brix 15'],
+    ] },
+  { code: 'FR-2026-0204', product: 'tea', farmer: 'farmer_f', origin: 'Mộc Châu, Sơn La', quantity: 350, days: 4,
+    steps: [
+      ['TRANSPORTED', 'distributor_b', 'QL6, Sơn La → Hà Nội', null],
+      ['RECEIVED', 'distributor_b', 'Kho Long Biên, Hà Nội', null],
+    ] },
 ];
 
 // QR theo SRS P1 (giống backend/src/common/qrToken.js của W5-TV2):

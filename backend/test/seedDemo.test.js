@@ -39,9 +39,9 @@ test('dữ liệu mẫu khớp test plan: đủ mã tài khoản và mã lô TV4
   const keys = seed.USERS.map((u) => u.key);
   for (const k of ['farmer_a', 'farmer_b', 'processor_a', 'distributor_a', 'admin_1', 'user_pending', 'user_locked']) assert.ok(keys.includes(k), k);
   const codes = seed.BATCHES.map((b) => b.code);
-  for (const c of ['BATCH-2026-0001', 'BATCH-2026-0002', 'BATCH-2026-0101']) assert.ok(codes.includes(c), c);
-  assert.equal(seed.BATCHES.find((b) => b.code === 'BATCH-2026-0001').steps.length, 0, '0001 phải còn CREATED');
-  assert.ok(seed.BATCHES.find((b) => b.code === 'BATCH-2026-0002').steps.length > 0, '0002 phải đã rời CREATED');
+  for (const c of ['FR-2026-0001', 'FR-2026-0002', 'FR-2026-0101']) assert.ok(codes.includes(c), c);
+  assert.equal(seed.BATCHES.find((b) => b.code === 'FR-2026-0001').steps.length, 0, '0001 phải còn CREATED');
+  assert.ok(seed.BATCHES.find((b) => b.code === 'FR-2026-0002').steps.length > 0, '0002 phải đã rời CREATED');
 });
 
 test('dữ liệu mẫu tự nhất quán: vai trò ↔ loại đơn vị, sản phẩm thuộc nông trại, mã lô đúng định dạng', () => {
@@ -55,7 +55,7 @@ test('dữ liệu mẫu tự nhất quán: vai trò ↔ loại đơn vị, sản
   }
   for (const p of seed.PRODUCTS) assert.equal(orgType[p.org], 'FARM', p.key);
   for (const b of seed.BATCHES) {
-    assert.match(b.code, /^BATCH-[0-9]{4}-[0-9]{4,}$/);
+    assert.match(b.code, /^FR-[0-9]{4}-[0-9]{4,}$/);
     const farmer = seed.USERS.find((u) => u.key === b.farmer);
     const product = seed.PRODUCTS.find((p) => p.key === b.product);
     assert.equal(farmer.role, 'FARMER'); assert.equal(farmer.status, 'ACTIVE');
@@ -122,15 +122,15 @@ test('chạy lại: đã có đủ dữ liệu mẫu thì bỏ qua; mã lô ho�
   assert.deepEqual(await seed.seedDemo(again, { passwordHash: HASH, qr }), { created: false, added: [] });
   assert.equal(inserts(again, 'organizations').length, 0);
   assert.equal(inserts(again, 'batches').length, 0);
-  await assert.rejects(seed.seedDemo(fakeDb({ takenCodes: ['BATCH-2026-0001'] }), { passwordHash: HASH, qr }), /BATCH-2026-0001/);
+  await assert.rejects(seed.seedDemo(fakeDb({ takenCodes: ['FR-2026-0001'] }), { passwordHash: HASH, qr }), /FR-2026-0001/);
   await assert.rejects(seed.seedDemo(fakeDb({ takenEmails: ['farmer_a@demo.local'] }), { passwordHash: HASH, qr }), /farmer_a@demo.local/);
 });
 
 test('QR mẫu theo SRS P1; thiếu QR_HMAC_SECRET thì báo lỗi', () => {
-  const sig = crypto.createHmac('sha256', SECRET).update('BATCH-2026-0001').digest('base64url');
+  const sig = crypto.createHmac('sha256', SECRET).update('FR-2026-0001').digest('base64url');
   const q = seed.createSeedQr({ secret: SECRET, baseUrl: 'http://localhost:5173/' });
-  assert.equal(q.signature('BATCH-2026-0001'), sig);
-  assert.equal(q.url('BATCH-2026-0001'), `http://localhost:5173/trace/BATCH-2026-0001.${sig}`);
+  assert.equal(q.signature('FR-2026-0001'), sig);
+  assert.equal(q.url('FR-2026-0001'), `http://localhost:5173/trace/FR-2026-0001.${sig}`);
   assert.throws(() => seed.createSeedQr({ secret: undefined }), /QR_HMAC_SECRET/);
   assert.throws(() => seed.createSeedQr({ secret: 'ngan' }), /QR_HMAC_SECRET/);
 });
@@ -167,7 +167,7 @@ test('W8: dữ liệu demo không có dữ liệu cá nhân thừa (biển số 
 });
 
 // CSDL đã seed bằng bản W5 (chưa có lô 0004, 0005) – dữ liệu như seed W5 tạo ra.
-const W5_CODES = ['BATCH-2026-0001', 'BATCH-2026-0002', 'BATCH-2026-0003', 'BATCH-2026-0101', 'BATCH-2026-0102'];
+const W5_CODES = seed.BATCHES.map((b) => b.code).filter((c) => !['FR-2026-0004', 'FR-2026-0005'].includes(c));
 function w5Existing() {
   const orgs = seed.ORGS.map((o, i) => ({ organization_id: String(i + 1), name: o.name, type: o.type }));
   const orgIdOf = (key) => orgs[seed.ORGS.findIndex((o) => o.key === key)].organization_id;
@@ -184,11 +184,11 @@ test('W8 nâng cấp: CSDL đã seed bản W5 thì chạy lại chỉ thêm lô 
   const db = fakeDb({ marker: true, takenCodes: W5_CODES, existing: ex });
   const r = await seed.seedDemo(db, { passwordHash: HASH, qr });
   assert.equal(r.created, false);
-  assert.deepEqual(r.added.map((b) => `${b.code}:${b.status}`), ['BATCH-2026-0004:TRANSPORTED', 'BATCH-2026-0005:PROCESSED']);
+  assert.deepEqual(r.added.map((b) => `${b.code}:${b.status}`), ['FR-2026-0004:TRANSPORTED', 'FR-2026-0005:PROCESSED']);
   // không tạo thêm đơn vị / tài khoản / sản phẩm
   for (const t of ['organizations', 'users', 'products']) assert.equal(inserts(db, t).length, 0, t);
   const b = inserts(db, 'batches');
-  assert.deepEqual(b.map((c) => c.params[0]), ['BATCH-2026-0004', 'BATCH-2026-0005']);
+  assert.deepEqual(b.map((c) => c.params[0]), ['FR-2026-0004', 'FR-2026-0005']);
   const userIdOf = (key) => Number(ex.users[seed.USERS.findIndex((u) => u.key === key)].user_id);
   assert.equal(b[0].params[1], 1, 'sản phẩm arabica cũ (id 1)');
   assert.equal(b[0].params[5], userIdOf('farmer_a'));

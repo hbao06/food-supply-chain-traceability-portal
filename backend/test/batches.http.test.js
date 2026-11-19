@@ -33,7 +33,7 @@ const visible = (auth, row, includeAwaiting = false) => auth.role === 'ADMIN' ||
 const repo = {
   async lockBatchCodeSequence() {},
   async nextBatchCode() {
-    return duplicateCode || `BATCH-${new Date().getFullYear()}-${String(rows.length + 1).padStart(4, '0')}`;
+    return duplicateCode || `FR-${new Date().getFullYear()}-${String(rows.length + 1).padStart(4, '0')}`;
   },
   async insertBatch(_db, batch) {
     if (rows.some((row) => row.batch_code === batch.batchCode)) {
@@ -133,10 +133,10 @@ after(async () => {
 });
 beforeEach(() => { rows = []; qrs = []; events = []; audits = []; duplicateCode = null; observedError = null; queue = Promise.resolve(); });
 
-test('TC-BATCH-01: A Farmer ACTIVE tạo lô đúng DTO, QR, CREATED và 3 audit → 201', async () => {
+test('TC-FR-01: A Farmer ACTIVE tạo lô đúng DTO, QR, CREATED và 3 audit → 201', async () => {
   const result = await request();
   assert.equal(result.status, 201);
-  assert.match(result.body.batchCode, new RegExp(`^BATCH-${new Date().getFullYear()}-\\d{4}$`));
+  assert.match(result.body.batchCode, new RegExp(`^FR-${new Date().getFullYear()}-\\d{4}$`));
   assert.deepEqual(result.body, { ...input, batchId: 1, batchCode: result.body.batchCode,
     creationDate: rows[0].creation_date, currentStatus: 'CREATED', createdBy: 10, organizationId: 1 });
   assert.equal(qrs.length, 1); assert.equal(Number(qrs[0].batch_id), result.body.batchId);
@@ -150,37 +150,37 @@ test('TC-BATCH-01: A Farmer ACTIVE tạo lô đúng DTO, QR, CREATED và 3 audit
 });
 for (const [label, token, code] of [['thiếu', null, 'UNAUTHORIZED'], ['giả', 'invalid', 'INVALID_TOKEN'],
   ['hết hạn', expired.sign({ userId: 10, role: 'FARMER', organizationId: 1 }), 'TOKEN_EXPIRED']]) {
-  test(`TC-BATCH-03: token ${label} → 401`, async () => {
+  test(`TC-FR-03: token ${label} → 401`, async () => {
     expectError(await request('POST', '', input, token), 401, code);
     assert.equal(rows.length, 0);
   });
 }
 for (const field of ['productName', 'origin', 'quantity']) {
-  test(`TC-BATCH-02: thiếu ${field} → 400`, async () => {
+  test(`TC-FR-02: thiếu ${field} → 400`, async () => {
     const body = { ...input }; delete body[field];
     expectError(await request('POST', '', body), 400, 'VALIDATION_ERROR', field);
   });
 }
 for (const [field, values] of [['productName', ['', '   ']], ['origin', ['', '   ']], ['quantity', [0, -1, 'abc', 1.234]]]) {
-  for (const value of values) test(`TC-BATCH-02: ${field}=${JSON.stringify(value)} → 400`, async () => {
+  for (const value of values) test(`TC-FR-02: ${field}=${JSON.stringify(value)} → 400`, async () => {
     expectError(await request('POST', '', { ...input, [field]: value }), 400, 'VALIDATION_ERROR', field);
     assert.equal(rows.length, 0);
   });
 }
-test('TC-BATCH-11: hai lô liên tiếp có mã tăng 0001/0002 → 201', async () => {
+test('TC-FR-11: hai lô liên tiếp có mã tăng 0001/0002 → 201', async () => {
   const first = await request(); const second = await request();
   assert.equal(first.status, 201); assert.equal(second.status, 201);
-  assert.equal(first.body.batchCode, `BATCH-${new Date().getFullYear()}-0001`);
-  assert.equal(second.body.batchCode, `BATCH-${new Date().getFullYear()}-0002`);
+  assert.equal(first.body.batchCode, `FR-${new Date().getFullYear()}-0001`);
+  assert.equal(second.body.batchCode, `FR-${new Date().getFullYear()}-0002`);
 });
 // Transaction giả tuần tự trong bộ nhớ chỉ chứng minh logic cấp mã không trùng ở tầng service.
 // Chưa kiểm chứng advisory lock hoặc UNIQUE trên PostgreSQL thật; việc đó để smoke-batches với CSDL thật ở tuần 8.
-test('TC-BATCH-11: tạo đồng thời qua transaction giả tuần tự có mã duy nhất → 201', async () => {
+test('TC-FR-11: tạo đồng thời qua transaction giả tuần tự có mã duy nhất → 201', async () => {
   const results = await Promise.all(Array.from({ length: 10 }, () => request()));
   results.forEach((result) => assert.equal(result.status, 201));
   assert.equal(new Set(results.map((result) => result.body.batchCode)).size, 10);
 });
-test('TC-BATCH-11: UNIQUE batch_code truyền lỗi 23505 tới handler → 409', async () => {
+test('TC-FR-11: UNIQUE batch_code truyền lỗi 23505 tới handler → 409', async () => {
   duplicateCode = (await request()).body.batchCode;
   const result = await request();
   expectError(result, 409, 'CONFLICT');
@@ -188,7 +188,7 @@ test('TC-BATCH-11: UNIQUE batch_code truyền lỗi 23505 tới handler → 409'
   assert.deepEqual(result.body, { code: 'CONFLICT', message: 'Dữ liệu bị trùng' });
   assert.equal(rows.length, 1);
 });
-test('TC-BATCH-07: Farmer chỉ liệt kê đơn vị mình, chủ lô và Admin xem chi tiết → 200/404', async () => {
+test('TC-FR-07: Farmer chỉ liệt kê đơn vị mình, chủ lô và Admin xem chi tiết → 200/404', async () => {
   await request(); await request('POST', '', input, tokenFor(11));
   const list = await request('GET');
   assert.equal(list.status, 200); assert.equal(list.body.total, 1);
@@ -197,7 +197,7 @@ test('TC-BATCH-07: Farmer chỉ liệt kê đơn vị mình, chủ lô và Admin
   expectError(await request('GET', '/2'), 404, 'NOT_FOUND');
   assert.equal((await request('GET', '/2', undefined, tokenFor(12))).status, 200);
 });
-test('TC-BATCH-07: Processor và Distributor chỉ liệt kê lô đã xử lý, xem thêm lô đang chờ → 200/404', async () => {
+test('TC-FR-07: Processor và Distributor chỉ liệt kê lô đã xử lý, xem thêm lô đang chờ → 200/404', async () => {
   const distributorBatch = (await request()).body;
   const distributorListBefore = await request('GET', '', undefined, tokenFor(14));
   assert.equal(distributorListBefore.status, 200);
@@ -215,7 +215,7 @@ test('TC-BATCH-07: Processor và Distributor chỉ liệt kê lô đã xử lý,
   const adminList = await request('GET', '', undefined, tokenFor(12));
   assert.equal(adminList.body.total, rows.length);
 });
-test('TC-BATCH-08: lọc CREATED và tìm tên/mã → 200', async () => {
+test('TC-FR-08: lọc CREATED và tìm tên/mã → 200', async () => {
   await request(); await request('POST', '', { ...input, productName: 'Hồ tiêu' });
   rows[1].current_status = 'TRANSPORTED';
   for (const query of ['?status=CREATED', `?q=${encodeURIComponent('Cà phê')}`, `?q=${rows[0].batch_code}`]) {
@@ -223,15 +223,15 @@ test('TC-BATCH-08: lọc CREATED và tìm tên/mã → 200', async () => {
     assert.equal(result.status, 200); assert.deepEqual(result.body.items.map((row) => row.batchId), [1]);
   }
 });
-test('TC-BATCH-08: trạng thái SAI → 400', async () => {
+test('TC-FR-08: trạng thái SAI → 400', async () => {
   expectError(await request('GET', '?status=SAI'), 400, 'VALIDATION_ERROR', 'status');
 });
-test('TC-BATCH-09: tìm kiếm không khớp trả danh sách rỗng → 200', async () => {
+test('TC-FR-09: tìm kiếm không khớp trả danh sách rỗng → 200', async () => {
   await request();
   const result = await request('GET', '?q=khong-co-lo-nao');
   assert.equal(result.status, 200); assert.deepEqual(result.body.items, []); assert.equal(result.body.total, 0);
 });
-test("TC-BATCH-10: chuỗi injection không lộ lô ngoài phạm vi và batchId lạ trả 400", async () => {
+test("TC-FR-10: chuỗi injection không lộ lô ngoài phạm vi và batchId lạ trả 400", async () => {
   await request(); await request('POST', '', input, tokenFor(11));
   const before = await request('GET', '', undefined, tokenFor(10));
   const result = await request('GET', `?q=${encodeURIComponent("' OR 1=1 --")}`, undefined, tokenFor(10));
@@ -239,38 +239,38 @@ test("TC-BATCH-10: chuỗi injection không lộ lô ngoài phạm vi và batchI
   assert.ok(result.body.items.every((row) => before.body.items.some((allowed) => allowed.batchId === row.batchId)));
   expectError(await request('GET', '/not-a-batch-id'), 400, 'VALIDATION_ERROR', 'batchId');
 });
-test('TC-BATCH-04: chủ lô PATCH giữ nguyên trường không gửi → 200', async () => {
+test('TC-FR-04: chủ lô PATCH giữ nguyên trường không gửi → 200', async () => {
   const original = (await request()).body;
   const result = await request('PATCH', '/1', { productName: 'Tên mới', quantity: 12.5 });
   assert.equal(result.status, 200);
   assert.deepEqual(result.body, { ...original, productName: 'Tên mới', quantity: 12.5 });
 });
 for (const id of [12, 13, 14, 15, 16]) {
-  test(`TC-BATCH-03: user ${id} không được tạo → 403`, async () => {
+  test(`TC-FR-03: user ${id} không được tạo → 403`, async () => {
     expectError(await request('POST', '', input, tokenFor(id)), 403,
       id === 15 ? 'ACCOUNT_PENDING' : id === 16 ? 'NO_ORGANIZATION' : 'FORBIDDEN');
     assert.equal(rows.length, 0);
   });
 }
 for (const [id, status, code] of [[11, 404, 'NOT_FOUND'], [12, 403, 'FORBIDDEN'], [13, 403, 'FORBIDDEN'], [14, 403, 'FORBIDDEN'], [null, 401, 'UNAUTHORIZED']]) {
-  test(`${id === 11 ? 'TC-BATCH-06' : 'TC-BATCH-03'}: user ${id} không được PATCH lô → ${status}`, async () => {
+  test(`${id === 11 ? 'TC-FR-06' : 'TC-FR-03'}: user ${id} không được PATCH lô → ${status}`, async () => {
     await request();
     expectError(await request('PATCH', '/1', { quantity: 10 }, id ? tokenFor(id) : null), status, code);
     assert.equal(Number(rows[0].quantity), input.quantity);
   });
 }
-test('TC-BATCH-12: Farmer LOCKED tạo lô bị chặn, dữ liệu không đổi → 403 ACCOUNT_LOCKED', async () => {
+test('TC-FR-12: Farmer LOCKED tạo lô bị chặn, dữ liệu không đổi → 403 ACCOUNT_LOCKED', async () => {
   expectError(await request('POST', '', input, tokenFor(17)), 403, 'ACCOUNT_LOCKED');
   assert.deepEqual({ rows, qrs, events, audits }, { rows: [], qrs: [], events: [], audits: [] });
 });
-test('TC-BATCH-05: PATCH lô TRANSPORTED → 409', async () => {
+test('TC-FR-05: PATCH lô TRANSPORTED → 409', async () => {
   await request(); rows[0].current_status = 'TRANSPORTED';
   expectError(await request('PATCH', '/1', { quantity: 1 }), 409, 'BATCH_NOT_EDITABLE');
   assert.equal(Number(rows[0].quantity), input.quantity);
 });
 for (const [body, field] of [[{ batchCode: 'fake' }, 'batchCode'], [{ currentStatus: 'SHIPPED' }, 'currentStatus'],
   [{ createdBy: 11 }, 'createdBy'], [{ organizationId: 2 }, 'organizationId'], [{}, 'body'], [{ quantity: 0 }, 'quantity'], [{ quantity: -1 }, 'quantity']]) {
-  test(`TC-BATCH-13: PATCH ${JSON.stringify(body)} → 400`, async () => {
+  test(`TC-FR-13: PATCH ${JSON.stringify(body)} → 400`, async () => {
     await request(); const original = structuredClone(rows);
     expectError(await request('PATCH', '/1', body), 400, 'VALIDATION_ERROR', field);
     assert.deepEqual(rows, original);
