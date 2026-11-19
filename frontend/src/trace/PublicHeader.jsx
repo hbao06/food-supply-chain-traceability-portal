@@ -1,6 +1,5 @@
-import { useState } from 'react'
 import { BrandLogo } from '../components/BrandAndFooter.jsx'
-import { IconQr, IconSearch, IconUser } from '../components/Icons.jsx'
+import { IconQr, IconSearch } from '../components/Icons.jsx'
 
 export function PublicHeader({
   navigate,
@@ -9,11 +8,9 @@ export function PublicHeader({
   preview = false,
   onSelectScanTab,
 }) {
-  const [menuOpen, setMenuOpen] = useState(false)
   const homePath = preview ? '/trace?preview=1' : '/trace'
 
   function goToSection(hash) {
-    setMenuOpen(false)
     if (window.location.pathname !== '/' && window.location.pathname !== '/trace') {
       navigate(homePath)
       setTimeout(() => {

@@ -3,7 +3,7 @@ import { BrandLogo } from '../components/BrandAndFooter.jsx'
 import { QrScannerPanel } from './QrScannerPanel.jsx'
 import { parseTraceInput } from './traceUtils.js'
 import { DEMO_BATCH_SHORTCUTS } from '../batches/batchConstants.js'
-import { TruckIllustration, WarehouseIllustration, QrPhoneIllustration } from '../components/Illustrations.jsx'
+import { TruckIllustration, WarehouseIllustration } from '../components/Illustrations.jsx'
 
 // Bộ sưu tập nông sản chuẩn lookbook bán hàng Nike / Adidas
 const SHOWCASE_PRODUCTS = [

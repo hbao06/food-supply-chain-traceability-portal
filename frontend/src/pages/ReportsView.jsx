@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { BATCH_STATUSES, STATUS_META, formatQuantity, formatDateOnly } from '../batches/batchConstants.js'
 import { useBatches } from '../hooks/useBatches.js'
-import { IconDownload, IconSearch, IconSparkles } from '../components/Icons.jsx'
+import { IconDownload, IconSearch } from '../components/Icons.jsx'
 
 // Biểu đồ cột SVG trực quan sản lượng nông sản
 function SvgBarChart({ data, height = 240 }) {
@@ -78,31 +78,23 @@ function SvgBarChart({ data, height = 240 }) {
   )
 }
 
-// Biểu đồ tròn Donut Chart SVG phân bố các giai đoạn chuỗi
-function SvgDonutChart({ data, size = 220 }) {
-  const total = data.reduce((sum, d) => sum + d.value, 0) || 1
-  const radius = 70
-  const center = size / 2
-  const strokeWidth = 28
+const STAGE_COLORS = {
+  CREATED: '#A3B875',
+  TRANSPORTED: '#3A82C4',
+  RECEIVED: '#4A9C2D',
+  PROCESSED: '#D97C2B',
+  PACKAGED: '#8C56B8',
+  SHIPPED: '#237318'
+}
 
+function computeDonutSlices(data, total, center, radius) {
   let currentAngle = -90
-
-  const STAGE_COLORS = {
-    CREATED: '#A3B875',
-    TRANSPORTED: '#3A82C4',
-    RECEIVED: '#4A9C2D',
-    PROCESSED: '#D97C2B',
-    PACKAGED: '#8C56B8',
-    SHIPPED: '#237318'
-  }
-
-  const slices = data.map((item) => {
+  return data.map((item) => {
     const angle = (item.value / total) * 360
     const startAngle = currentAngle
     const endAngle = currentAngle + angle
     currentAngle += angle
 
-    // Chuyển góc sang tọa độ vòng tròn
     const startX = center + radius * Math.cos((Math.PI * startAngle) / 180)
     const startY = center + radius * Math.sin((Math.PI * startAngle) / 180)
     const endX = center + radius * Math.cos((Math.PI * endAngle) / 180)
@@ -121,6 +113,16 @@ function SvgDonutChart({ data, size = 220 }) {
       percent: Math.round((item.value / total) * 100)
     }
   })
+}
+
+// Biểu đồ tròn Donut Chart SVG phân bố các giai đoạn chuỗi
+function SvgDonutChart({ data, size = 220 }) {
+  const total = data.reduce((sum, d) => sum + d.value, 0) || 1
+  const radius = 70
+  const center = size / 2
+  const strokeWidth = 28
+
+  const slices = computeDonutSlices(data, total, center, radius)
 
   return (
     <div className="donut-chart-wrapper">

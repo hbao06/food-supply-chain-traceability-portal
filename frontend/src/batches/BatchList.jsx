@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { api, ApiError, errorMessage } from '../api.js'
 import { BatchStatusBadge } from './BatchStatusBadge.jsx'
 import { BatchQrModal } from './BatchQrModal.jsx'
@@ -64,7 +64,7 @@ export function BatchList({
     setPage(1)
   }
 
-  function matchDate(creationDate) {
+  const matchDate = useCallback((creationDate) => {
     if (datePreset === 'ALL') return true
     if (!creationDate) return true
     const d = new Date(creationDate)
@@ -82,7 +82,7 @@ export function BatchList({
       return true
     }
     return true
-  }
+  }, [datePreset, startDate, endDate])
 
   const previewData = useMemo(() => {
     if (!preview) return null
@@ -105,7 +105,7 @@ export function BatchList({
       total: items.length,
       items: items.slice(start, start + limit),
     }
-  }, [preview, filterStatus, datePreset, startDate, endDate, debouncedQuery, page, limit])
+  }, [preview, filterStatus, matchDate, debouncedQuery, page, limit])
 
   useEffect(() => {
     if (preview) return
@@ -147,7 +147,7 @@ export function BatchList({
   const filteredLiveBatches = useMemo(() => {
     if (preview) return []
     return batches.filter((b) => matchDate(b.creationDate || b.createdAt))
-  }, [batches, datePreset, startDate, endDate, preview])
+  }, [batches, matchDate, preview])
 
   const displayedBatches = preview ? previewData?.items || [] : (datePreset === 'ALL' ? batches : filteredLiveBatches)
   const displayedTotal = preview ? previewData?.total || 0 : (datePreset === 'ALL' ? total : filteredLiveBatches.length)

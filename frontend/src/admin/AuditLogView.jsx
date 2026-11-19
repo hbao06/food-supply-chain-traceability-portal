@@ -32,9 +32,7 @@ export function AuditLogView({ token, preview = false, onOpenBatch }) {
 
   const [filterAction, setFilterAction] = useState('ALL')
   const [filterEntity, setFilterEntity] = useState('ALL')
-  const [datePreset, setDatePreset] = useState('ALL') // 'ALL' | '7D' | '30D' | 'QUARTER' | 'CUSTOM'
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
+  const [datePreset, setDatePreset] = useState('ALL') // 'ALL' | '7D' | '30D' | 'QUARTER'
   const [searchQuery, setSearchQuery] = useState('')
   const [verifying, setVerifying] = useState(false)
   const [verifyResult, setVerifyResult] = useState(null)
@@ -133,14 +131,6 @@ export function AuditLogView({ token, preview = false, onOpenBatch }) {
         if (datePreset === '7D' && d < new Date(now.getTime() - 7 * 86400000)) return false
         if (datePreset === '30D' && d < new Date(now.getTime() - 30 * 86400000)) return false
         if (datePreset === 'QUARTER' && d < new Date(now.getTime() - 90 * 86400000)) return false
-        if (datePreset === 'CUSTOM') {
-          if (startDate && d < new Date(startDate)) return false
-          if (endDate) {
-            const end = new Date(endDate)
-            end.setHours(23, 59, 59, 999)
-            if (d > end) return false
-          }
-        }
       }
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim()
@@ -172,7 +162,7 @@ export function AuditLogView({ token, preview = false, onOpenBatch }) {
       }
       return true
     })
-  }, [logs, filterAction, filterEntity, searchQuery])
+  }, [logs, filterAction, filterEntity, datePreset, searchQuery])
 
   return (
     <div className="audit-view-container">

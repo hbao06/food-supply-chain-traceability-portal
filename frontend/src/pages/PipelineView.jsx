@@ -8,19 +8,12 @@ import {
 } from '../batches/batchConstants.js'
 import { useBatches } from '../hooks/useBatches.js'
 import {
-  IconBatches,
-  IconBook,
   IconBuilding,
-  IconChartBar,
   IconCheckCircle,
   IconFactory,
-  IconPackage,
-  IconPlus,
-  IconQr,
   IconSeedling,
   IconShield,
   IconTruck,
-  IconUsersGroup,
 } from '../components/Icons.jsx'
 
 const ROLE_DASHBOARD_CONFIG = {

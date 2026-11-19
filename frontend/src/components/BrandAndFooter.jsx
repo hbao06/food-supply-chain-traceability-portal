@@ -1,6 +1,4 @@
-import { useState } from 'react'
-import { buildTraceRoute, parseTraceInput } from '../trace/traceUtils.js'
-import { IconCheckCircle, IconMapPin, IconShield } from './Icons.jsx'
+import { buildTraceRoute } from '../trace/traceUtils.js'
 
 export function BrandLogo({ compact = false, invert = false }) {
   return (
