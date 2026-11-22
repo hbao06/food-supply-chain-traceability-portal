@@ -1,4 +1,5 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { api } from '../api.js'
 import { BatchQrBadge } from './pipelineParts.jsx'
 import {
   BATCH_STATUSES,
@@ -149,13 +150,13 @@ const ROLE_DASHBOARD_CONFIG = {
         title: 'Kiểm toán chuỗi khối SHA-256',
         desc: 'Xác thực tính toàn vẹn chuỗi băm mật mã, bảo đảm nhật ký không bị can thiệp.',
         actionLabel: 'Kiểm toán hệ thống →',
-        route: '/admin/audit',
+        route: '/audit-logs',
       },
       {
         title: 'Quản lý Tổ chức & Doanh nghiệp',
         desc: 'Quản lý danh sách các nông trại, nhà máy chế biến và nhà phân phối.',
         actionLabel: 'Quản lý tổ chức →',
-        route: '/admin/orgs',
+        route: '/admin/organizations',
       },
       {
         title: 'Báo cáo tổng quan toàn quốc',
@@ -167,24 +168,34 @@ const ROLE_DASHBOARD_CONFIG = {
   },
 }
 
-export function PipelineView({ token, user, preview, onOpenBatch, navigate }) {
-  const { items, loading, error } = useBatches(token, preview)
+export function PipelineView({ token, user, onOpenBatch, navigate }) {
+  const { items, loading, error } = useBatches(token)
+  const [adminStats, setAdminStats] = useState({ orgs: 0, users: 0 })
 
   const userRole = user?.role || 'FARMER'
   const roleConfig = ROLE_DASHBOARD_CONFIG[userRole] || ROLE_DASHBOARD_CONFIG.FARMER
   const RoleIcon = roleConfig.icon
 
+  useEffect(() => {
+    if (userRole !== 'ADMIN' || !token) return
+    let active = true
+    Promise.all([
+      api.listOrganizations(token, { limit: 1 }),
+      api.listUsers(token, { limit: 1 }),
+    ])
+      .then(([orgsRes, usersRes]) => {
+        if (!active) return
+        setAdminStats({
+          orgs: Number(orgsRes?.total ?? orgsRes?.items?.length ?? 0),
+          users: Number(usersRes?.total ?? usersRes?.items?.length ?? 0),
+        })
+      })
+      .catch(() => {})
+    return () => { active = false }
+  }, [token, userRole])
+
   // Tính toán các chỉ số theo Role
   const roleMetrics = useMemo(() => {
-    if (!items || !items.length) {
-      return {
-        m1: { label: 'Lô hàng', val: 0, unit: 'lô' },
-        m2: { label: 'Đang luân chuyển', val: 0, unit: 'lô' },
-        m3: { label: 'Sản lượng', val: '0 kg', unit: '' },
-        m4: { label: 'Tiêu chuẩn', val: 'Đạt', unit: '' },
-      }
-    }
-
     const createdCount = items.filter((b) => b.currentStatus === 'CREATED').length
     const transportedCount = items.filter((b) => b.currentStatus === 'TRANSPORTED').length
     const receivedCount = items.filter((b) => b.currentStatus === 'RECEIVED').length
@@ -199,7 +210,7 @@ export function PipelineView({ token, user, preview, onOpenBatch, navigate }) {
         m1: { label: 'Lô đang canh tác / mới tạo', val: createdCount, unit: 'lô' },
         m2: { label: 'Lô đã bàn giao vận chuyển', val: transportedCount, unit: 'lô' },
         m3: { label: 'Tổng sản lượng đã xuất vườn', val: formatQuantity(totalWeight), unit: '' },
-        m4: { label: 'Tỷ lệ gắn tem mã FR-', val: '100%', unit: 'Chuẩn hóa' },
+        m4: { label: 'Định danh lô hàng', val: 'Chuẩn FR-', unit: 'Gắn tem QR HMAC' },
       }
     }
     if (userRole === 'PROCESSOR') {
@@ -207,25 +218,25 @@ export function PipelineView({ token, user, preview, onOpenBatch, navigate }) {
         m1: { label: 'Nguyên liệu chờ chế biến', val: receivedCount, unit: 'lô' },
         m2: { label: 'Đang sơ chế & đóng gói', val: processedCount + packagedCount, unit: 'lô' },
         m3: { label: 'Thành phẩm sẵn sàng xuất', val: shippedCount, unit: 'lô' },
-        m4: { label: 'Tiêu chuẩn an toàn', val: 'ISO 22000', unit: 'HACCP Đạt' },
+        m4: { label: 'Tổng sản lượng xử lý', val: formatQuantity(totalWeight), unit: '' },
       }
     }
     if (userRole === 'DISTRIBUTOR') {
       return {
-        m1: { label: 'Đội xe lạnh đang vận chuyển', val: transportedCount, unit: 'lô' },
-        m2: { label: 'Nông sản lưu kho trung chuyển', val: receivedCount, unit: 'lô' },
-        m3: { label: 'Đã phân phối tới siêu thị', val: shippedCount, unit: 'lô' },
-        m4: { label: 'Nhiệt độ bảo quản GPS', val: '2°C – 8°C', unit: 'Chuỗi lạnh' },
+        m1: { label: 'Đang vận chuyển', val: transportedCount, unit: 'lô' },
+        m2: { label: 'Đang lưu kho tiếp nhận', val: receivedCount, unit: 'lô' },
+        m3: { label: 'Đã phân phối tới thị trường', val: shippedCount, unit: 'lô' },
+        m4: { label: 'Tổng sản lượng lưu thông', val: formatQuantity(totalWeight), unit: '' },
       }
     }
     // ADMIN
     return {
       m1: { label: 'Tổng số lô toàn hệ thống', val: items.length, unit: 'lô' },
-      m2: { label: 'Đơn vị thành viên mạng lưới', val: '9', unit: 'Đơn vị' },
-      m3: { label: 'Tài khoản chuỗi cung ứng', val: '12', unit: 'Tài khoản' },
-      m4: { label: 'Toàn vẹn chuỗi khối SHA-256', val: '100%', unit: 'Khớp tuyệt đối' },
+      m2: { label: 'Đơn vị thành viên mạng lưới', val: adminStats.orgs, unit: 'Đơn vị' },
+      m3: { label: 'Tài khoản chuỗi cung ứng', val: adminStats.users, unit: 'Tài khoản' },
+      m4: { label: 'Chuỗi băm nhật ký', val: 'SHA-256', unit: 'Kiểm toán tại mục Kiểm toán' },
     }
-  }, [items, userRole])
+  }, [items, userRole, adminStats])
 
   if (loading) {
     return (

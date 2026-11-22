@@ -9,14 +9,20 @@ const MAX_TOKEN_LENGTH = 200;
 // Người ngoài không phân biệt được lô có tồn tại hay không.
 const NOT_FOUND = () => new NotFoundError('NOT_FOUND', "Không tìm thấy thông tin truy xuất hợp lệ");
 
-// DANH SÁCH TRẮNG: chỉ những trường này được trả ra công khai (OpenAPI: PublicTrace). Thêm trường mới phải sửa ở đây.
-function toPublicTrace(batch, events) {
+function toPublicBatchSummary(batch) {
   return {
     batchCode: batch.batch_code,
     productName: batch.product_name,
     origin: batch.origin,
     organizationName: batch.organization_name ?? null,
     currentStatus: batch.current_status,
+  };
+}
+
+// DANH SÁCH TRẮNG: chỉ những trường này được trả ra công khai (OpenAPI: PublicTrace). Thêm trường mới phải sửa ở đây.
+function toPublicTrace(batch, events) {
+  return {
+    ...toPublicBatchSummary(batch),
     events: events.map((e) => ({
       eventType: e.event_type,
       location: e.location,
@@ -27,6 +33,13 @@ function toPublicTrace(batch, events) {
 }
 
 function createTraceService({ db, repo, qr }) {
+  async function recent({ limit = 6 } = {}) {
+    const parsed = Number(limit);
+    const safeLimit = Number.isInteger(parsed) && parsed >= 1 ? Math.min(parsed, 12) : 6;
+    const rows = await repo.listRecentPublicBatches(db, safeLimit);
+    return { items: rows.map(toPublicBatchSummary) };
+  }
+
   async function byCode(batchCode) {
     if (typeof batchCode !== 'string' || !BATCH_CODE_RE.test(batchCode)) throw NOT_FOUND();
     const batch = await repo.findPublicBatch(db, batchCode);
@@ -42,7 +55,7 @@ function createTraceService({ db, repo, qr }) {
     return byCode(batchCode);
   }
 
-  return { byCode, byToken };
+  return { recent, byCode, byToken };
 }
 
-module.exports = { createTraceService, toPublicTrace, BATCH_CODE_RE };
+module.exports = { createTraceService, toPublicTrace, toPublicBatchSummary, BATCH_CODE_RE };

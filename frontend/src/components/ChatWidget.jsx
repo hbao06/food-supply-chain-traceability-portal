@@ -4,9 +4,9 @@ import { IconSparkles } from './Icons.jsx'
 const baseUrl = (import.meta.env?.VITE_API_BASE_URL || '/api').replace(/\/$/, '')
 const WELCOME = {
   from: 'bot',
-  text: 'Xin chào! Mình là trợ lý AI của Food Trace. Hãy hỏi về cách quét QR, quy trình chuỗi cung ứng hoặc nhập mã lô (VD: FR-2026-0201) để mình tra cứu giúp bạn.',
+  text: 'Xin chào! Mình là trợ lý AI của Food Trace. Hãy hỏi về cách quét QR, quy trình chuỗi cung ứng hoặc nhập mã lô (VD: FR-2026-0001) để mình tra cứu giúp bạn.',
 }
-const QUICK = ['Cách quét mã QR?', 'Quy trình 6 giai đoạn?', 'Tra cứu lô FR-2026-0201', 'Cách tạo lô mới?']
+const QUICK = ['Cách quét mã QR?', 'Quy trình 6 giai đoạn?', 'Mã lô FR- có định dạng thế nào?', 'Cách tạo lô mới?']
 
 export function ChatWidget() {
   const [open, setOpen] = useState(false)

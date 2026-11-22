@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { createTraceService, toPublicTrace } = require('../src/modules/trace/trace.service');
+const { createTraceService, toPublicTrace, toPublicBatchSummary } = require('../src/modules/trace/trace.service');
 const { createQrTokenService } = require('../src/common/qrToken');
 
 const qr = createQrTokenService({ secret: 'k'.repeat(40) });
@@ -102,4 +102,38 @@ test('toPublicTrace: tổ chức null được giữ là null, không phải und
   const t = toPublicTrace({ batch_code: 'FR-2026-0001', product_name: 'A', origin: 'B', current_status: 'CREATED' }, [{ event_type: 'CREATED', location: 'L', timestamp: new Date(0) }]);
   assert.equal(t.organizationName, null);
   assert.equal(t.events[0].organizationName, null);
+});
+
+test('recent: trả danh sách lô công khai mới nhất, giới hạn 1..12 và không lộ trường nội bộ', async () => {
+  const receivedLimits = [];
+  const repo = {
+    async listRecentPublicBatches(_db, limit) {
+      receivedLimits.push(limit);
+      return [
+        {
+          batch_code: 'FR-2026-0005',
+          product_name: 'Chè Ô Long Mộc Châu',
+          origin: 'Mộc Châu, Sơn La',
+          organization_name: 'HTX Chè Ô Long Mộc Châu',
+          current_status: 'CREATED',
+          batch_id: 5,
+          created_by: 9,
+          quantity: '350.00',
+        },
+      ];
+    },
+  };
+  const service = createTraceService({ db: {}, repo, qr });
+  const resDefault = await service.recent();
+  assert.equal(receivedLimits[0], 6);
+  assert.equal(resDefault.items.length, 1);
+  assert.deepEqual(Object.keys(resDefault.items[0]).sort(), ['batchCode', 'currentStatus', 'organizationName', 'origin', 'productName']);
+  assert.equal(resDefault.items[0].batchCode, 'FR-2026-0005');
+
+  await service.recent({ limit: '50' });
+  await service.recent({ limit: '-3' });
+  assert.deepEqual(receivedLimits.slice(1), [12, 6]);
+
+  const summary = toPublicBatchSummary({ batch_code: 'FR-2026-0001', product_name: 'X', origin: 'Y', current_status: 'SHIPPED' });
+  assert.equal(summary.organizationName, null);
 });

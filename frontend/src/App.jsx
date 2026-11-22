@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ApiError, api, errorMessage } from './api.js'
 import './App.css'
 import { BatchList } from './batches/BatchList.jsx'
@@ -19,7 +19,7 @@ import { buildTraceRoute, parseTraceInput, parseTraceRoute } from './trace/trace
 import { BrandLogo, WorkspaceFooter } from './components/BrandAndFooter.jsx'
 import {
   BATCH_STATUSES,
-  PREVIEW_BATCHES,
+  ROLE_LABELS_VI,
   STATUS_META,
   formatDateOnly,
   formatQuantity,
@@ -35,9 +35,6 @@ import {
   IconBell,
   IconPlus,
   IconBuilding,
-  IconSeedling,
-  IconIndustry,
-  IconTruck,
   IconShield,
   IconCheck,
   IconSearch,
@@ -47,78 +44,7 @@ import {
 
 const TOKEN_KEY = 'food-trace-token'
 
-const PREVIEW_USER = {
-  userId: 2,
-  name: 'Nguyễn Văn An',
-  email: 'farmer_a@demo.local',
-  role: 'FARMER',
-  status: 'ACTIVE',
-  organizationId: 1,
-  organizationName: 'HTX Cà phê Cầu Đất',
-}
-
-const ROLE_LABELS = {
-  FARMER: 'Nông trại (Farmer)',
-  PROCESSOR: 'Chế biến (Processor)',
-  DISTRIBUTOR: 'Phân phối (Distributor)',
-  ADMIN: 'Quản trị viên (Admin)',
-}
-
-const ORG_NAME_BY_ID = {
-  1: 'HTX Cà phê Cầu Đất',
-  2: 'Nông trại Sầu riêng Cái Mơn',
-  3: 'Công ty Chế biến Nông sản Sài Gòn',
-  4: 'Vận tải Lạnh Miền Nam',
-  5: 'Phân phối Thực phẩm Sạch Hà Nội',
-}
-
-const DEMO_ACTORS = {
-  FARMER: {
-    userId: 2,
-    name: 'Nguyễn Văn An',
-    email: 'farmer_a@demo.local',
-    role: 'FARMER',
-    status: 'ACTIVE',
-    organizationId: 1,
-    organizationName: 'HTX Cà phê Cầu Đất',
-  },
-  PROCESSOR: {
-    userId: 4,
-    name: 'Lê Văn Chế',
-    email: 'processor_a@demo.local',
-    role: 'PROCESSOR',
-    status: 'ACTIVE',
-    organizationId: 3,
-    organizationName: 'Công ty Chế biến Nông sản Sài Gòn',
-  },
-  DISTRIBUTOR: {
-    userId: 5,
-    name: 'Phạm Văn Dũng',
-    email: 'distributor_a@demo.local',
-    role: 'DISTRIBUTOR',
-    status: 'ACTIVE',
-    organizationId: 4,
-    organizationName: 'Vận tải Lạnh Miền Nam',
-  },
-  ADMIN: {
-    userId: 1,
-    name: 'Quản trị Demo',
-    email: 'admin_1@demo.local',
-    role: 'ADMIN',
-    status: 'ACTIVE',
-    organizationId: null,
-    organizationName: 'Hệ thống Quản trị',
-  },
-}
-
-function enrichUserOrg(u) {
-  if (!u) return u
-  if (u.organizationName) return u
-  if (u.organizationId && ORG_NAME_BY_ID[u.organizationId]) {
-    return { ...u, organizationName: ORG_NAME_BY_ID[u.organizationId] }
-  }
-  return u
-}
+const ROLE_LABELS = ROLE_LABELS_VI
 
 function parseRoute(path) {
   const cleanPath = String(path || '/').split('?')[0].split('#')[0].replace(/\/+$/, '') || '/'
@@ -248,32 +174,6 @@ function Login({ navigate, onLogin, flash }) {
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
 
-  async function quickLogin(roleKey) {
-    const actor = DEMO_ACTORS[roleKey] || DEMO_ACTORS.FARMER
-    setMessage('')
-    setBusy(true)
-    try {
-      // Ưu tiên đăng nhập THẬT vào backend (CSDL demo cố định, mật khẩu Demo12345)
-      const result = await api.login({ email: actor.email, password: 'Demo12345' })
-      if (result?.token && result?.user) {
-        onLogin({ token: result.token, user: enrichUserOrg(result.user) })
-        return
-      }
-    } catch (error) {
-      if (!(error instanceof ApiError && (error.code === 'NETWORK_ERROR' || error.code === 'API_UNAVAILABLE'))) {
-        setMessage(errorMessage(error))
-        setBusy(false)
-        return
-      }
-    }
-    // Fallback offline nếu backend chưa khởi động
-    onLogin({
-      token: `mock-token-${roleKey.toLowerCase()}-${Date.now()}`,
-      user: actor,
-    })
-    setBusy(false)
-  }
-
   async function submit(event) {
     event.preventDefault()
     const next = {}
@@ -287,7 +187,7 @@ function Login({ navigate, onLogin, flash }) {
     try {
       const result = await api.login({ email: form.email.trim(), password: form.password })
       if (!result?.token || !result?.user) throw new ApiError(502, 'INVALID_RESPONSE')
-      onLogin({ token: result.token, user: enrichUserOrg(result.user) })
+      onLogin({ token: result.token, user: result.user })
     } catch (error) {
       setMessage(errorMessage(error))
       setForm((current) => ({ ...current, password: '' }))
@@ -311,7 +211,7 @@ function Login({ navigate, onLogin, flash }) {
           label="Email tài khoản"
           type="email"
           autoComplete="username"
-          placeholder="farmer_a@demo.local"
+          placeholder="ten@donvi.vn"
           value={form.email}
           error={errors.email}
           onChange={(event) => setForm({ ...form, email: event.target.value })}
@@ -321,7 +221,7 @@ function Login({ navigate, onLogin, flash }) {
           label="Mật khẩu"
           type="password"
           autoComplete="current-password"
-          placeholder="Nhập mật khẩu (Demo12345)"
+          placeholder="Nhập mật khẩu"
           value={form.password}
           error={errors.password}
           onChange={(event) => setForm({ ...form, password: event.target.value })}
@@ -330,26 +230,6 @@ function Login({ navigate, onLogin, flash }) {
           {busy ? 'Đang xác thực…' : 'Đăng nhập'}
         </button>
       </form>
-
-      <div className="demo-accounts-card">
-        <div className="demo-accounts-head">
-          <span className="demo-accounts-label">Tài khoản Demo</span>
-        </div>
-        <div className="demo-accounts-grid">
-          <button type="button" className="demo-account-chip" disabled={busy} onClick={() => quickLogin('FARMER')}>
-            <IconSeedling /> Nông trại (Farmer)
-          </button>
-          <button type="button" className="demo-account-chip" disabled={busy} onClick={() => quickLogin('PROCESSOR')}>
-            <IconIndustry /> Chế biến (Processor)
-          </button>
-          <button type="button" className="demo-account-chip" disabled={busy} onClick={() => quickLogin('DISTRIBUTOR')}>
-            <IconTruck /> Phân phối (Distributor)
-          </button>
-          <button type="button" className="demo-account-chip" disabled={busy} onClick={() => quickLogin('ADMIN')}>
-            <IconShield /> Quản trị (Admin)
-          </button>
-        </div>
-      </div>
 
       <p className="auth-switch">
         Chưa có tài khoản đối tác?{' '}
@@ -397,16 +277,12 @@ function Register({ navigate }) {
       })
       setDone(true)
     } catch (error) {
-      if (error instanceof ApiError && (error.code === 'NETWORK_ERROR' || error.code === 'API_UNAVAILABLE')) {
-        setDone(true)
-      } else {
-        if (error instanceof ApiError && error.details) {
-          const fieldErrors = {}
-          for (const d of error.details) fieldErrors[d.field] = d.message
-          setErrors(fieldErrors)
-        }
-        setMessage(errorMessage(error))
+      if (error instanceof ApiError && error.details) {
+        const fieldErrors = {}
+        for (const d of error.details) fieldErrors[d.field] = d.message
+        setErrors(fieldErrors)
       }
+      setMessage(errorMessage(error))
     } finally {
       setBusy(false)
     }
@@ -483,9 +359,9 @@ function Register({ navigate }) {
                 aria-invalid={Boolean(errors.role)}
               >
                 <option value="">Chọn vai trò phù hợp</option>
-                <option value="FARMER">Nông trại / Nhà sản xuất (Farmer)</option>
-                <option value="PROCESSOR">Cơ sở chế biến (Processor)</option>
-                <option value="DISTRIBUTOR">Đơn vị vận chuyển & Phân phối (Distributor)</option>
+                <option value="FARMER">Nông trại / Nhà sản xuất</option>
+                <option value="PROCESSOR">Cơ sở chế biến</option>
+                <option value="DISTRIBUTOR">Đơn vị vận chuyển & Phân phối</option>
               </select>
             </Field>
             <button className="button primary wide" type="submit" disabled={busy}>
@@ -511,13 +387,12 @@ function Workspace({
   user,
   onLogout,
   onUserUpdate,
-  preview = false,
   flash = '',
   onFlash,
 }) {
-  const [profile, setProfile] = useState(() => enrichUserOrg(user || (preview ? PREVIEW_USER : null)))
-  const [name, setName] = useState(() => user?.name || (preview ? PREVIEW_USER.name : ''))
-  const [loading, setLoading] = useState(() => !preview && !user)
+  const [profile, setProfile] = useState(() => user || null)
+  const [name, setName] = useState(() => user?.name || '')
+  const [loading, setLoading] = useState(() => !user)
   const [loadError, setLoadError] = useState('')
   const [retry, setRetry] = useState(0)
   const [nameError, setNameError] = useState('')
@@ -529,21 +404,26 @@ function Workspace({
   const [quickQrBatch, setQuickQrBatch] = useState(null)
   const routeInfo = parseRoute(route)
 
-  const [dashboardBatches, setDashboardBatches] = useState(() => (preview ? PREVIEW_BATCHES : []))
+  const [dashboardBatches, setDashboardBatches] = useState([])
+  const [dashboardError, setDashboardError] = useState('')
+  const [dashboardRetry, setDashboardRetry] = useState(0)
   const [awaitingCount, setAwaitingCount] = useState(0)
+  const [pendingUsersCount, setPendingUsersCount] = useState(0)
 
   useEffect(() => {
-    if (preview || !token) return
+    if (!token) return
     let active = true
     api
       .listBatches(token, { limit: 100 })
       .then((data) => {
         if (!active) return
-        if (Array.isArray(data?.items)) {
-          setDashboardBatches(data.items)
-        }
+        setDashboardBatches(Array.isArray(data?.items) ? data.items : [])
+        setDashboardError('')
       })
-      .catch(() => {})
+      .catch((err) => {
+        if (!active) return
+        setDashboardError(errorMessage(err))
+      })
 
     if (profile?.role === 'PROCESSOR' || profile?.role === 'DISTRIBUTOR') {
       api
@@ -553,18 +433,27 @@ function Workspace({
         })
         .catch(() => {})
     }
+
+    if (profile?.role === 'ADMIN') {
+      api
+        .listUsers(token, { status: 'PENDING', limit: 1 })
+        .then((data) => {
+          if (active) setPendingUsersCount(data?.total || 0)
+        })
+        .catch(() => {})
+    }
+
     return () => { active = false }
-  }, [token, preview, profile?.role, route])
+  }, [token, profile?.role, route, dashboardRetry])
 
   useEffect(() => {
-    if (preview) return
+    if (!token) return
     let active = true
     api.me(token).then((result) => {
       if (!active) return
-      const enriched = enrichUserOrg(result)
-      setProfile(enriched)
-      setName(enriched.name || '')
-      onUserUpdate(enriched)
+      setProfile(result)
+      setName(result.name || '')
+      onUserUpdate(result)
       setLoadError('')
     }).catch((error) => {
       if (!active) return
@@ -574,14 +463,10 @@ function Workspace({
       else setLoadError(errorMessage(error))
     }).finally(() => { if (active) setLoading(false) })
     return () => { active = false }
-  }, [token, retry, onLogout, onUserUpdate, preview])
+  }, [token, retry, onLogout, onUserUpdate])
 
   async function saveName(event) {
     event.preventDefault()
-    if (preview) {
-      setSaved(true)
-      return
-    }
     const trimmed = name.trim()
     setNameError(!trimmed ? 'Vui lòng nhập họ và tên.' :
       trimmed.length > 100 ? 'Họ và tên tối đa 100 ký tự.' : '')
@@ -590,7 +475,7 @@ function Workspace({
     if (!trimmed || trimmed.length > 100) return
     setSaving(true)
     try {
-      const result = enrichUserOrg(await api.updateMe(token, { name: trimmed }))
+      const result = await api.updateMe(token, { name: trimmed })
       setProfile(result)
       setName(result.name || trimmed)
       onUserUpdate(result)
@@ -613,34 +498,45 @@ function Workspace({
     e.preventDefault()
     const parsed = parseTraceInput(topSearch)
     if (!parsed.valid) return
-    navigate(buildTraceRoute(parsed.mode, parsed.identifier, { preview }))
+    navigate(buildTraceRoute(parsed.mode, parsed.identifier))
     setTopSearch('')
   }
 
   const [showNotifications, setShowNotifications] = useState(false)
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      title: 'Lô FR-2026-0002 hoàn tất chuỗi 6/6',
-      desc: 'Đã xuất kho (SHIPPED) phân phối ra hệ thống bán lẻ TP.HCM.',
-      time: '10 phút trước',
-      unread: true,
-    },
-    {
-      id: 2,
-      title: 'Chuỗi băm SHA-256 toàn vẹn 100%',
-      desc: 'Tất cả bản ghi kiểm toán và sự kiện chuỗi cung ứng đều khớp chữ ký.',
-      time: '1 giờ trước',
-      unread: true,
-    },
-    {
-      id: 3,
-      title: 'Lô FR-2026-0101 đã dán tem QR',
-      desc: 'Sầu riêng Ri6 Cái Mơn đã hoàn tất đóng gói (PACKAGED), sẵn sàng xuất kho.',
-      time: '3 giờ trước',
-      unread: false,
-    },
-  ])
+  const [readNotifIds, setReadNotifIds] = useState(() => new Set())
+
+  const notifications = useMemo(() => {
+    const items = []
+    if (profile?.role === 'ADMIN' && pendingUsersCount > 0) {
+      items.push({
+        id: 'pending-users',
+        title: `Có ${pendingUsersCount} tài khoản chờ duyệt`,
+        desc: 'Cần gán đơn vị và kích hoạt để đối tác bắt đầu thao tác.',
+        time: 'Hiện tại',
+        route: '/admin/users',
+      })
+    }
+    if ((profile?.role === 'PROCESSOR' || profile?.role === 'DISTRIBUTOR') && awaitingCount > 0) {
+      items.push({
+        id: 'awaiting-batches',
+        title: `Có ${awaitingCount} lô hàng chờ tiếp nhận`,
+        desc: 'Mở tab "Chờ tiếp nhận" trong Quản lý lô hàng để xử lý.',
+        time: 'Hiện tại',
+        route: '/batches',
+      })
+    }
+    for (const b of dashboardBatches.slice(0, 3)) {
+      items.push({
+        id: `batch-${b.batchId}-${b.currentStatus}`,
+        title: `${b.batchCode} · ${b.productName}`,
+        desc: `Trạng thái: ${STATUS_META[b.currentStatus]?.label || b.currentStatus}`,
+        time: formatDateOnly(b.creationDate),
+        route: `/batches/${b.batchId}`,
+      })
+    }
+    return items.map((item) => ({ ...item, unread: !readNotifIds.has(item.id) }))
+  }, [profile?.role, pendingUsersCount, awaitingCount, dashboardBatches, readNotifIds])
+
   const unreadCount = notifications.filter((n) => n.unread).length
 
   const totalBatches = dashboardBatches.length
@@ -714,7 +610,7 @@ function Workspace({
               <button
                 type="button"
                 className="nav-link"
-                onClick={() => navigate(preview ? '/trace?preview=1' : '/trace')}
+                onClick={() => navigate('/trace')}
               >
                 <IconQr /> <span>Cổng tra cứu QR</span>
               </button>
@@ -841,22 +737,45 @@ function Workspace({
                       <button
                         type="button"
                         className="notif-read-all-btn"
-                        onClick={() => setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })))}
+                        onClick={() => setReadNotifIds(new Set(notifications.map((n) => n.id)))}
                       >
                         Đã đọc tất cả
                       </button>
                     )}
                   </div>
                   <div className="notif-list">
-                    {notifications.map((n) => (
-                      <div key={n.id} className={`notif-item ${n.unread ? 'unread' : ''}`}>
-                        <div className="notif-title-row">
-                          <strong className="notif-title">{n.title}</strong>
-                          <span className="notif-time">{n.time}</span>
-                        </div>
-                        <p className="notif-desc">{n.desc}</p>
+                    {notifications.length === 0 ? (
+                      <div className="notif-item">
+                        <p className="notif-desc">Chưa có thông báo mới.</p>
                       </div>
-                    ))}
+                    ) : (
+                      notifications.map((n) => (
+                        <div
+                          key={n.id}
+                          className={`notif-item ${n.unread ? 'unread' : ''}`}
+                          onClick={() => {
+                            setReadNotifIds((prev) => new Set([...prev, n.id]))
+                            setShowNotifications(false)
+                            if (n.route) navigate(n.route)
+                          }}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              setReadNotifIds((prev) => new Set([...prev, n.id]))
+                              setShowNotifications(false)
+                              if (n.route) navigate(n.route)
+                            }
+                          }}
+                        >
+                          <div className="notif-title-row">
+                            <strong className="notif-title">{n.title}</strong>
+                            <span className="notif-time">{n.time}</span>
+                          </div>
+                          <p className="notif-desc">{n.desc}</p>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               )}
@@ -944,7 +863,6 @@ function Workspace({
               mode="create"
               token={token}
               user={profile}
-              preview={preview}
               onSuccess={(newBatch, msg) => {
                 navigate(`/batches/${newBatch.batchId}`)
                 if (onFlash) onFlash(msg)
@@ -954,15 +872,9 @@ function Workspace({
           ) : routeInfo.name === 'batch-edit' ? (
             <BatchForm
               mode="update"
-              batch={
-                preview
-                  ? PREVIEW_BATCHES.find((b) => b.batchId === routeInfo.batchId) || PREVIEW_BATCHES[0]
-                  : null
-              }
               batchId={routeInfo.batchId}
               token={token}
               user={profile}
-              preview={preview}
               onSuccess={(updated, msg) => {
                 navigate(`/batches/${updated.batchId}`)
                 if (onFlash) onFlash(msg)
@@ -974,7 +886,6 @@ function Workspace({
               batchId={routeInfo.batchId}
               token={token}
               user={profile}
-              preview={preview}
               onBack={() => navigate('/batches')}
               onEdit={(b) => navigate(`/batches/${b.batchId}/edit`)}
             />
@@ -982,7 +893,6 @@ function Workspace({
             <BatchList
               token={token}
               user={profile}
-              preview={preview}
               onOpenBatch={(id) => navigate(`/batches/${id}`)}
               onCreateBatch={() => navigate('/batches/new')}
               onEditBatch={(b) => navigate(`/batches/${b.batchId}/edit`)}
@@ -991,24 +901,22 @@ function Workspace({
             <PipelineView
               token={token}
               user={profile}
-              preview={preview}
               onOpenBatch={(id) => navigate(`/batches/${id}`)}
               navigate={navigate}
             />
           ) : routeInfo.name === 'reports' ? (
-            <ReportsView token={token} user={profile} preview={preview} />
+            <ReportsView token={token} user={profile} />
           ) : routeInfo.name === 'qr-center' ? (
-            <QrCenterView token={token} user={profile} preview={preview} />
+            <QrCenterView token={token} user={profile} />
           ) : routeInfo.name === 'help' ? (
             <HelpView />
           ) : routeInfo.name === 'admin-users' ? (
-            <UserManagementView token={token} currentUser={profile} preview={preview} />
+            <UserManagementView token={token} currentUser={profile} />
           ) : routeInfo.name === 'admin-orgs' ? (
-            <OrganizationManagementView token={token} preview={preview} />
+            <OrganizationManagementView token={token} />
           ) : routeInfo.name === 'audit-logs' ? (
             <AuditLogView
               token={token}
-              preview={preview}
               onOpenBatch={(id) => navigate(`/batches/${id}`)}
             />
           ) : routeInfo.name === 'profile' ? (
@@ -1054,7 +962,7 @@ function Workspace({
                     <button
                       className="button primary"
                       type="submit"
-                      disabled={preview || saving || name.trim() === profile.name}
+                      disabled={saving || name.trim() === profile.name}
                     >
                       {saving ? 'Đang lưu…' : 'Lưu thay đổi'}
                     </button>
@@ -1120,6 +1028,19 @@ function Workspace({
               </div>
 
               {/* 4 Compact Role-Specific KPIs */}
+              {dashboardError && (
+                <div className="notice error" role="alert" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                  <span>Không thể tải dữ liệu tổng quan: {dashboardError}</span>
+                  <button
+                    type="button"
+                    className="button secondary sm"
+                    onClick={() => setDashboardRetry((r) => r + 1)}
+                  >
+                    Thử lại
+                  </button>
+                </div>
+              )}
+
               <div className="dashboard-kpi-grid">
                 <div className="kpi-card-metric">
                   <span className="metric-tag">TỔNG QUAN</span>
@@ -1290,7 +1211,6 @@ function Workspace({
         <BatchQrModal
           batch={quickQrBatch}
           token={token}
-          preview={preview}
           onClose={() => setQuickQrBatch(null)}
         />
       )}
@@ -1305,7 +1225,7 @@ function App() {
   const [user, setUser] = useState(() => {
     try {
       const stored = sessionStorage.getItem('food-trace-user')
-      return stored ? enrichUserOrg(JSON.parse(stored)) : null
+      return stored ? JSON.parse(stored) : null
     } catch {
       return null
     }
@@ -1340,11 +1260,10 @@ function App() {
   }, [])
 
   const login = useCallback((result) => {
-    const enriched = enrichUserOrg(result.user)
     sessionStorage.setItem(TOKEN_KEY, result.token)
-    sessionStorage.setItem('food-trace-user', JSON.stringify(enriched))
+    sessionStorage.setItem('food-trace-user', JSON.stringify(result.user))
     setToken(result.token)
-    setUser(enriched)
+    setUser(result.user)
     setFlash('')
     navigate('/dashboard')
   }, [navigate])
@@ -1352,12 +1271,6 @@ function App() {
   const routeInfo = parseRoute(route)
   const isPublicTrace = routeInfo.name === 'trace-search' || routeInfo.name === 'trace-result'
   const isProtected = !isPublicTrace && routeInfo.name !== 'login' && routeInfo.name !== 'register'
-  const isMockSession = Boolean(token && token.startsWith('mock-token-'))
-  const hasPreviewParam =
-    route.includes('preview=1') ||
-    new URLSearchParams(window.location.search).get('preview') === '1'
-  const isPublicPreview = Boolean(hasPreviewParam || isMockSession)
-  const isPreview = Boolean(import.meta.env.DEV && hasPreviewParam && !token) || isMockSession
 
   useEffect(() => {
     if (routeInfo.name === 'trace-search') {
@@ -1376,7 +1289,6 @@ function App() {
       <PublicTraceSearch
         navigate={navigate}
         isAuthenticated={Boolean(token)}
-        preview={isPublicPreview}
       />
     )
   }
@@ -1384,28 +1296,12 @@ function App() {
   if (routeInfo.name === 'trace-result') {
     return (
       <PublicTraceResult
-        key={`${routeInfo.mode}:${routeInfo.identifier}:${isPublicPreview}`}
+        key={`${routeInfo.mode}:${routeInfo.identifier}`}
         mode={routeInfo.mode}
         identifier={routeInfo.identifier}
         prefetchedTrace={navState?.prefetchedTrace || null}
         navigate={navigate}
         isAuthenticated={Boolean(token)}
-        preview={isPublicPreview}
-      />
-    )
-  }
-
-  if (isPreview && !token) {
-    return (
-      <Workspace
-        route={route}
-        navigate={navigate}
-        user={PREVIEW_USER}
-        onLogout={logout}
-        onUserUpdate={setUser}
-        preview
-        flash={flash}
-        onFlash={setFlash}
       />
     )
   }
@@ -1423,7 +1319,6 @@ function App() {
         user={user}
         onLogout={logout}
         onUserUpdate={setUser}
-        preview={isMockSession}
         flash={flash}
         onFlash={setFlash}
       />
@@ -1441,7 +1336,6 @@ function App() {
       user={user}
       onLogout={logout}
       onUserUpdate={setUser}
-      preview={isMockSession}
       flash={flash}
       onFlash={setFlash}
     />

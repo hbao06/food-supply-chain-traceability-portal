@@ -4,7 +4,7 @@ import {
   STATUS_META,
   SUPPLY_CHAIN_STEPS,
   BATCH_STATUSES,
-  PREVIEW_EVENTS,
+  ROLE_LABELS_VI,
   formatDateTime,
   formatRelativeTime,
   canUserAddEvent,
@@ -27,72 +27,30 @@ export function BatchTimeline({
   batch,
   user,
   token,
-  preview = false,
   onBatchUpdated,
 }) {
-  const [events, setEvents] = useState(() => {
-    if (preview && batch?.batchId) {
-      return PREVIEW_EVENTS[batch.batchId] || [
-        {
-          eventId: 9001,
-          batchId: batch.batchId,
-          actorName: user?.name || 'Chủ nông hộ',
-          organizationName: batch.organizationName || 'Hợp tác xã nông nghiệp',
-          role: 'FARMER',
-          eventType: 'CREATED',
-          location: batch.origin || 'Khu vực canh tác nông trại',
-          timestamp: batch.creationDate || new Date().toISOString(),
-          description: `Khởi tạo lô thực phẩm ${batch.productName} vào hệ thống truy xuất nguồn gốc.`,
-        },
-      ]
-    }
-    return []
-  })
-  const [loading, setLoading] = useState(!preview)
+  const [events, setEvents] = useState([])
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [sortOrder, setSortOrder] = useState('asc') // 'asc': cũ nhất trước, 'desc': mới nhất trước
+  const [sortOrder, setSortOrder] = useState('asc')
   const [showAddModal, setShowAddModal] = useState(false)
+  const [reloadTick, setReloadTick] = useState(0)
 
   useEffect(() => {
-    if (preview || !batch?.batchId) return
+    if (!batch?.batchId || !token) return
     let active = true
 
     api
       .listEvents(token, batch.batchId)
       .then((data) => {
-        if (active) {
-          if (Array.isArray(data) && data.length > 0) {
-            setEvents(data)
-          } else {
-            // If backend returns empty, synthesize CREATED event from batch
-            setEvents([
-              {
-                eventId: 1,
-                batchId: batch.batchId,
-                actorName: user?.name || 'Nhà sản xuất',
-                organizationName: batch.organizationName || 'Hợp tác xã nông sản',
-                role: 'FARMER',
-                eventType: 'CREATED',
-                location: batch.origin,
-                timestamp: batch.creationDate,
-                description: 'Khởi tạo lô nông sản trên hệ thống.',
-              },
-            ])
-          }
-          setError('')
-        }
+        if (!active) return
+        setEvents(Array.isArray(data) ? data : [])
+        setError('')
       })
       .catch((err) => {
-        if (active) {
-          console.warn('Không thể tải sự kiện từ API, kích hoạt dữ liệu giả định:', err)
-          // Fallback to preview events if available
-          const fallback = PREVIEW_EVENTS[batch.batchId]
-          if (fallback) {
-            setEvents(fallback)
-          } else {
-            setError(err instanceof ApiError ? errorMessage(err) : 'Không thể tải hành trình sự kiện.')
-          }
-        }
+        if (!active) return
+        setEvents([])
+        setError(err instanceof ApiError ? errorMessage(err) : 'Không thể tải hành trình sự kiện.')
       })
       .finally(() => {
         if (active) setLoading(false)
@@ -101,9 +59,8 @@ export function BatchTimeline({
     return () => {
       active = false
     }
-  }, [batch?.batchId, batch?.creationDate, batch?.origin, batch?.organizationName, batch?.productName, preview, token, user?.name])
+  }, [batch?.batchId, token, reloadTick])
 
-  // Completed events index
   const currentStatusIndex = BATCH_STATUSES.indexOf(batch?.currentStatus || 'CREATED')
   const completedCount = Math.max(1, currentStatusIndex + 1)
   const progressPercent = Math.min(100, Math.round((completedCount / SUPPLY_CHAIN_STEPS.length) * 100))
@@ -114,7 +71,6 @@ export function BatchTimeline({
     return sortOrder === 'asc' ? timeA - timeB : timeB - timeA
   })
 
-  // Permission check for adding event
   const permission = canUserAddEvent(user, batch)
   const canAdd = permission.allowed
 
@@ -126,20 +82,18 @@ export function BatchTimeline({
     }
   }
 
-  // Upcoming steps
   const completedTypes = new Set(events.map((e) => e.eventType))
   const upcomingSteps = SUPPLY_CHAIN_STEPS.filter((s) => !completedTypes.has(s.type))
 
   return (
     <div className="timeline-section-wrapper">
-      {/* Timeline Controls & Progress Bar */}
       <div className="timeline-header-card">
         <div className="timeline-header-top">
           <div className="timeline-headline">
             <span className="eyebrow-accent">
               <IconTimeline /> HÀNH TRÌNH CHUỖI CUNG ỨNG MINH BẠCH
             </span>
-            <h2 className="timeline-main-title">Dòng Thời Gian & Biên Niên Sự Kiện</h2>
+            <h2 className="timeline-main-title">Dòng Thời Gian &amp; Biên Niên Sự Kiện</h2>
             <p className="timeline-sub-desc">
               Ghi nhận toàn bộ các mốc kiểm định, vận chuyển và chế biến của lô thực phẩm qua từng mắt xích.
             </p>
@@ -175,7 +129,6 @@ export function BatchTimeline({
           </div>
         </div>
 
-        {/* Visual Progress Meter */}
         <div className="chain-progress-bar-wrap">
           <div className="chain-progress-info">
             <span className="progress-label">
@@ -210,12 +163,28 @@ export function BatchTimeline({
           <span className="state-icon"><IconAlertTriangle /></span>
           <h3>Không thể tải sự kiện</h3>
           <p>{error}</p>
+          <button
+            type="button"
+            className="button secondary"
+            onClick={() => {
+              setLoading(true)
+              setError('')
+              setReloadTick((t) => t + 1)
+            }}
+          >
+            Thử lại
+          </button>
         </div>
       )}
 
-      {!loading && !error && (
+      {!loading && !error && sortedEvents.length === 0 && (
+        <div className="state-block">
+          <p>Chưa có sự kiện nào được ghi nhận cho lô hàng này.</p>
+        </div>
+      )}
+
+      {!loading && !error && sortedEvents.length > 0 && (
         <div className="timeline-content-layout">
-          {/* Main Vertical Timeline Track */}
           <div className="timeline-track-container">
             <div className="timeline-stem-line" aria-hidden="true" />
 
@@ -229,7 +198,6 @@ export function BatchTimeline({
                   key={event.eventId || index}
                   className={`timeline-milestone-card ${isCurrent ? 'is-current-stage' : ''}`}
                 >
-                  {/* Milestone Marker Pin */}
                   <div className="milestone-marker">
                     <span className={`marker-circle ${meta.color || 'emerald'}`}>
                       {index + 1}
@@ -237,7 +205,6 @@ export function BatchTimeline({
                     {isCurrent && <span className="marker-pulse-glow" aria-hidden="true" />}
                   </div>
 
-                  {/* Event Detail Card */}
                   <div className="milestone-card-inner">
                     <div className="milestone-top-banner">
                       <div className="milestone-title-col">
@@ -262,19 +229,17 @@ export function BatchTimeline({
                       </div>
                     </div>
 
-                    {/* Core 4-Factor Facts Grid (Đơn vị, Địa điểm, Thời gian, Trạng thái) */}
                     <div className="milestone-facts-matrix">
-                      {/* 1. ĐƠN VỊ THỰC HIỆN */}
                       <div className="milestone-fact-cell fact-unit">
                         <span className="cell-label">
                           <IconBuilding /> Đơn vị thực hiện
                         </span>
                         <strong className="cell-value">
-                          {event.organizationName || 'Hợp tác xã nông nghiệp'}
+                          {event.organizationName || 'Đơn vị tham gia chuỗi cung ứng'}
                         </strong>
                         <div className="cell-sub-actor">
                           <span className="actor-badge">
-                            {event.role || (event.eventType === 'CREATED' ? 'Nhà sản xuất' : 'Đối tác')}
+                            {ROLE_LABELS_VI[event.role] || (event.eventType === 'CREATED' ? 'Nông trại' : 'Đối tác')}
                           </span>
                           {event.actorName && (
                             <span className="actor-name">
@@ -284,20 +249,18 @@ export function BatchTimeline({
                         </div>
                       </div>
 
-                      {/* 2. ĐỊA ĐIỂM DIỄN RA */}
                       <div className="milestone-fact-cell fact-location">
                         <span className="cell-label">
                           <IconMapPin /> Địa điểm xác thực
                         </span>
                         <strong className="cell-value">{event.location || '—'}</strong>
-                        <span className="cell-sub-note">Tọa độ ghi nhận tại hiện trường</span>
+                        <span className="cell-sub-note">Địa điểm ghi nhận tại hiện trường</span>
                       </div>
                     </div>
 
-                    {/* Event Description & Inspection Notes */}
                     {event.description && (
                       <div className="milestone-description-box">
-                        <span className="desc-heading">Ghi chú & Biên bản kiểm tra:</span>
+                        <span className="desc-heading">Ghi chú &amp; Biên bản kiểm tra:</span>
                         <p className="desc-text">{event.description}</p>
                       </div>
                     )}
@@ -307,7 +270,6 @@ export function BatchTimeline({
             })}
           </div>
 
-          {/* Upcoming Stages Roadmap */}
           {upcomingSteps.length > 0 && (
             <aside className="upcoming-stages-sidebar">
               <div className="upcoming-card">
@@ -327,7 +289,7 @@ export function BatchTimeline({
                         </span>
                         <div className="upcoming-step-info">
                           <strong>{step.label}</strong>
-                          <span className="upcoming-step-role">Phụ trách: {step.role}</span>
+                          <span className="upcoming-step-role">Phụ trách: {ROLE_LABELS_VI[step.role] || step.roleVi}</span>
                           <small className="upcoming-step-desc">{stepMeta?.description}</small>
                         </div>
                       </div>
@@ -350,13 +312,11 @@ export function BatchTimeline({
         </div>
       )}
 
-      {/* Add Event Modal */}
       {showAddModal && (
         <AddEventModal
           batch={batch}
           user={user}
           token={token}
-          preview={preview}
           onSuccess={handleEventAdded}
           onClose={() => setShowAddModal(false)}
         />

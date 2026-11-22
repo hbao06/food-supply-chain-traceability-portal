@@ -1,7 +1,5 @@
 import {
   BATCH_STATUSES,
-  PREVIEW_BATCHES,
-  PREVIEW_EVENTS,
   STATUS_META,
 } from '../batches/batchConstants.js'
 
@@ -13,10 +11,9 @@ function safeDecode(value) {
   }
 }
 
-export function buildTraceRoute(mode, identifier, { preview = false } = {}) {
+export function buildTraceRoute(mode, identifier) {
   const encoded = encodeURIComponent(identifier)
-  const base = mode === 'token' ? `/trace/${encoded}` : `/trace/code/${encoded}`
-  return preview ? `${base}?preview=1` : base
+  return mode === 'token' ? `/trace/${encoded}` : `/trace/code/${encoded}`
 }
 
 export function parseTraceRoute(path) {
@@ -97,11 +94,12 @@ export function parseTraceInput(rawInput) {
   }
 
   // Standard batch code (e.g. FR-2026-0001)
+  const normalizedCode = trimmed.toUpperCase().startsWith('FR-') ? trimmed.toUpperCase() : trimmed
   return {
     valid: true,
     mode: 'code',
-    identifier: trimmed.toUpperCase().startsWith('FR-') ? trimmed.toUpperCase() : trimmed,
-    route: buildTraceRoute('code', trimmed.toUpperCase().startsWith('FR-') ? trimmed.toUpperCase() : trimmed),
+    identifier: normalizedCode,
+    route: buildTraceRoute('code', normalizedCode),
   }
 }
 
@@ -137,45 +135,6 @@ export function sanitizePublicTrace(raw) {
     currentStatus: BATCH_STATUSES.includes(inferredStatus) ? inferredStatus : String(inferredStatus),
     events,
   }
-}
-
-export function extractQrTokenFromUrl(qrData) {
-  if (!qrData || typeof qrData !== 'string') return ''
-  const marker = '/trace/'
-  const idx = qrData.indexOf(marker)
-  if (idx === -1) return ''
-  return safeDecode(qrData.slice(idx + marker.length).split('?')[0])
-}
-
-export function getPreviewPublicTrace({ mode, identifier }) {
-  const target = String(identifier || '').trim()
-  if (!target) return null
-
-  const matchedBatch =
-    mode === 'token'
-      ? PREVIEW_BATCHES.find((b) => extractQrTokenFromUrl(b.qrData) === target)
-      : PREVIEW_BATCHES.find((b) => b.batchCode.toUpperCase() === target.toUpperCase())
-
-  if (!matchedBatch) return null
-
-  const events = PREVIEW_EVENTS[matchedBatch.batchId] || [
-    {
-      eventType: 'CREATED',
-      location: matchedBatch.origin,
-      organizationName: matchedBatch.organizationName,
-      timestamp: matchedBatch.creationDate,
-      description: `Khởi tạo lô ${matchedBatch.productName}.`,
-    },
-  ]
-
-  return sanitizePublicTrace({
-    batchCode: matchedBatch.batchCode,
-    productName: matchedBatch.productName,
-    origin: matchedBatch.origin,
-    organizationName: matchedBatch.organizationName,
-    currentStatus: matchedBatch.currentStatus,
-    events,
-  })
 }
 
 export function classifyTraceError(error) {

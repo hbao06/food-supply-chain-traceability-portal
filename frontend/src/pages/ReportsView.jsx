@@ -160,8 +160,8 @@ function SvgDonutChart({ data, size = 220 }) {
   )
 }
 
-export function ReportsView({ token, preview }) {
-  const { items, loading, error } = useBatches(token, preview)
+export function ReportsView({ token }) {
+  const { items, loading, error } = useBatches(token)
 
   // 1. STATE BỘ LỌC THỜI GIAN (TIME FILTER)
   const [timePreset, setTimePreset] = useState('ALL') // 'ALL' | '7D' | '30D' | 'QUARTER' | 'CUSTOM'

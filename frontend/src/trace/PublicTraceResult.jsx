@@ -26,7 +26,6 @@ import { PublicHeader } from './PublicHeader.jsx'
 import {
   buildTraceRoute,
   classifyTraceError,
-  getPreviewPublicTrace,
   getTraceProgress,
   parseTraceInput,
   sanitizePublicTrace,
@@ -44,7 +43,6 @@ export function PublicTraceResult({
   prefetchedTrace = null,
   navigate,
   isAuthenticated = false,
-  preview = false,
 }) {
   const [retryTick, setRetryTick] = useState(0)
   const [quickCode, setQuickCode] = useState('')
@@ -65,22 +63,6 @@ export function PublicTraceResult({
     let active = true
 
     async function load() {
-      if (preview) {
-        await Promise.resolve()
-        if (!active) return
-        const previewData = getPreviewPublicTrace({ mode, identifier })
-        if (!previewData) {
-          setState({
-            status: 'error',
-            data: null,
-            error: classifyTraceError({ status: 404, code: 'NOT_FOUND' }),
-          })
-          return
-        }
-        setState({ status: 'success', data: previewData, error: null })
-        return
-      }
-
       try {
         const raw =
           mode === 'token'
@@ -107,7 +89,7 @@ export function PublicTraceResult({
     return () => {
       active = false
     }
-  }, [identifier, mode, prefetchedTrace, preview, retryTick])
+  }, [identifier, mode, prefetchedTrace, retryTick])
 
   const shareUrl =
     state.data && typeof window !== 'undefined'
@@ -142,7 +124,7 @@ export function PublicTraceResult({
       return
     }
     setQuickError('')
-    navigate(buildTraceRoute(parsed.mode, parsed.identifier, { preview }))
+    navigate(buildTraceRoute(parsed.mode, parsed.identifier))
   }
 
   function handleCopyShareLink() {
@@ -161,7 +143,7 @@ export function PublicTraceResult({
     link.click()
   }
 
-  const searchHomePath = preview ? '/trace?preview=1' : '/trace'
+  const searchHomePath = '/trace'
   const progress = state.data ? getTraceProgress(state.data.currentStatus) : null
 
   return (
@@ -170,7 +152,6 @@ export function PublicTraceResult({
         navigate={navigate}
         isAuthenticated={isAuthenticated}
         showSearchLink
-        preview={preview}
       />
 
       <main className="public-main public-result-main">
@@ -499,7 +480,7 @@ export function PublicTraceResult({
         </div>
       </main>
 
-      <PublicFooter navigate={navigate} preview={preview} />
+      <PublicFooter navigate={navigate} footerId="standards" />
     </div>
   )
 }

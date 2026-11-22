@@ -1805,6 +1805,8 @@
 .metric-title, .kpi-sub { font-size: 12.5px; color: var(--muted); }
 .metric-value-wrap { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .metric-number.emerald, .kpi-highlight { color: var(--olive); }
+.kpi-danger { color: #B43832; }
+.kpi-warning { color: #B26A11; }
 .metric-number.blue { color: #2468A2; }
 .metric-number.teal { color: #16755D; }
 .metric-number.orange { color: #C96A2B; }
@@ -2507,13 +2509,16 @@
 }
 .verify-result-card.is-verified { background: #F4F9EB; border-color: #C7DE9F; color: #36520F; }
 .verify-result-card.is-broken { background: #FFF5F4; border-color: #EFC2BE; color: #9E342F; }
+.verify-result-card.is-error { background: #FFF9ED; border-color: #F0D59C; color: #8A530B; }
 .verify-content-col { flex: 1; }
 .verify-badge-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 5px; font-size: 12px; }
 .verify-status-badge { padding: 3px 10px; border-radius: var(--radius-pill); font-weight: 700; }
 .verify-status-badge.badge-ok { background: var(--olive); color: #FFFFFF; }
 .verify-status-badge.badge-fail { background: #C8443E; color: #FFFFFF; }
+.verify-status-badge.badge-error { background: #C97A16; color: #FFFFFF; }
 .verify-heading { margin: 0 0 4px; font-size: 16px; }
 .verify-text { margin: 0; font-size: 13px; }
+.verify-retry-wrap { margin-top: 10px; }
 .verify-close-btn { border: 0; background: transparent; font-size: 16px; color: inherit; }
 
 .action-pill { padding: 3px 9px; border-radius: var(--radius-pill); font-size: 11.5px; font-weight: 700; background: var(--olive-soft); color: var(--olive-dark); }
@@ -2528,6 +2533,9 @@
 .hash-copy-btn { border: 1px solid var(--line); background: #FFFFFF; border-radius: 6px; width: 26px; height: 26px; display: grid; place-items: center; color: var(--muted); }
 .hash-sealed-text { font-size: 12px; color: var(--muted); }
 .integrity-badge.verified { display: inline-flex; align-items: center; gap: 4px; color: var(--olive-dark); font-size: 12.5px; font-weight: 600; }
+.integrity-badge.pending { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); font-size: 12.5px; font-weight: 600; }
+.integrity-badge.broken { display: inline-flex; align-items: center; gap: 4px; color: #C8443E; font-size: 12.5px; font-weight: 700; }
+.integrity-badge.affected { display: inline-flex; align-items: center; gap: 4px; color: #B26A11; font-size: 12.5px; font-weight: 600; }
 
 /* Profile */
 .profile-layout {

@@ -13,9 +13,9 @@ import {
 
 const ROLE_LABELS = {
   ADMIN: 'Quản trị viên',
-  FARMER: 'Nông trại (Farmer)',
-  PROCESSOR: 'Chế biến (Processor)',
-  DISTRIBUTOR: 'Phân phối (Distributor)',
+  FARMER: 'Nông trại',
+  PROCESSOR: 'Cơ sở chế biến',
+  DISTRIBUTOR: 'Đơn vị phân phối',
 }
 
 const ORG_TYPE_FOR_ROLE = {
@@ -24,34 +24,22 @@ const ORG_TYPE_FOR_ROLE = {
   DISTRIBUTOR: 'DISTRIBUTOR',
 }
 
+const ORG_TYPE_LABELS_VI = {
+  FARM: 'Nông trại / HTX',
+  PROCESSOR: 'Cơ sở chế biến',
+  DISTRIBUTOR: 'Đơn vị phân phối',
+}
+
 const STATUS_LABELS = {
   ACTIVE: 'Đang hoạt động',
   PENDING: 'Chờ duyệt',
   LOCKED: 'Đã khóa',
 }
 
-const PREVIEW_USERS = [
-  { userId: 1, name: 'Quản trị Demo', email: 'admin_1@demo.local', role: 'ADMIN', status: 'ACTIVE', organizationId: null, organizationName: null, createdAt: '2026-10-20T08:00:00Z' },
-  { userId: 2, name: 'Nguyễn Văn An', email: 'farmer_a@demo.local', role: 'FARMER', status: 'ACTIVE', organizationId: 1, organizationName: 'HTX Cà phê Cầu Đất', createdAt: '2026-10-21T08:00:00Z' },
-  { userId: 3, name: 'Trần Thị Bình', email: 'farmer_b@demo.local', role: 'FARMER', status: 'ACTIVE', organizationId: 2, organizationName: 'Nông trại Sầu riêng Cái Mơn', createdAt: '2026-10-22T08:00:00Z' },
-  { userId: 4, name: 'Lê Văn Chế', email: 'processor_a@demo.local', role: 'PROCESSOR', status: 'ACTIVE', organizationId: 3, organizationName: 'Công ty Chế biến Nông sản Sài Gòn', createdAt: '2026-10-23T08:00:00Z' },
-  { userId: 5, name: 'Phạm Văn Dũng', email: 'distributor_a@demo.local', role: 'DISTRIBUTOR', status: 'ACTIVE', organizationId: 4, organizationName: 'Vận tải Lạnh Miền Nam', createdAt: '2026-10-24T08:00:00Z' },
-  { userId: 7, name: 'Đỗ Văn Chờ', email: 'user_pending@demo.local', role: 'FARMER', status: 'PENDING', organizationId: null, organizationName: null, createdAt: '2026-11-15T08:00:00Z' },
-  { userId: 8, name: 'Vũ Văn Khóa', email: 'user_locked@demo.local', role: 'DISTRIBUTOR', status: 'LOCKED', organizationId: 4, organizationName: 'Vận tải Lạnh Miền Nam', createdAt: '2026-11-01T08:00:00Z' },
-]
-
-const PREVIEW_ORGS = [
-  { organizationId: 1, name: 'HTX Cà phê Cầu Đất', type: 'FARM' },
-  { organizationId: 2, name: 'Nông trại Sầu riêng Cái Mơn', type: 'FARM' },
-  { organizationId: 3, name: 'Công ty Chế biến Nông sản Sài Gòn', type: 'PROCESSOR' },
-  { organizationId: 4, name: 'Vận tải Lạnh Miền Nam', type: 'DISTRIBUTOR' },
-  { organizationId: 5, name: 'Phân phối Thực phẩm Sạch Hà Nội', type: 'DISTRIBUTOR' },
-]
-
-export function UserManagementView({ token, currentUser, preview = false }) {
-  const [users, setUsers] = useState(() => (preview ? PREVIEW_USERS : []))
-  const [orgs, setOrgs] = useState(() => (preview ? PREVIEW_ORGS : []))
-  const [loading, setLoading] = useState(!preview)
+export function UserManagementView({ token, currentUser }) {
+  const [users, setUsers] = useState([])
+  const [orgs, setOrgs] = useState([])
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [roleFilter, setRoleFilter] = useState('')
@@ -70,14 +58,13 @@ export function UserManagementView({ token, currentUser, preview = false }) {
   const [refreshTick, setRefreshTick] = useState(0)
 
   const loadData = useCallback(() => {
-    if (preview) return
     setLoading(true)
     setError('')
     setRefreshTick((t) => t + 1)
-  }, [preview])
+  }, [])
 
   useEffect(() => {
-    if (preview) return
+    if (!token) return
     let active = true
     Promise.all([
       api.listUsers(token, { limit: 100 }),
@@ -97,7 +84,7 @@ export function UserManagementView({ token, currentUser, preview = false }) {
         if (active) setLoading(false)
       })
     return () => { active = false }
-  }, [token, preview, refreshTick])
+  }, [token, refreshTick])
 
   const filteredUsers = useMemo(() => {
     return users.filter((u) => {
@@ -142,26 +129,6 @@ export function UserManagementView({ token, currentUser, preview = false }) {
 
     setModalBusy(true)
     try {
-      if (preview) {
-        const matchedOrg = orgs.find((o) => o.organizationId === chosenOrgId)
-        setUsers((prev) =>
-          prev.map((u) =>
-            u.userId === modalUser.userId
-              ? {
-                  ...u,
-                  role: modalRole,
-                  organizationId: chosenOrgId,
-                  organizationName: matchedOrg?.name || null,
-                  status: modalApproveToo ? 'ACTIVE' : u.status,
-                }
-              : u
-          )
-        )
-        setFlash(`Đã cập nhật tài khoản ${modalUser.name}.`)
-        setModalUser(null)
-        return
-      }
-
       let updated = modalUser
       if (modalRole !== modalUser.role) {
         const body = { role: modalRole }
@@ -198,11 +165,6 @@ export function UserManagementView({ token, currentUser, preview = false }) {
     }
     setBusyId(user.userId)
     try {
-      if (preview) {
-        setUsers((prev) => prev.map((u) => (u.userId === user.userId ? { ...u, status: targetStatus } : u)))
-        setFlash(`Đã chuyển trạng thái tài khoản ${user.name} sang ${STATUS_LABELS[targetStatus]}.`)
-        return
-      }
       const updated = await api.changeUserStatus(token, user.userId, { status: targetStatus })
       setUsers((prev) => prev.map((u) => (u.userId === updated.userId ? updated : u)))
       setFlash(`Đã cập nhật trạng thái tài khoản ${updated.name} thành ${STATUS_LABELS[updated.status]}.`)
@@ -240,21 +202,21 @@ export function UserManagementView({ token, currentUser, preview = false }) {
           <span className="metric-label">Đang hoạt động</span>
           <div className="metric-value-wrap">
             <span className="metric-number emerald">{counts.active}</span>
-            <span className="metric-tag emerald">ACTIVE</span>
+            <span className="metric-tag emerald">Hoạt động</span>
           </div>
         </div>
         <div className="metric-pill-card">
           <span className="metric-label">Chờ phê duyệt</span>
           <div className="metric-value-wrap">
             <span className="metric-number orange">{counts.pending}</span>
-            <span className="metric-tag orange">PENDING</span>
+            <span className="metric-tag orange">Chờ duyệt</span>
           </div>
         </div>
         <div className="metric-pill-card">
           <span className="metric-label">Đang bị khóa</span>
           <div className="metric-value-wrap">
             <span className="metric-number muted-num">{counts.locked}</span>
-            <span className="metric-tag muted-tag">LOCKED</span>
+            <span className="metric-tag muted-tag">Đã khóa</span>
           </div>
         </div>
       </div>
@@ -288,10 +250,10 @@ export function UserManagementView({ token, currentUser, preview = false }) {
             aria-label="Lọc theo vai trò"
           >
             <option value="">Mọi vai trò</option>
-            <option value="FARMER">Nông trại (Farmer)</option>
-            <option value="PROCESSOR">Chế biến (Processor)</option>
-            <option value="DISTRIBUTOR">Phân phối (Distributor)</option>
-            <option value="ADMIN">Quản trị viên (Admin)</option>
+            <option value="FARMER">Nông trại</option>
+            <option value="PROCESSOR">Cơ sở chế biến</option>
+            <option value="DISTRIBUTOR">Đơn vị phân phối</option>
+            <option value="ADMIN">Quản trị viên</option>
           </select>
         </div>
 
@@ -432,15 +394,15 @@ export function UserManagementView({ token, currentUser, preview = false }) {
                     setModalOrgId('')
                   }}
                 >
-                  <option value="FARMER">Nông trại (Farmer)</option>
-                  <option value="PROCESSOR">Cơ sở chế biến (Processor)</option>
-                  <option value="DISTRIBUTOR">Đơn vị phân phối (Distributor)</option>
+                  <option value="FARMER">Nông trại</option>
+                  <option value="PROCESSOR">Cơ sở chế biến</option>
+                  <option value="DISTRIBUTOR">Đơn vị phân phối</option>
                 </select>
               </div>
 
               <div className="field">
                 <label htmlFor="modal-user-org">
-                  Đơn vị trực thuộc (Loại {ORG_TYPE_FOR_ROLE[modalRole]})
+                  Đơn vị trực thuộc ({ORG_TYPE_LABELS_VI[ORG_TYPE_FOR_ROLE[modalRole]] || ORG_TYPE_FOR_ROLE[modalRole]})
                 </label>
                 <select
                   id="modal-user-org"
@@ -463,7 +425,7 @@ export function UserManagementView({ token, currentUser, preview = false }) {
                     checked={modalApproveToo}
                     onChange={(e) => setModalApproveToo(e.target.checked)}
                   />
-                  <span>Kích hoạt tài khoản sang trạng thái <strong>Hoạt động (ACTIVE)</strong> ngay sau khi lưu</span>
+                  <span>Kích hoạt tài khoản sang trạng thái <strong>Đang hoạt động</strong> ngay sau khi lưu</span>
                 </label>
               )}
 

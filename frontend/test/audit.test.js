@@ -1,55 +1,26 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { PREVIEW_AUDIT_LOGS } from '../src/batches/batchConstants.js'
 import { api, errorMessage, ApiError } from '../src/api.js'
 import {
   parseAuditLogsResponse,
+  parseAuditLogsPage,
   parseVerifyResponse,
+  createVerifyErrorResult,
   getAuditBatchCode,
 } from '../src/admin/auditHelpers.js'
-
-test('audit - PREVIEW_AUDIT_LOGS exists and contains valid structure', () => {
-  assert.ok(Array.isArray(PREVIEW_AUDIT_LOGS))
-  assert.ok(PREVIEW_AUDIT_LOGS.length >= 5)
-
-  for (const log of PREVIEW_AUDIT_LOGS) {
-    assert.ok(log.auditId, 'Mỗi bản ghi phải có auditId')
-    assert.ok(log.timestamp || log.createdAt, 'Mỗi bản ghi phải có timestamp hoặc createdAt')
-    assert.ok(log.actorName, 'Mỗi bản ghi phải có actorName')
-    assert.ok(log.actorRole, 'Mỗi bản ghi phải có actorRole')
-    assert.ok(log.action, 'Mỗi bản ghi phải có action')
-    assert.ok(log.entityType, 'Mỗi bản ghi phải có entityType')
-    assert.ok(log.hash, 'Mỗi bản ghi phải có SHA-256 hash')
-    assert.ok(log.previousHash, 'Mỗi bản ghi phải có previousHash')
-    assert.equal(log.hash.length, 64, 'SHA-256 hash phải có độ dài 64 hex characters')
-    assert.equal(log.previousHash.length, 64, 'Previous hash phải có độ dài 64 hex characters')
-  }
-})
-
-test('audit - Hash chain links sequentially without break', () => {
-  for (let i = 1; i < PREVIEW_AUDIT_LOGS.length; i++) {
-    const prev = PREVIEW_AUDIT_LOGS[i - 1]
-    const curr = PREVIEW_AUDIT_LOGS[i]
-    assert.equal(
-      curr.previousHash,
-      prev.hash,
-      `Bản ghi #${curr.auditId} previousHash phải khớp tuyệt đối với hash của #${prev.auditId}`
-    )
-  }
-})
 
 test('audit - API methods listAuditLogs and verifyAuditChain are defined', () => {
   assert.equal(typeof api.listAuditLogs, 'function')
   assert.equal(typeof api.verifyAuditChain, 'function')
 })
 
-test('audit - parseAuditLogsResponse parses backend { items, page, limit, total } contract', () => {
+test('audit - parseAuditLogsResponse & parseAuditLogsPage parse backend { items, page, limit, total } contract', () => {
   const backendResponse = {
     items: [
       {
         auditId: 101,
         actorId: 2,
-        actorName: 'Nguyễn Văn Nông Dân',
+        actorName: 'Nguyễn Văn An',
         action: 'CREATE',
         entityType: 'BATCH',
         entityId: 12,
@@ -60,8 +31,8 @@ test('audit - parseAuditLogsResponse parses backend { items, page, limit, total 
       {
         auditId: 102,
         actorId: 3,
-        actorName: 'Công ty Chế biến',
-        action: 'EVENT',
+        actorName: 'Nhà máy Chế biến',
+        action: 'CREATE',
         entityType: 'EVENT',
         entityId: 45,
         oldValue: null,
@@ -71,7 +42,7 @@ test('audit - parseAuditLogsResponse parses backend { items, page, limit, total 
     ],
     page: 1,
     limit: 20,
-    total: 2,
+    total: 42,
   }
 
   const result = parseAuditLogsResponse(backendResponse)
@@ -81,17 +52,22 @@ test('audit - parseAuditLogsResponse parses backend { items, page, limit, total 
   assert.equal(result[0].createdAt, '2026-11-16T08:30:00.000Z')
   assert.equal(result[0].newValue.batchCode, 'FR-2026-0012')
 
-  // Fallback testing for other envelopes
+  const pageObj = parseAuditLogsPage(backendResponse)
+  assert.equal(pageObj.items.length, 2)
+  assert.equal(pageObj.total, 42)
+  assert.equal(pageObj.page, 1)
+  assert.equal(pageObj.limit, 20)
+
   assert.deepEqual(parseAuditLogsResponse({ data: [result[0]] }), [result[0]])
   assert.deepEqual(parseAuditLogsResponse([result[0]]), [result[0]])
   assert.deepEqual(parseAuditLogsResponse(null), [])
   assert.deepEqual(parseAuditLogsResponse(undefined), [])
 })
 
-test('audit - getAuditBatchCode extracts batch code from DTOs and preview logs', () => {
-  assert.equal(getAuditBatchCode({ batchCode: 'BATCH-001' }), 'BATCH-001')
-  assert.equal(getAuditBatchCode({ newValue: { batchCode: 'BATCH-002' } }), 'BATCH-002')
-  assert.equal(getAuditBatchCode({ oldValue: { batchCode: 'BATCH-003' } }), 'BATCH-003')
+test('audit - getAuditBatchCode extracts batch code from DTOs', () => {
+  assert.equal(getAuditBatchCode({ batchCode: 'FR-2026-0001' }), 'FR-2026-0001')
+  assert.equal(getAuditBatchCode({ newValue: { batchCode: 'FR-2026-0002' } }), 'FR-2026-0002')
+  assert.equal(getAuditBatchCode({ oldValue: { batchCode: 'FR-2026-0003' } }), 'FR-2026-0003')
   assert.equal(getAuditBatchCode({ entityType: 'BATCH', entityId: 99 }), 'Lô #99')
   assert.equal(getAuditBatchCode({ entityType: 'USER', entityId: 5 }), null)
   assert.equal(getAuditBatchCode(null), null)
@@ -110,6 +86,7 @@ test('audit - parseVerifyResponse maps valid backend hash chain verification', (
   }
 
   const parsed = parseVerifyResponse(backendVerifySuccess)
+  assert.equal(parsed.status, 'verified')
   assert.equal(parsed.verified, true)
   assert.equal(parsed.count, 18)
   assert.equal(parsed.firstBrokenId, null)
@@ -131,12 +108,22 @@ test('audit - parseVerifyResponse maps broken hash chain with firstBrokenId and 
   }
 
   const parsed = parseVerifyResponse(backendVerifyBroken)
+  assert.equal(parsed.status, 'broken')
   assert.equal(parsed.verified, false, 'Khi auditLog.valid là false, verified phải là false')
   assert.equal(parsed.count, 7)
   assert.equal(parsed.firstBrokenId, 8)
   assert.equal(parsed.reason, 'prev_hash mismatch')
   assert.ok(parsed.message.includes('Chuỗi băm bị gián đoạn tại bản ghi #8'))
   assert.ok(parsed.message.includes('prev_hash mismatch'))
+})
+
+test('audit - createVerifyErrorResult separates server/network error from broken chain integrity', () => {
+  const errRes = createVerifyErrorResult('Máy chủ đang gặp sự cố. Vui lòng thử lại.')
+  assert.equal(errRes.status, 'error')
+  assert.equal(errRes.verified, false)
+  assert.equal(errRes.firstBrokenId, null)
+  assert.equal(errRes.count, 0)
+  assert.match(errRes.message, /Máy chủ đang gặp sự cố/)
 })
 
 test('audit - parseVerifyResponse never defaults missing or malformed response to true', () => {

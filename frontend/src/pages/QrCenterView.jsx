@@ -6,18 +6,18 @@ import { productImage, formatQuantity, STATUS_META, BATCH_STATUSES } from '../ba
 import { useBatches } from '../hooks/useBatches.js'
 import { IconDownload, IconRefresh, IconQr } from '../components/Icons.jsx'
 
-function QrCard({ batch, token, preview }) {
+function QrCard({ batch, token }) {
   const canvasRef = useRef(null)
   const [url, setUrl] = useState(null)
   const fallback = `${window.location.origin}/trace/code/${encodeURIComponent(batch.batchCode)}`
-  const target = url || (preview || !token ? batch.qrData || fallback : fallback)
+  const target = url || batch.qrData || fallback
 
   useEffect(() => {
-    if (preview || !token) return
+    if (!token) return
     let active = true
     api.getBatchQr(token, batch.batchId).then((d) => active && d.qrData && setUrl(d.qrData)).catch(() => {})
     return () => { active = false }
-  }, [batch.batchId, token, preview])
+  }, [batch.batchId, token])
 
   useEffect(() => {
     if (!canvasRef.current) return
@@ -43,9 +43,9 @@ function QrCard({ batch, token, preview }) {
   )
 }
 
-export function QrCenterView({ token, preview }) {
+export function QrCenterView({ token }) {
   const [tick, setTick] = useState(0)
-  const { items, loading, error } = useBatches(token, preview, tick)
+  const { items, loading, error } = useBatches(token, tick)
   const [status, setStatus] = useState('')
   const list = status ? items.filter((b) => b.currentStatus === status) : items
 
@@ -69,7 +69,7 @@ export function QrCenterView({ token, preview }) {
       </div>
       {loading ? <div className="state-block"><div className="spinner-olive" /></div> : error ? <div className="notice error">{error}</div> : (
         <div className="qr-sheet-grid">
-          {list.map((b) => <QrCard key={b.batchId} batch={b} token={token} preview={preview} />)}
+          {list.map((b) => <QrCard key={b.batchId} batch={b} token={token} />)}
           {list.length === 0 && <p className="muted-inline">Không có lô nào.</p>}
         </div>
       )}

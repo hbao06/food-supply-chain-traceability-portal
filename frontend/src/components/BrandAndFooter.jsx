@@ -57,18 +57,27 @@ export function LeafDivider() {
   )
 }
 
-export function PublicFooter({ navigate, preview = false }) {
-  const handleQuickTrace = (batchId) => {
-    navigate(buildTraceRoute('code', batchId, { preview }))
+export function PublicFooter({ navigate, recentBatches = [], footerId }) {
+  function scrollOrNavigate(hash) {
+    if (window.location.pathname !== '/' && window.location.pathname !== '/trace') {
+      navigate('/trace')
+      setTimeout(() => {
+        const el = document.querySelector(hash)
+        if (el) el.scrollIntoView({ behavior: 'smooth' })
+      }, 120)
+      return
+    }
+    const el = document.querySelector(hash)
+    if (el) el.scrollIntoView({ behavior: 'smooth' })
   }
 
   return (
-    <footer id="standards" className="portal-master-footer">
+    <footer id={footerId} className="portal-master-footer">
       <div className="footer-top-row">
         <div className="footer-col-brand">
           <BrandLogo invert />
           <p className="footer-org-summary">
-            Hệ thống truy xuất nguồn gốc chuỗi cung ứng thực phẩm Việt Nam. Xây dựng nền tảng minh bạch hóa, 
+            Hệ thống truy xuất nguồn gốc chuỗi cung ứng thực phẩm Việt Nam. Xây dựng nền tảng minh bạch hóa,
             kết nối các hợp tác xã nông sản sạch đến thị trường nội địa và quốc tế.
           </p>
           <div className="footer-cert-tags">
@@ -81,15 +90,30 @@ export function PublicFooter({ navigate, preview = false }) {
         </div>
 
         <div className="footer-col-nav">
-          <h4>Nhóm Nông Sản</h4>
-          <ul>
-            <li><button type="button" onClick={() => handleQuickTrace('FR-2026-0001')}>Cà phê Arabica Cầu Đất</button></li>
-            <li><button type="button" onClick={() => handleQuickTrace('FR-2026-0201')}>Gạo ST25 Sóc Trăng</button></li>
-            <li><button type="button" onClick={() => handleQuickTrace('FR-2026-0202')}>Hạt Điều Rang Muối Bình Phước</button></li>
-            <li><button type="button" onClick={() => handleQuickTrace('FR-2026-0203')}>Thanh Long Ruột Đỏ Tiền Giang</button></li>
-            <li><button type="button" onClick={() => handleQuickTrace('FR-2026-0204')}>Chè Ô Long Mộc Châu</button></li>
-            <li><button type="button" onClick={() => handleQuickTrace('FR-2026-0002')}>Sầu Riêng Ri6 Bến Tre</button></li>
-          </ul>
+          {recentBatches.length > 0 ? (
+            <>
+              <h4>Lô Nông Sản Mới Công Bố</h4>
+              <ul>
+                {recentBatches.slice(0, 6).map((b) => (
+                  <li key={b.batchCode}>
+                    <button type="button" onClick={() => navigate(buildTraceRoute('code', b.batchCode))}>
+                      {b.productName} ({b.batchCode})
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <>
+              <h4>Tra Cứu &amp; Quy Chuẩn</h4>
+              <ul>
+                <li><button type="button" onClick={() => navigate('/trace')}>Tra cứu theo mã lô FR-</button></li>
+                <li><button type="button" onClick={() => scrollOrNavigate('#pillars')}>Quy chuẩn 4 chặng chuỗi cung ứng</button></li>
+                <li><button type="button" onClick={() => scrollOrNavigate('#standards')}>Cấu trúc mã định danh FR-</button></li>
+                <li><button type="button" onClick={() => navigate('/help')}>Hướng dẫn vận hành đối tác</button></li>
+              </ul>
+            </>
+          )}
         </div>
 
         <div className="footer-col-nav">

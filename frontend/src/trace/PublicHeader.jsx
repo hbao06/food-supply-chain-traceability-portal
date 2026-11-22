@@ -5,10 +5,9 @@ export function PublicHeader({
   navigate,
   isAuthenticated = false,
   showSearchLink = false,
-  preview = false,
   onSelectScanTab,
 }) {
-  const homePath = preview ? '/trace?preview=1' : '/trace'
+  const homePath = '/trace'
 
   function goToSection(hash) {
     if (window.location.pathname !== '/' && window.location.pathname !== '/trace') {

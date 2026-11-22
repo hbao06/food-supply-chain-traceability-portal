@@ -26,6 +26,7 @@ const read = (p) => fs.readFileSync(p, 'utf8').replace(/\r\n/g, '\n');
 const PUBLIC_ROUTES = new Set([
   'authRouter POST /register',
   'authRouter POST /login',
+  'traceRouter GET /recent',
   'traceRouter GET /code/:batchCode',
   'traceRouter GET /:qrToken',
   'assistantRouter POST /chat',

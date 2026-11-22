@@ -4,7 +4,6 @@ import { BatchStatusBadge } from './BatchStatusBadge.jsx'
 import { BatchQrModal } from './BatchQrModal.jsx'
 import {
   BATCH_STATUSES,
-  PREVIEW_BATCHES,
   STATUS_META,
   formatDateOnly,
   formatQuantity,
@@ -23,16 +22,12 @@ import {
 export function BatchList({
   token,
   user,
-  preview = false,
   onOpenBatch,
   onCreateBatch,
   onEditBatch,
 }) {
   const isChainPartner = user?.role === 'PROCESSOR' || user?.role === 'DISTRIBUTOR'
   const [listScope, setListScope] = useState('mine') // 'mine' | 'awaiting'
-  const [batches, setBatches] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [datePreset, setDatePreset] = useState('ALL') // 'ALL' | '7D' | '30D' | 'QUARTER' | 'CUSTOM'
   const [startDate, setStartDate] = useState('')
@@ -41,9 +36,16 @@ export function BatchList({
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [page, setPage] = useState(1)
   const [limit] = useState(8)
-  const [total, setTotal] = useState(0)
   const [qrModalBatch, setQrModalBatch] = useState(null)
   const [refreshKey, setRefreshKey] = useState(0)
+
+  const requestKey = `${token || ''}|${filterStatus}|${debouncedQuery.trim()}|${isChainPartner ? listScope : 'mine'}|${page}|${limit}|${refreshKey}`
+  const [fetchState, setFetchState] = useState({
+    key: '',
+    items: [],
+    total: 0,
+    error: '',
+  })
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -84,31 +86,8 @@ export function BatchList({
     return true
   }, [datePreset, startDate, endDate])
 
-  const previewData = useMemo(() => {
-    if (!preview) return null
-    let items = [...PREVIEW_BATCHES]
-    if (filterStatus) {
-      items = items.filter((b) => b.currentStatus === filterStatus)
-    }
-    items = items.filter((b) => matchDate(b.creationDate))
-    if (debouncedQuery.trim()) {
-      const q = debouncedQuery.toLowerCase().trim()
-      items = items.filter(
-        (b) =>
-          b.batchCode.toLowerCase().includes(q) ||
-          b.productName.toLowerCase().includes(q) ||
-          b.origin.toLowerCase().includes(q)
-      )
-    }
-    const start = (page - 1) * limit
-    return {
-      total: items.length,
-      items: items.slice(start, start + limit),
-    }
-  }, [preview, filterStatus, matchDate, debouncedQuery, page, limit])
-
   useEffect(() => {
-    if (preview) return
+    if (!token) return
     let active = true
 
     api
@@ -120,52 +99,55 @@ export function BatchList({
         limit,
       })
       .then((data) => {
-        if (active) {
-          setBatches(data.items || [])
-          setTotal(data.total || 0)
-          setError('')
-        }
+        if (!active) return
+        setFetchState({
+          key: requestKey,
+          items: data.items || [],
+          total: data.total || 0,
+          error: '',
+        })
       })
       .catch((err) => {
-        if (active) {
-          setError(
+        if (!active) return
+        setFetchState({
+          key: requestKey,
+          items: [],
+          total: 0,
+          error:
             err instanceof ApiError
               ? errorMessage(err)
-              : 'Không thể kết nối để lấy danh sách lô.'
-          )
-        }
-      })
-      .finally(() => {
-        if (active) setLoading(false)
+              : 'Không thể kết nối để lấy danh sách lô.',
+        })
       })
 
     return () => {
       active = false
     }
-  }, [token, filterStatus, debouncedQuery, listScope, isChainPartner, page, limit, refreshKey, preview])
+  }, [token, filterStatus, debouncedQuery, listScope, isChainPartner, page, limit, refreshKey, requestKey])
+
+  const isEffectiveLoading = Boolean(token) && fetchState.key !== requestKey
+  const batches = useMemo(() => (fetchState.key === requestKey ? fetchState.items : []), [fetchState, requestKey])
+  const total = fetchState.key === requestKey ? fetchState.total : 0
+  const error = fetchState.key === requestKey ? fetchState.error : ''
 
   const filteredLiveBatches = useMemo(() => {
-    if (preview) return []
     return batches.filter((b) => matchDate(b.creationDate || b.createdAt))
-  }, [batches, matchDate, preview])
+  }, [batches, matchDate])
 
-  const displayedBatches = preview ? previewData?.items || [] : (datePreset === 'ALL' ? batches : filteredLiveBatches)
-  const displayedTotal = preview ? previewData?.total || 0 : (datePreset === 'ALL' ? total : filteredLiveBatches.length)
-  const isEffectiveLoading = preview ? false : loading
+  const displayedBatches = datePreset === 'ALL' ? batches : filteredLiveBatches
+  const displayedTotal = datePreset === 'ALL' ? total : filteredLiveBatches.length
 
   const stats = useMemo(() => {
-    const source = preview ? previewData?.items || PREVIEW_BATCHES : batches
-    const totalCount = preview ? displayedTotal : total
-    const createdCount = source.filter((b) => b.currentStatus === 'CREATED').length
-    const activeCount = source.filter((b) =>
+    const createdCount = batches.filter((b) => b.currentStatus === 'CREATED').length
+    const activeCount = batches.filter((b) =>
       ['TRANSPORTED', 'RECEIVED', 'PROCESSED', 'PACKAGED'].includes(b.currentStatus)
     ).length
-    const shippedCount = source.filter((b) => b.currentStatus === 'SHIPPED').length
-    return { totalCount, createdCount, activeCount, shippedCount }
-  }, [batches, preview, previewData, displayedTotal, total])
+    const shippedCount = batches.filter((b) => b.currentStatus === 'SHIPPED').length
+    return { totalCount: total, createdCount, activeCount, shippedCount }
+  }, [batches, total])
 
   const totalPages = Math.max(1, Math.ceil(displayedTotal / limit))
-  const isFarmer = user?.role === 'FARMER' || preview
+  const isFarmer = user?.role === 'FARMER'
 
   return (
     <div className="batch-list-container">
@@ -626,7 +608,6 @@ export function BatchList({
         <BatchQrModal
           batch={qrModalBatch}
           token={token}
-          preview={preview}
           onClose={() => setQrModalBatch(null)}
         />
       )}

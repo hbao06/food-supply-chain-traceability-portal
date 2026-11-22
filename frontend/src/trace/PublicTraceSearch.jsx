@@ -1,110 +1,75 @@
-import { useState, useRef } from 'react'
-import { BrandLogo } from '../components/BrandAndFooter.jsx'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { api } from '../api.js'
+import { STATUS_META, productImage } from '../batches/batchConstants.js'
+import { BrandLogo, PublicFooter } from '../components/BrandAndFooter.jsx'
+import { TruckIllustration, WarehouseIllustration } from '../components/Illustrations.jsx'
 import { QrScannerPanel } from './QrScannerPanel.jsx'
 import { parseTraceInput } from './traceUtils.js'
-import { DEMO_BATCH_SHORTCUTS } from '../batches/batchConstants.js'
-import { TruckIllustration, WarehouseIllustration } from '../components/Illustrations.jsx'
 
-// Bộ sưu tập nông sản chuẩn lookbook bán hàng Nike / Adidas
-const SHOWCASE_PRODUCTS = [
-  {
-    id: 'FR-2026-0001',
-    name: 'Cà phê Arabica Cầu Đất',
-    category: 'Cà phê đặc sản',
-    origin: 'Đà Lạt, Lâm Đồng',
-    standard: 'VietGAP • UTZ Certified',
-    image: '/products/coffee.jpg',
-    tag: 'Đặc sản cao nguyên',
-    desc: 'Thu hoạch từ độ cao 1.650m, sơ chế ướt khép kín, hương thơm trái cây chín mọng quyện mật ong rừng.',
-    trustPoints: [
-      { title: '100% Nông trại VietGAP', sub: 'HTX Cầu Đất, Đà Lạt (Cao độ 1.650m)' },
-      { title: 'Logistics chuỗi lạnh GPS', sub: 'Xe lạnh chuyên dụng giám sát 2–8°C' },
-      { title: 'Bảo chứng mã băm SHA-256', sub: 'Chống giả mạo và can thiệp nhật ký' },
-    ]
-  },
-  {
-    id: 'FR-2026-0201',
-    name: 'Gạo Thơm Hữu Cơ ST25',
-    category: 'Lúa gạo xuất khẩu',
-    origin: 'Sóc Trăng (Vùng tôm - lúa)',
-    standard: 'Hữu cơ USDA • OCOP 5 Sao',
-    image: '/products/rice.jpg',
-    tag: 'Gạo ngon nhất thế giới',
-    desc: 'Hạt dài, trắng trong, dẻo thơm mùi lá dứa tự nhiên, mô hình canh tác luân canh sinh thái tôm - lúa sạch.',
-    trustPoints: [
-      { title: 'Canh tác hữu cơ sinh thái', sub: 'Mô hình luân canh tôm - lúa tự nhiên' },
-      { title: 'Bảo quản silo hút chân không', sub: 'Giữ ẩm độ tiêu chuẩn xuất khẩu EU/Mỹ' },
-      { title: 'Bảo chứng mã băm SHA-256', sub: 'Số hóa tem truy xuất điện tử độc bản' },
-    ]
-  },
-  {
-    id: 'FR-2026-0202',
-    name: 'Hạt Điều Rang Muối Vỏ Lụa',
-    category: 'Hạt dinh dưỡng',
-    origin: 'Bù Đăng, Bình Phước',
-    standard: 'Chỉ dẫn địa lý • ISO 22000',
-    image: '/products/cashew.jpg',
-    tag: 'Chỉ dẫn địa lý',
-    desc: 'Hạt điều size đại W240, rang củi gia truyền nguyên vỏ lụa, vị giòn tan, ngọt bùi đặc trưng đất đỏ bazan.',
-    trustPoints: [
-      { title: 'Vùng nguyên liệu Bù Đăng', sub: 'Đặc sản Chỉ dẫn địa lý Bình Phước' },
-      { title: 'Rang củi gia truyền ISO 22000', sub: 'Quy trình kiểm soát an toàn nghiêm ngặt' },
-      { title: 'Bảo chứng mã băm SHA-256', sub: 'Niêm phong nguồn gốc theo từng mẻ rang' },
-    ]
-  },
-  {
-    id: 'FR-2026-0203',
-    name: 'Thanh Long Ruột Đỏ Chợ Gạo',
-    category: 'Trái cây tươi',
-    origin: 'Chợ Gạo, Tiền Giang',
-    standard: 'GlobalGAP • Chuẩn EU',
-    image: '/products/dragonfruit.jpg',
-    tag: 'Xuất khẩu EU',
-    desc: 'Độ ngọt Brix 14-16, vỏ mỏng bóng đẹp, tai quả cứng xanh, bảo quản chuỗi lạnh đạt chuẩn thị trường khó tính.',
-    trustPoints: [
-      { title: 'Vùng trồng GlobalGAP cấp mã vùng', sub: 'HTX Thanh Long Chợ Gạo xuất khẩu' },
-      { title: 'Chuỗi cung ứng lạnh bảo quản CA', sub: 'Kiểm soát chặng vận tải và chiếu xạ' },
-      { title: 'Bảo chứng mã băm SHA-256', sub: 'Xác thực kiểm dịch thực vật xuất khẩu' },
-    ]
-  },
-  {
-    id: 'FR-2026-0204',
-    name: 'Chè Ô Long Kim Tuyên Mộc Châu',
-    category: 'Trà & Thảo mộc',
-    origin: 'Mộc Châu, Sơn La',
-    standard: 'VietGAP • Cao nguyên 1050m',
-    image: '/products/tea.jpg',
-    tag: 'Hương vị sương sớm',
-    desc: 'Hái thủ công 1 tôm 2 lá trong sương sớm, quy trình ủ lên men bán phần giữ trọn vị hậu ngọt thanh tao.',
-    trustPoints: [
-      { title: 'Vườn chè cao nguyên 1.050m', sub: 'Canh tác vi sinh không tồn dư hóa chất' },
-      { title: 'Ủ men bán phần bí truyền', sub: 'Quy trình đóng gói hút chân không khử ẩm' },
-      { title: 'Bảo chứng mã băm SHA-256', sub: 'Minh bạch nguồn gốc từng lứa hái' },
-    ]
-  },
-  {
-    id: 'FR-2026-0002',
-    name: 'Sầu Riêng Ri6 Cơm Vàng Hạt Lép',
-    category: 'Trái cây nhiệt đới',
-    origin: 'Chợ Lách, Bến Tre',
-    standard: 'Mã số vùng trồng • VietGAP',
-    image: '/products/durian.jpg',
-    tag: 'Đệ nhất sầu riêng',
-    desc: 'Thu hoạch khi đạt độ chín hoàn hảo trên cây, múi cơm vàng ươm, dày béo mịn màng không xơ, hạt lép nhỏ.',
-    trustPoints: [
-      { title: 'Vườn cây giống chuẩn Chợ Lách', sub: 'Chín cây tự nhiên, kiểm định dư lượng' },
-      { title: 'Xe thùng lạnh chuyên dụng', sub: 'Duy trì hương vị tươi ngon xuất khẩu' },
-      { title: 'Bảo chứng mã băm SHA-256', sub: 'Gắn tem định danh từng trái xuất vườn' },
-    ]
+function buildProductDisplayMeta(batch) {
+  if (!batch) return null
+  const statusMeta = STATUS_META[batch.currentStatus] || {
+    label: batch.currentStatus || 'Đã xác thực',
+    shortLabel: batch.currentStatus || 'Xác thực',
+    description: 'Thông tin lô hàng đã được xác thực trên hệ thống.',
   }
-]
+  const orgName = batch.organizationName || 'Đối tác Food Trace'
+  return {
+    id: batch.batchCode,
+    name: batch.productName,
+    category: statusMeta.label,
+    origin: batch.origin,
+    standard: orgName,
+    image: productImage(batch.productName),
+    tag: statusMeta.shortLabel || statusMeta.label,
+    desc: `${statusMeta.description} Nguồn gốc: ${batch.origin}${batch.organizationName ? ` · ${batch.organizationName}` : ''}.`,
+    trustPoints: [
+      { title: orgName, sub: `Xuất xứ: ${batch.origin}` },
+      { title: `Trạng thái: ${statusMeta.label}`, sub: statusMeta.description },
+      { title: 'Bảo chứng mã băm SHA-256', sub: 'Chống giả mạo và lưu vết bất biến trong PostgreSQL' },
+    ],
+  }
+}
 
-export function PublicTraceSearch({ navigate, isAuthenticated = false, preview = false }) {
+export function PublicTraceSearch({ navigate, isAuthenticated = false }) {
   const [input, setInput] = useState('')
   const [error, setError] = useState('')
   const [showScanner, setShowScanner] = useState(false)
-  const [selectedProduct, setSelectedProduct] = useState(SHOWCASE_PRODUCTS[0])
+  const [recentBatches, setRecentBatches] = useState([])
+  const [recentLoading, setRecentLoading] = useState(true)
+  const [selectedCode, setSelectedCode] = useState('')
   const railRef = useRef(null)
+
+  useEffect(() => {
+    let active = true
+    api
+      .listRecentPublicTraces(6)
+      .then((res) => {
+        if (!active) return
+        const items = Array.isArray(res?.items) ? res.items : []
+        setRecentBatches(items)
+        if (items.length > 0) {
+          setSelectedCode((prev) => prev || items[0].batchCode)
+        }
+      })
+      .catch(() => {
+        if (active) setRecentBatches([])
+      })
+      .finally(() => {
+        if (active) setRecentLoading(false)
+      })
+    return () => { active = false }
+  }, [])
+
+  const showcaseItems = useMemo(
+    () => recentBatches.map(buildProductDisplayMeta).filter(Boolean),
+    [recentBatches]
+  )
+
+  const selectedProduct = useMemo(
+    () => showcaseItems.find((p) => p.id === selectedCode) || showcaseItems[0] || null,
+    [showcaseItems, selectedCode]
+  )
 
   const scrollRail = (direction) => {
     if (!railRef.current) return
@@ -122,12 +87,11 @@ export function PublicTraceSearch({ navigate, isAuthenticated = false, preview =
 
     const parsed = parseTraceInput(target)
     if (!parsed.valid) {
-      setError(parsed.message || 'Mã lô không hợp lệ (Ví dụ hợp lệ: FR-2026-0001, FR-2026-0201...).')
+      setError(parsed.error || 'Mã lô không hợp lệ (Ví dụ hợp lệ: FR-2026-0001).')
       return
     }
 
-    const targetRoute = preview ? `${parsed.route}?preview=1` : parsed.route
-    navigate(targetRoute)
+    navigate(parsed.route)
   }
 
   const handleScanSuccess = (detectedText) => {
@@ -141,7 +105,7 @@ export function PublicTraceSearch({ navigate, isAuthenticated = false, preview =
       {/* 1. HEADER CHUYÊN NGHIỆP ĐỒNG BỘ MÀU XANH NỀN VỚI FOOTER */}
       <header className="public-header-bar">
         <div className="header-container">
-          <div className="header-brand" onClick={() => navigate(preview ? '/trace?preview=1' : '/trace')}>
+          <div className="header-brand" onClick={() => navigate('/trace')}>
             <BrandLogo invert />
             <div className="header-brand-slogan">
               <span className="brand-badge-vn">VIỆT NAM</span>
@@ -190,7 +154,7 @@ export function PublicTraceSearch({ navigate, isAuthenticated = false, preview =
         </div>
       </header>
 
-      {/* 2. HERO BANNER - BỐ CỤC 2 CỘT CÂN ĐỐI, HIỆN ĐẠI, KHÔNG BỊ TRỐNG 2 BÊN */}
+      {/* 2. HERO BANNER - BỐ CỤC 2 CỘT CÂN ĐỐI, HIỆN ĐẠI */}
       <section className="portal-hero-section">
         <div className="hero-split-grid">
           {/* CỘT TRÁI: THÔNG ĐIỆP & BỘ CÔNG CỤ TRA CỨU */}
@@ -205,7 +169,7 @@ export function PublicTraceSearch({ navigate, isAuthenticated = false, preview =
             </h1>
 
             <p className="hero-lead-text">
-              Mỗi nông sản được gắn mã định danh chuẩn <code>FR-YYYY-NNNN</code>. Tra cứu ngay nhật ký canh tác từ nông trại, 
+              Mỗi nông sản được gắn mã định danh chuẩn <code>FR-YYYY-NNNN</code>. Tra cứu ngay nhật ký canh tác từ nông trại,
               kiểm định an toàn thực phẩm, nhiệt độ vận tải lạnh GPS đến siêu&nbsp;thị.
             </p>
 
@@ -225,14 +189,14 @@ export function PublicTraceSearch({ navigate, isAuthenticated = false, preview =
                 <input
                   id="trace-input-field"
                   type="text"
-                  placeholder="Nhập mã lô hàng (Ví dụ: FR-2026-0001, FR-2026-0201...) hoặc dán URL"
+                  placeholder="Nhập mã lô hàng (Ví dụ: FR-2026-0001) hoặc dán đường dẫn QR"
                   value={input}
                   onChange={(e) => {
                     const val = e.target.value.toUpperCase()
                     setInput(val)
                     setError('')
-                    const match = SHOWCASE_PRODUCTS.find((p) => p.id === val.trim())
-                    if (match) setSelectedProduct(match)
+                    const match = showcaseItems.find((p) => p.id === val.trim())
+                    if (match) setSelectedCode(match.id)
                   }}
                   autoComplete="off"
                   spellCheck="false"
@@ -289,172 +253,263 @@ export function PublicTraceSearch({ navigate, isAuthenticated = false, preview =
               </div>
             )}
 
-            {/* Phím tắt chọn nhanh 6 nông sản mẫu - THAY ĐỔI LINH HOẠT SẢN PHẨM HIỂN THỊ */}
+            {/* Phím tắt chọn nhanh các lô hàng thật mới công bố */}
             <div className="hero-shortcuts-row">
-              <span className="shortcuts-title">Mẫu nông sản demo (bấm để xem &amp; đổi mẫu):</span>
-              <div className="shortcuts-chips-wrap">
-                {DEMO_BATCH_SHORTCUTS.map((item) => {
-                  const isSelected = selectedProduct.id === item.id
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      className={`shortcut-chip-item ${isSelected ? 'active' : ''}`}
-                      onClick={() => {
-                        setInput(item.id)
-                        const match = SHOWCASE_PRODUCTS.find((p) => p.id === item.id)
-                        if (match) setSelectedProduct(match)
-                      }}
-                      title={`Bấm để xem thông tin ${item.label}`}
-                    >
-                      <span className="chip-dot" />
-                      <strong>{item.id}</strong>: {item.label}
-                    </button>
-                  )
-                })}
-              </div>
+              <span className="shortcuts-title">Lô nông sản mới công bố (bấm để xem nhanh):</span>
+              {recentLoading ? (
+                <div className="shortcuts-chips-wrap">
+                  <span className="shortcuts-title">Đang tải dữ liệu lô hàng từ máy chủ…</span>
+                </div>
+              ) : showcaseItems.length > 0 ? (
+                <div className="shortcuts-chips-wrap">
+                  {showcaseItems.map((item) => {
+                    const isSelected = selectedProduct?.id === item.id
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        className={`shortcut-chip-item ${isSelected ? 'active' : ''}`}
+                        onClick={() => {
+                          setInput(item.id)
+                          setSelectedCode(item.id)
+                        }}
+                        title={`Bấm để xem thông tin ${item.name}`}
+                      >
+                        <span className="chip-dot" />
+                        <strong>{item.id}</strong>: {item.name}
+                      </button>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="shortcuts-chips-wrap">
+                  <span className="shortcuts-title">
+                    Chưa có lô nông sản nào được công bố. Hãy quét tem QR trên bao bì hoặc đăng nhập đối tác để khởi tạo lô mới.
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* CỘT PHẢI: CARD MINH HỌA SẢN PHẨM BỰ, ĐẸP, TỰ ĐỘNG THAY ĐỔI THEO MÃ ĐƯỢC CHỌN */}
+          {/* CỘT PHẢI: CARD MINH HỌA SẢN PHẨM TỪ DỮ LIỆU THẬT */}
           <div className="hero-trust-badge-col">
-            <div className="hero-digital-qr-card">
-              {/* Ảnh sản phẩm to bản, bắt mắt */}
-              <div className="qr-card-cover-box">
-                <img
-                  src={selectedProduct.image}
-                  alt={selectedProduct.name}
-                  className="qr-card-big-img"
-                  onError={(e) => { e.currentTarget.src = '/products/coffee.jpg' }}
-                />
-                <div className="qr-card-cover-badge-row">
-                  <span className="qr-card-category-tag">{selectedProduct.category}</span>
-                  <span className="qr-card-std-tag">{selectedProduct.standard}</span>
-                </div>
-              </div>
-
-              <div className="qr-card-body-content">
-                <div className="qr-card-title-group">
-                  <span className="qr-card-badge">CHỨNG THỰC SỐ QUỐC GIA</span>
-                  <h3 className="qr-card-product-name">{selectedProduct.name}</h3>
-                  <div className="qr-card-code-row">
-                    <code className="qr-card-code-tag">{selectedProduct.id}</code>
-                    <span className="qr-card-origin-text">• {selectedProduct.origin}</span>
+            {selectedProduct ? (
+              <div className="hero-digital-qr-card">
+                <div className="qr-card-cover-box">
+                  <img
+                    src={selectedProduct.image}
+                    alt={selectedProduct.name}
+                    className="qr-card-big-img"
+                    onError={(e) => { e.currentTarget.src = '/products/warehouse.jpg' }}
+                  />
+                  <div className="qr-card-cover-badge-row">
+                    <span className="qr-card-category-tag">{selectedProduct.category}</span>
+                    <span className="qr-card-std-tag">{selectedProduct.standard}</span>
                   </div>
                 </div>
 
-                <div className="qr-card-features-list">
-                  {selectedProduct.trustPoints.map((tp, idx) => (
-                    <div key={idx} className="qr-feature-item">
-                      <span className="feature-icon">✓</span>
-                      <div>
-                        <strong>{tp.title}</strong>
-                        <p>{tp.sub}</p>
-                      </div>
+                <div className="qr-card-body-content">
+                  <div className="qr-card-title-group">
+                    <span className="qr-card-badge">CHỨNG THỰC SỐ QUỐC GIA</span>
+                    <h3 className="qr-card-product-name">{selectedProduct.name}</h3>
+                    <div className="qr-card-code-row">
+                      <code className="qr-card-code-tag">{selectedProduct.id}</code>
+                      <span className="qr-card-origin-text">• {selectedProduct.origin}</span>
                     </div>
-                  ))}
+                  </div>
+
+                  <div className="qr-card-features-list">
+                    {selectedProduct.trustPoints.map((tp, idx) => (
+                      <div key={idx} className="qr-feature-item">
+                        <span className="feature-icon">✓</span>
+                        <div>
+                          <strong>{tp.title}</strong>
+                          <p>{tp.sub}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    className="btn-qr-card-inspect"
+                    onClick={() => {
+                      setInput(selectedProduct.id)
+                      handleTraceBatch(selectedProduct.id)
+                    }}
+                  >
+                    Xem chi tiết hành trình {selectedProduct.name} →
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="hero-digital-qr-card">
+                <div className="qr-card-cover-box">
+                  <img
+                    src="/products/warehouse.jpg"
+                    alt="Cổng xác thực nguồn gốc nông sản"
+                    className="qr-card-big-img"
+                  />
+                  <div className="qr-card-cover-badge-row">
+                    <span className="qr-card-category-tag">Chuẩn FR-YYYY-NNNN</span>
+                    <span className="qr-card-std-tag">HMAC-SHA256</span>
+                  </div>
                 </div>
 
-                <button
-                  type="button"
-                  className="btn-qr-card-inspect"
-                  onClick={() => {
-                    setInput(selectedProduct.id)
-                    handleTraceBatch(selectedProduct.id)
-                  }}
-                >
-                  Xem chi tiết hành trình {selectedProduct.name} →
-                </button>
+                <div className="qr-card-body-content">
+                  <div className="qr-card-title-group">
+                    <span className="qr-card-badge">CỔNG TRUY XUẤT QUỐC GIA</span>
+                    <h3 className="qr-card-product-name">Xác thực nguồn gốc theo thời gian thực</h3>
+                    <div className="qr-card-code-row">
+                      <code className="qr-card-code-tag">FR-YYYY-NNNN</code>
+                      <span className="qr-card-origin-text">• Dữ liệu trực tiếp PostgreSQL</span>
+                    </div>
+                  </div>
+
+                  <div className="qr-card-features-list">
+                    <div className="qr-feature-item">
+                      <span className="feature-icon">✓</span>
+                      <div>
+                        <strong>Truy xuất không cần đăng nhập</strong>
+                        <p>Quét trực tiếp tem QR trên bao bì bằng camera điện thoại hoặc ảnh PNG</p>
+                      </div>
+                    </div>
+                    <div className="qr-feature-item">
+                      <span className="feature-icon">✓</span>
+                      <div>
+                        <strong>6 chặng chuỗi cung ứng khép kín</strong>
+                        <p>Từ nông trại, vận tải, tiếp nhận kho, chế biến, đóng gói đến phân phối</p>
+                      </div>
+                    </div>
+                    <div className="qr-feature-item">
+                      <span className="feature-icon">✓</span>
+                      <div>
+                        <strong>Bảo chứng chữ ký &amp; chuỗi băm SHA-256</strong>
+                        <p>Ngăn chặn làm giả tem nhãn và bảo toàn nhật ký bất biến</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="btn-qr-card-inspect"
+                    onClick={() => setShowScanner(true)}
+                  >
+                    Mở camera quét tem QR ngay →
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </section>
 
-      {/* 3. PRODUCT SHOWCASE RAIL (Phong cách Lookbook bán hàng thể thao Nike & Adidas) */}
+      {/* 3. PRODUCT SHOWCASE RAIL */}
       <section id="showcase" className="showcase-rail-section">
         <div className="rail-header-container">
           <div>
-            <div className="rail-kicker">TIÊU CHUẨN XUẤT KHẨU</div>
+            <div className="rail-kicker">DỮ LIỆU TRỰC TIẾP TỪ HỆ THỐNG</div>
             <h2 className="rail-title text-balance">Nông sản tiêu biểu</h2>
           </div>
-          <div className="rail-ctrl-arrows">
-            <button
-              type="button"
-              className="rail-arrow-btn"
-              onClick={() => scrollRail('left')}
-              aria-label="Xem sản phẩm trước"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <polyline points="15 18 9 12 15 6" />
-              </svg>
-            </button>
-            <button
-              type="button"
-              className="rail-arrow-btn"
-              onClick={() => scrollRail('right')}
-              aria-label="Xem sản phẩm tiếp theo"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </button>
-          </div>
+          {showcaseItems.length > 0 && (
+            <div className="rail-ctrl-arrows">
+              <button
+                type="button"
+                className="rail-arrow-btn"
+                onClick={() => scrollRail('left')}
+                aria-label="Xem sản phẩm trước"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                className="rail-arrow-btn"
+                onClick={() => scrollRail('right')}
+                aria-label="Xem sản phẩm tiếp theo"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Khung trượt ngang sản phẩm (Nike/Adidas lookbook track) */}
-        <div className="showcase-rail-track" ref={railRef}>
-          {SHOWCASE_PRODUCTS.map((prod) => (
-            <div
-              key={prod.id}
-              className="showcase-product-card"
-              onClick={() => {
-                setInput(prod.id)
-                handleTraceBatch(prod.id)
-              }}
-            >
-              <div className="card-thumb-holder">
-                <img
-                  src={prod.image}
-                  alt={prod.name}
-                  loading="lazy"
-                  className="card-thumb-img"
-                  onError={(e) => {
-                    e.currentTarget.src = '/products/coffee.jpg'
-                  }}
-                />
-                <span className="card-category-badge">{prod.tag}</span>
-              </div>
-              <div className="card-info-pane">
-                <div className="card-location-meta">
-                  <span>{prod.category}</span>
-                  <span className="meta-sep">•</span>
-                  <span>{prod.origin}</span>
-                </div>
-                <h3 className="card-product-heading">{prod.name}</h3>
-                <p className="card-product-summary">{prod.desc}</p>
-                <div className="card-action-bar">
-                  <div className="card-batch-badge">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="3" y="3" width="7" height="7"></rect>
-                      <rect x="14" y="3" width="7" height="7"></rect>
-                      <rect x="14" y="14" width="7" height="7"></rect>
-                      <rect x="3" y="14" width="7" height="7"></rect>
-                    </svg>
-                    <span>{prod.id}</span>
-                  </div>
-                  <span className="card-view-btn">
-                    Xem nhật ký
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <line x1="5" y1="12" x2="19" y2="12"></line>
-                      <polyline points="12 5 19 12 12 19"></polyline>
-                    </svg>
-                  </span>
-                </div>
-              </div>
+        {recentLoading ? (
+          <div className="batches-loading-state" role="status">
+            <div className="spinner-olive" />
+            <p>Đang tải danh sách nông sản công bố…</p>
+          </div>
+        ) : showcaseItems.length === 0 ? (
+          <div className="batches-empty-state">
+            <h3>Chưa có lô nông sản nào được công bố</h3>
+            <p>Khi đối tác nông trại khởi tạo lô hàng thật trong hệ thống, danh sách sản phẩm sẽ tự động hiển thị tại đây.</p>
+            <div className="empty-actions">
+              <button
+                type="button"
+                className="button primary"
+                onClick={() => navigate(isAuthenticated ? '/batches/new' : '/login')}
+              >
+                {isAuthenticated ? 'Khởi tạo lô đầu tiên' : 'Đăng nhập đối tác →'}
+              </button>
             </div>
-          ))}
-        </div>
+          </div>
+        ) : (
+          <div className="showcase-rail-track" ref={railRef}>
+            {showcaseItems.map((prod) => (
+              <div
+                key={prod.id}
+                className="showcase-product-card"
+                onClick={() => {
+                  setInput(prod.id)
+                  handleTraceBatch(prod.id)
+                }}
+              >
+                <div className="card-thumb-holder">
+                  <img
+                    src={prod.image}
+                    alt={prod.name}
+                    loading="lazy"
+                    className="card-thumb-img"
+                    onError={(e) => {
+                      e.currentTarget.src = '/products/warehouse.jpg'
+                    }}
+                  />
+                  <span className="card-category-badge">{prod.tag}</span>
+                </div>
+                <div className="card-info-pane">
+                  <div className="card-location-meta">
+                    <span>{prod.standard}</span>
+                    <span className="meta-sep">•</span>
+                    <span>{prod.origin}</span>
+                  </div>
+                  <h3 className="card-product-heading">{prod.name}</h3>
+                  <p className="card-product-summary">{prod.desc}</p>
+                  <div className="card-action-bar">
+                    <div className="card-batch-badge">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                      </svg>
+                      <span>{prod.id}</span>
+                    </div>
+                    <span className="card-view-btn">
+                      Xem nhật ký
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                      </svg>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* 4. QUY TRÌNH 4 TRỤ CỘT CHUỖI CUNG ỨNG NÔNG SẢN MINH BẠCH */}
@@ -470,7 +525,6 @@ export function PublicTraceSearch({ navigate, isAuthenticated = false, preview =
         </div>
 
         <div className="pillars-four-grid">
-          {/* Cột 1: Nông trại */}
           <div className="pillar-item-card">
             <div className="pillar-media-box">
               <img
@@ -489,7 +543,6 @@ export function PublicTraceSearch({ navigate, isAuthenticated = false, preview =
             </div>
           </div>
 
-          {/* Cột 2: Kho bãi & Sơ chế */}
           <div className="pillar-item-card">
             <div className="pillar-media-box">
               <img
@@ -509,7 +562,6 @@ export function PublicTraceSearch({ navigate, isAuthenticated = false, preview =
             </div>
           </div>
 
-          {/* Cột 3: Vận chuyển xe lạnh */}
           <div className="pillar-item-card">
             <div className="pillar-media-box">
               <img
@@ -529,7 +581,6 @@ export function PublicTraceSearch({ navigate, isAuthenticated = false, preview =
             </div>
           </div>
 
-          {/* Cột 4: Tem QR & Siêu thị */}
           <div className="pillar-item-card">
             <div className="pillar-media-box">
               <img
@@ -592,64 +643,8 @@ export function PublicTraceSearch({ navigate, isAuthenticated = false, preview =
         </div>
       </section>
 
-      {/* 6. FOOTER DOANH NGHIỆP PHONG CÁCH XUẤT NHẬP KHẨU THỰC PHẨM NHƯ Ý */}
-      <footer className="portal-master-footer">
-
-        <div className="footer-top-row">
-          <div className="footer-col-brand">
-            <BrandLogo invert />
-            <p className="footer-org-summary">
-              Hệ thống truy xuất nguồn gốc chuỗi cung ứng thực phẩm Việt Nam. Xây dựng nền tảng minh bạch hóa, 
-              kết nối các hợp tác xã nông sản sạch đến thị trường nội địa và quốc tế.
-            </p>
-            <div className="footer-cert-tags">
-              <span className="cert-pill">VietGAP</span>
-              <span className="cert-pill">GlobalGAP</span>
-              <span className="cert-pill">HACCP</span>
-              <span className="cert-pill">ISO 22000</span>
-              <span className="cert-pill">SHA-256</span>
-            </div>
-          </div>
-
-          <div className="footer-col-nav">
-            <h4>Nhóm Nông Sản</h4>
-            <ul>
-              <li><button type="button" onClick={() => handleTraceBatch('FR-2026-0001')}>Cà phê Arabica Cầu Đất</button></li>
-              <li><button type="button" onClick={() => handleTraceBatch('FR-2026-0201')}>Gạo ST25 Sóc Trăng</button></li>
-              <li><button type="button" onClick={() => handleTraceBatch('FR-2026-0202')}>Hạt Điều Rang Muối Bình Phước</button></li>
-              <li><button type="button" onClick={() => handleTraceBatch('FR-2026-0203')}>Thanh Long Ruột Đỏ Tiền Giang</button></li>
-              <li><button type="button" onClick={() => handleTraceBatch('FR-2026-0204')}>Chè Ô Long Mộc Châu</button></li>
-              <li><button type="button" onClick={() => handleTraceBatch('FR-2026-0002')}>Sầu Riêng Ri6 Bến Tre</button></li>
-            </ul>
-          </div>
-
-          <div className="footer-col-nav">
-            <h4>Dành Cho Đối Tác</h4>
-            <ul>
-              <li><button type="button" onClick={() => navigate('/login')}>Cổng đăng nhập đối tác</button></li>
-              <li><button type="button" onClick={() => navigate('/register')}>Đăng ký gia nhập mạng lưới</button></li>
-              <li><button type="button" onClick={() => navigate('/help')}>Quy chuẩn gắn tem FR-</button></li>
-              <li><button type="button" onClick={() => navigate('/audit-logs')}>Bảo chứng kiểm toán chuỗi khối</button></li>
-            </ul>
-          </div>
-
-          <div className="footer-col-contact">
-            <h4>Đầu Mối Hỗ Trợ Kỹ Thuật</h4>
-            <p><strong>Hotline:</strong> 1900 6868 (8:00 - 18:00)</p>
-            <p><strong>Email:</strong> hotro@foodtrace.vn</p>
-            <p><strong>Trụ sở:</strong> Tầng 8, Tòa nhà Công Nghệ Xanh, Quận 1, TP. Hồ Chí Minh</p>
-          </div>
-        </div>
-
-        <div className="footer-bottom-copyright">
-          <div>© 2026 Food Trace Vietnam. Bản quyền thuộc về Đề tài Chuỗi Cung Ứng Thực Phẩm Minh Bạch.</div>
-          <div className="footer-legal-links">
-            <span>Tiêu chuẩn TCVN 12850:2019</span>
-            <span>•</span>
-            <span>Bảo mật dữ liệu HMAC-SHA256</span>
-          </div>
-        </div>
-      </footer>
+      {/* 6. FOOTER DOANH NGHIỆP */}
+      <PublicFooter navigate={navigate} recentBatches={recentBatches} />
 
       {/* Modal máy ảnh quét mã QR */}
       {showScanner && (

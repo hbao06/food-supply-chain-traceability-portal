@@ -16,17 +16,9 @@ const ORG_TYPE_META = {
   DISTRIBUTOR: { label: 'Đơn vị phân phối', tagClass: 'org-distributor' },
 }
 
-const PREVIEW_ORGS = [
-  { organizationId: 1, name: 'HTX Cà phê Cầu Đất', type: 'FARM', address: 'Cầu Đất, Đà Lạt, Lâm Đồng', createdAt: '2026-10-18T08:00:00Z' },
-  { organizationId: 2, name: 'Nông trại Sầu riêng Cái Mơn', type: 'FARM', address: 'Chợ Lách, Bến Tre', createdAt: '2026-10-18T08:01:00Z' },
-  { organizationId: 3, name: 'Công ty Chế biến Nông sản Sài Gòn', type: 'PROCESSOR', address: 'KCN Tân Bình, TP.HCM', createdAt: '2026-10-18T08:02:00Z' },
-  { organizationId: 4, name: 'Vận tải Lạnh Miền Nam', type: 'DISTRIBUTOR', address: 'Quận 7, TP.HCM', createdAt: '2026-10-18T08:03:00Z' },
-  { organizationId: 5, name: 'Phân phối Thực phẩm Sạch Hà Nội', type: 'DISTRIBUTOR', address: 'Long Biên, Hà Nội', createdAt: '2026-10-18T08:04:00Z' },
-]
-
-export function OrganizationManagementView({ token, preview = false }) {
-  const [orgs, setOrgs] = useState(() => (preview ? PREVIEW_ORGS : []))
-  const [loading, setLoading] = useState(!preview)
+export function OrganizationManagementView({ token }) {
+  const [orgs, setOrgs] = useState([])
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
   const [flash, setFlash] = useState('')
@@ -40,14 +32,13 @@ export function OrganizationManagementView({ token, preview = false }) {
   const [refreshTick, setRefreshTick] = useState(0)
 
   const loadOrgs = useCallback(() => {
-    if (preview) return
     setLoading(true)
     setError('')
     setRefreshTick((t) => t + 1)
-  }, [preview])
+  }, [])
 
   useEffect(() => {
-    if (preview) return
+    if (!token) return
     let active = true
     api
       .listOrganizations(token, { limit: 100 })
@@ -64,7 +55,7 @@ export function OrganizationManagementView({ token, preview = false }) {
         if (active) setLoading(false)
       })
     return () => { active = false }
-  }, [token, preview, refreshTick])
+  }, [token, refreshTick])
 
   const filteredOrgs = useMemo(() => {
     if (!typeFilter) return orgs
@@ -99,18 +90,6 @@ export function OrganizationManagementView({ token, preview = false }) {
       address: form.address.trim() || null,
     }
     try {
-      if (preview) {
-        if (editingOrg) {
-          setOrgs((prev) => prev.map((o) => (o.organizationId === editingOrg.organizationId ? { ...o, ...payload } : o)))
-          setFlash(`Đã cập nhật đơn vị ${payload.name}.`)
-        } else {
-          setOrgs((prev) => [{ organizationId: Date.now(), ...payload, createdAt: new Date().toISOString() }, ...prev])
-          setFlash(`Đã thêm đơn vị mới: ${payload.name}.`)
-        }
-        setModalOpen(false)
-        return
-      }
-
       if (editingOrg) {
         const updated = await api.updateOrganization(token, editingOrg.organizationId, payload)
         setOrgs((prev) => prev.map((o) => (o.organizationId === updated.organizationId ? updated : o)))
@@ -243,9 +222,9 @@ export function OrganizationManagementView({ token, preview = false }) {
                   value={form.type}
                   onChange={(e) => setForm({ ...form, type: e.target.value })}
                 >
-                  <option value="FARM">Nông trại / Hợp tác xã (FARM)</option>
-                  <option value="PROCESSOR">Cơ sở sơ chế & Chế biến (PROCESSOR)</option>
-                  <option value="DISTRIBUTOR">Đơn vị vận chuyển & Phân phối (DISTRIBUTOR)</option>
+                  <option value="FARM">Nông trại / Hợp tác xã</option>
+                  <option value="PROCESSOR">Cơ sở sơ chế & Chế biến</option>
+                  <option value="DISTRIBUTOR">Đơn vị vận chuyển & Phân phối</option>
                 </select>
               </div>
 

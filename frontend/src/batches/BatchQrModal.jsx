@@ -3,30 +3,28 @@ import QRCode from 'qrcode'
 import { api, ApiError, errorMessage } from '../api.js'
 import { IconMapPin, IconDownload, IconCheck } from '../components/Icons.jsx'
 
-export function BatchQrModal({ batch, token, preview = false, onClose, onOpenTrace }) {
+export function BatchQrModal({ batch, token, onClose, onOpenTrace }) {
   const canvasRef = useRef(null)
   const [copied, setCopied] = useState(false)
   const [downloading, setDownloading] = useState(false)
 
   const fallbackUrl = batch
-    ? (batch.qrData && !batch.qrData.includes('PREVIEW')
-        ? batch.qrData
-        : `${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173'}/trace/code/${encodeURIComponent(batch.batchCode)}`)
+    ? (batch.qrData || `${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173'}/trace/code/${encodeURIComponent(batch.batchCode)}`)
     : ''
 
   const [qrState, setQrState] = useState(() => ({
     batchId: batch?.batchId ?? null,
-    qrData: (!token || preview) ? fallbackUrl : '',
+    qrData: !token ? fallbackUrl : '',
     error: '',
   }))
 
-  const needsFetch = Boolean(token && !preview && batch?.batchId)
+  const needsFetch = Boolean(token && batch?.batchId)
   const qrLoading = needsFetch && qrState.batchId !== batch?.batchId
   const qrData = qrLoading ? '' : (qrState.qrData || fallbackUrl)
   const qrError = qrLoading ? '' : qrState.error
 
   useEffect(() => {
-    if (!batch?.batchId || !token || preview) return
+    if (!batch?.batchId || !token) return
     let active = true
     api.getBatchQr(token, batch.batchId).then((data) => {
       if (active) {
@@ -46,7 +44,7 @@ export function BatchQrModal({ batch, token, preview = false, onClose, onOpenTra
       }
     })
     return () => { active = false }
-  }, [token, preview, batch?.batchId, fallbackUrl])
+  }, [token, batch?.batchId, fallbackUrl])
 
   useEffect(() => {
     if (!canvasRef.current || !qrData) return

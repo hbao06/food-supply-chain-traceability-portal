@@ -6,7 +6,6 @@ import { BatchQrModal } from './BatchQrModal.jsx'
 import { BatchTimeline } from './BatchTimeline.jsx'
 import { AddEventModal } from './AddEventModal.jsx'
 import {
-  PREVIEW_BATCHES,
   STATUS_META,
   SUPPLY_CHAIN_STEPS,
   formatDateTime,
@@ -32,18 +31,11 @@ export function BatchDetail({
   initialBatch = null,
   token,
   user,
-  preview = false,
   onBack,
   onEdit,
 }) {
-  const [batch, setBatch] = useState(() => {
-    if (initialBatch) return initialBatch
-    if (preview) {
-      return PREVIEW_BATCHES.find((b) => b.batchId === Number(batchId)) || PREVIEW_BATCHES[0]
-    }
-    return null
-  })
-  const [loading, setLoading] = useState(() => !initialBatch && !preview)
+  const [batch, setBatch] = useState(() => initialBatch || null)
+  const [loading, setLoading] = useState(() => !initialBatch)
   const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState('timeline') // 'timeline' | 'info' | 'steps'
   const [showQrModal, setShowQrModal] = useState(false)
@@ -56,7 +48,7 @@ export function BatchDetail({
   const qrCanvasRef = useRef(null)
 
   useEffect(() => {
-    if (initialBatch || preview) return
+    if (initialBatch || !token || !batchId) return
     let active = true
     api
       .getBatch(token, batchId)
@@ -82,21 +74,21 @@ export function BatchDetail({
     return () => {
       active = false
     }
-  }, [batchId, initialBatch, token, preview])
+  }, [batchId, initialBatch, token])
 
   const fallbackQrUrl = batch
     ? (batch.qrData || `${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173'}/trace/code/${encodeURIComponent(batch.batchCode)}`)
     : ''
 
   const qrBatchId = batch?.batchId
-  const needsQrFetch = Boolean(qrBatchId && token && !preview)
+  const needsQrFetch = Boolean(qrBatchId && token)
   const qrLoading = needsQrFetch && qrState.batchId !== qrBatchId
   const qrData = qrLoading ? '' : (qrState.qrData || fallbackQrUrl)
   const qrError = qrLoading ? '' : qrState.error
   const traceUrl = qrData
 
   useEffect(() => {
-    if (!qrBatchId || !token || preview) return
+    if (!qrBatchId || !token) return
     let active = true
     api.getBatchQr(token, qrBatchId).then((data) => {
       if (active) {
@@ -116,7 +108,7 @@ export function BatchDetail({
       }
     })
     return () => { active = false }
-  }, [token, preview, qrBatchId, fallbackQrUrl])
+  }, [token, qrBatchId, fallbackQrUrl])
 
   useEffect(() => {
     if (!qrCanvasRef.current || !traceUrl) return
@@ -179,7 +171,7 @@ export function BatchDetail({
   const currentStepIndex = SUPPLY_CHAIN_STEPS.findIndex(
     (s) => s.type === batch.currentStatus
   )
-  const isFarmer = user?.role === 'FARMER' || preview
+  const isFarmer = user?.role === 'FARMER'
   const canEdit = isFarmer && batch.currentStatus === 'CREATED'
 
   const eventPermission = canUserAddEvent(user, batch)
@@ -290,7 +282,6 @@ export function BatchDetail({
               batch={batch}
               user={user}
               token={token}
-              preview={preview}
               onBatchUpdated={(updated) => setBatch(updated)}
             />
           ) : activeTab === 'info' ? (
@@ -457,7 +448,6 @@ export function BatchDetail({
         <BatchQrModal
           batch={batch}
           token={token}
-          preview={preview}
           onClose={() => setShowQrModal(false)}
         />
       )}
@@ -467,7 +457,6 @@ export function BatchDetail({
           batch={batch}
           user={user}
           token={token}
-          preview={preview}
           onSuccess={handleEventAdded}
           onClose={() => setShowAddEventModal(false)}
         />

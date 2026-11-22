@@ -732,6 +732,39 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
 
+  /trace/recent:
+    get:
+      tags: [Trace]
+      summary: Recent public batches for the public portal landing page
+      description: |
+        No login required. Returns up to `limit` (1–12, default 6) recent batches using only the public
+        allow-list fields from `public_batch_trace`. Rate limited per IP (429).
+      operationId: listRecentPublicTraces
+      security: []
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+            default: 6
+      responses:
+        "200":
+          description: List of recent public batch summaries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/PublicBatchSummary"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
   /trace/{qrToken}:
     get:
       tags: [Trace]
@@ -1201,6 +1234,22 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/TimelineEvent"
+
+    PublicBatchSummary:
+      type: object
+      description: Public batch summary fields only (allow-list).
+      properties:
+        batchCode:
+          type: string
+          example: FR-2026-0001
+        productName:
+          type: string
+        origin:
+          type: string
+        organizationName:
+          type: [string, "null"]
+        currentStatus:
+          $ref: "#/components/schemas/EventType"
 
     PublicTrace:
       type: object

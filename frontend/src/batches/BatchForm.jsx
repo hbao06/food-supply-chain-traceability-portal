@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, ApiError, errorMessage } from '../api.js'
 import { BatchStatusBadge } from './BatchStatusBadge.jsx'
-import { formatQuantity } from './batchConstants.js'
+import { STATUS_META, formatQuantity } from './batchConstants.js'
 import { IconQr, IconLock, IconClipboard } from '../components/Icons.jsx'
 
 const PRODUCT_SUGGESTIONS = [
@@ -19,13 +19,12 @@ export function BatchForm({
   batchId = null,
   token,
   user,
-  preview = false,
   onSuccess,
   onCancel,
 }) {
   const isEdit = mode === 'update'
   const [loadedBatch, setLoadedBatch] = useState(initialBatch)
-  const [loadingBatch, setLoadingBatch] = useState(Boolean(isEdit && !initialBatch && !preview && batchId))
+  const [loadingBatch, setLoadingBatch] = useState(Boolean(isEdit && !initialBatch && batchId))
   const [loadError, setLoadError] = useState('')
 
   const [form, setForm] = useState({
@@ -39,7 +38,7 @@ export function BatchForm({
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
-    if (!isEdit || initialBatch || preview || !batchId || !token) return
+    if (!isEdit || initialBatch || !batchId || !token) return
     let active = true
     api
       .getBatch(token, batchId)
@@ -61,7 +60,7 @@ export function BatchForm({
         if (active) setLoadingBatch(false)
       })
     return () => { active = false }
-  }, [isEdit, initialBatch, preview, batchId, token])
+  }, [isEdit, initialBatch, batchId, token])
 
   const batch = loadedBatch || initialBatch
   const isEditable = !isEdit || batch?.currentStatus === 'CREATED'
@@ -109,27 +108,6 @@ export function BatchForm({
       productName: form.productName.trim(),
       origin: form.origin.trim(),
       quantity: Math.round(Number(form.quantity) * 100) / 100,
-    }
-
-    if (preview) {
-      const generatedCode = isEdit ? batch.batchCode : `FR-2026-${String(Math.floor(Math.random() * 900) + 100).padStart(4, '0')}`
-      const simulatedResult = {
-        batchId: isEdit ? batch.batchId : Math.floor(Math.random() * 900) + 200,
-        batchCode: generatedCode,
-        productName: payload.productName,
-        origin: payload.origin,
-        quantity: payload.quantity,
-        currentStatus: isEdit ? batch.currentStatus : 'CREATED',
-        creationDate: isEdit ? batch.creationDate : new Date().toISOString(),
-        createdBy: user?.userId || 1,
-        organizationId: user?.organizationId || 1,
-        organizationName: user?.organizationName || 'Nông trại mẫu',
-        qrData: isEdit
-          ? batch.qrData
-          : `${window.location.origin}/trace/code/${generatedCode}`,
-      }
-      onSuccess(simulatedResult, isEdit ? 'Đã cập nhật thông tin lô hàng.' : 'Đã khởi tạo lô thực phẩm mới thành công!')
-      return
     }
 
     setSubmitting(true)
@@ -202,7 +180,7 @@ export function BatchForm({
             <div>
               <strong>Lô hàng này đã bị khóa chỉnh sửa</strong>
               <p>
-                Trạng thái hiện tại: <strong>{batch?.currentStatus}</strong>. Dữ liệu gốc chỉ có thể sửa khi lô còn ở trạng thái <code>CREATED</code> để bảo toàn tính bất biến.
+                Trạng thái hiện tại: <strong>{STATUS_META[batch?.currentStatus]?.label || batch?.currentStatus}</strong>. Dữ liệu gốc chỉ có thể sửa khi lô còn ở trạng thái <code>Khởi tạo</code> để bảo toàn tính bất biến.
               </p>
             </div>
           </div>

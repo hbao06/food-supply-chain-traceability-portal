@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ROLE_LABELS_VI } from '../batches/batchConstants.js'
 import {
   IconSeedling,
   IconTruck,
@@ -50,7 +51,7 @@ const STANDARD_STEPS = [
 
 const ROLE_GUIDES = [
   {
-    role: 'Nông trại (Farmer)',
+    role: 'Nông trại',
     icon: <IconSeedling />,
     color: '#73932A',
     actions: [
@@ -61,7 +62,7 @@ const ROLE_GUIDES = [
     ]
   },
   {
-    role: 'Vận chuyển & Phân phối (Distributor)',
+    role: 'Vận chuyển & Phân phối',
     icon: <IconTruck />,
     color: '#2B6CB0',
     actions: [
@@ -72,7 +73,7 @@ const ROLE_GUIDES = [
     ]
   },
   {
-    role: 'Cơ sở chế biến (Processor)',
+    role: 'Cơ sở chế biến',
     icon: <IconIndustry />,
     color: '#C05621',
     actions: [
@@ -83,13 +84,13 @@ const ROLE_GUIDES = [
     ]
   },
   {
-    role: 'Quản trị viên (Admin)',
+    role: 'Quản trị viên',
     icon: <IconShield />,
     color: '#4A5568',
     actions: [
       'Duyệt và kích hoạt tài khoản đối tác mới gia nhập chuỗi.',
       'Gán phân quyền đơn vị (HTX Nông trại, Xưởng chế biến, Công ty vận tải).',
-      'Tra soát kiểm toán chuỗi băm mật mã SHA-256 (Audit Logs).',
+      'Tra soát kiểm toán chuỗi băm mật mã SHA-256.',
       'Khóa tài khoản vi phạm hoặc có dấu hiệu gian lận thương mại.'
     ]
   }
@@ -194,7 +195,7 @@ export function HelpView() {
               <div key={step.step} className="step-guide-card">
                 <div className="step-card-num-badge">{step.step}</div>
                 <h3 className="step-card-heading">{step.name}</h3>
-                <span className="step-card-role-tag">{step.role}</span>
+                <span className="step-card-role-tag">{ROLE_LABELS_VI[step.role] || step.role}</span>
                 <p className="step-card-desc">{step.desc}</p>
               </div>
             ))}

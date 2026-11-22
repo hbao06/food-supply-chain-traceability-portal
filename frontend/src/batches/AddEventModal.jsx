@@ -5,6 +5,7 @@ import {
   SUPPLY_CHAIN_STEPS,
   NEXT_EVENT_MAP,
   EVENT_ROLE_MAP,
+  ROLE_LABELS_VI,
   canUserAddEvent,
 } from './batchConstants.js'
 import { BatchStatusBadge } from './BatchStatusBadge.jsx'
@@ -21,8 +22,7 @@ import {
 function getCurrentLocalDateTime() {
   const now = new Date()
   const offset = now.getTimezoneOffset() * 60000
-  const localISOTime = new Date(now.getTime() - offset).toISOString().slice(0, 16)
-  return localISOTime
+  return new Date(now.getTime() - offset).toISOString().slice(0, 16)
 }
 
 const LOCATION_PRESETS = {
@@ -62,25 +62,18 @@ export function AddEventModal({
   batch,
   user,
   token,
-  preview = false,
   onSuccess,
   onClose,
 }) {
   const permission = canUserAddEvent(user, batch)
   const defaultNextType = permission.nextType || NEXT_EVENT_MAP[batch?.currentStatus] || 'TRANSPORTED'
+  const actorOrganization =
+    user?.organizationName ||
+    user?.organization?.name ||
+    (user?.organizationId ? `Đơn vị #${user.organizationId}` : 'Chưa gán đơn vị')
 
   const [eventType, setEventType] = useState(defaultNextType)
-  const [organizationName, setOrganizationName] = useState(
-    user?.organizationName ||
-      user?.organization?.name ||
-      (user?.role === 'DISTRIBUTOR'
-        ? 'Công ty Vận tải & Logistics Mekong'
-        : user?.role === 'PROCESSOR'
-        ? 'Nhà máy Chế biến Thực phẩm Đạt Chuẩn'
-        : 'Đơn vị phụ trách chuỗi cung ứng')
-  )
   const [location, setLocation] = useState('')
-  const [timestamp, setTimestamp] = useState(getCurrentLocalDateTime)
   const [description, setDescription] = useState('')
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
@@ -90,6 +83,7 @@ export function AddEventModal({
 
   const targetMeta = STATUS_META[eventType] || {}
   const presets = LOCATION_PRESETS[eventType] || []
+  const currentTimeDisplay = getCurrentLocalDateTime()
 
   function validate() {
     const errs = {}
@@ -100,9 +94,6 @@ export function AddEventModal({
       errs.location = 'Địa điểm diễn ra sự kiện không được để trống.'
     } else if (location.trim().length > 255) {
       errs.location = 'Địa điểm tối đa 255 ký tự.'
-    }
-    if (!organizationName.trim()) {
-      errs.organizationName = 'Tên đơn vị thực hiện không được để trống.'
     }
     if (description && description.length > 1000) {
       errs.description = 'Mô tả tối đa 1000 ký tự.'
@@ -117,7 +108,6 @@ export function AddEventModal({
     if (!validate()) return
 
     setSubmitting(true)
-    const eventTimeIso = timestamp ? new Date(timestamp).toISOString() : new Date().toISOString()
     const payload = {
       eventType,
       location: location.trim(),
@@ -125,49 +115,22 @@ export function AddEventModal({
     }
 
     try {
-      let createdEvent = null
-      let updatedBatch = null
-
-      if (preview || !token) {
-        // Mock / Preview Mode
-        await new Promise((r) => setTimeout(r, 400))
-        createdEvent = {
-          eventId: Date.now(),
-          batchId: batch.batchId,
-          actorId: user?.userId || 99,
-          actorName: user?.name || 'Cán bộ kiểm định',
-          organizationName: organizationName.trim(),
-          role: user?.role || 'DISTRIBUTOR',
-          eventType,
-          timestamp: eventTimeIso,
-          location: location.trim(),
-          description: description.trim() || undefined,
-        }
-        updatedBatch = {
-          ...batch,
-          currentStatus: eventType,
-        }
-      } else {
-        // Call Real API
-        createdEvent = await api.createEvent(token, batch.batchId, payload)
-        // Augment with display fields if backend returns minimal DTO
-        if (!createdEvent.organizationName) {
-          createdEvent.organizationName = organizationName.trim()
-        }
-        if (!createdEvent.actorName && user?.name) {
-          createdEvent.actorName = user.name
-        }
-        updatedBatch = {
-          ...batch,
-          currentStatus: eventType,
-        }
+      const createdEvent = await api.createEvent(token, batch.batchId, payload)
+      if (!createdEvent.organizationName && user?.organizationName) {
+        createdEvent.organizationName = user.organizationName
+      }
+      if (!createdEvent.actorName && user?.name) {
+        createdEvent.actorName = user.name
+      }
+      const updatedBatch = {
+        ...batch,
+        currentStatus: eventType,
       }
 
       if (onSuccess) {
         onSuccess(createdEvent, updatedBatch)
       }
     } catch (err) {
-      console.error('Lỗi ghi nhận sự kiện:', err)
       setSubmitError(
         err instanceof ApiError ? errorMessage(err) : 'Không thể ghi nhận sự kiện. Vui lòng thử lại.'
       )
@@ -216,7 +179,6 @@ export function AddEventModal({
         )}
 
         <form onSubmit={handleSubmit} noValidate className="add-event-form">
-          {/* 1. Chọn loại sự kiện kế tiếp */}
           <div className="form-group">
             <label className="field-label" htmlFor="event-type-select">
               1. Loại sự kiện chuỗi cung ứng <span className="req-star">*</span>
@@ -227,7 +189,8 @@ export function AddEventModal({
                   const isNext = step.type === defaultNextType
                   const isSelected = step.type === eventType
                   const allowedRoles = EVENT_ROLE_MAP[step.type] || []
-                  const isRoleMatch = allowedRoles.includes(user?.role) || (!user && preview)
+                  const isRoleMatch = allowedRoles.includes(user?.role)
+                  const roleNames = allowedRoles.map((r) => ROLE_LABELS_VI[r] || r).join(' / ')
 
                   return (
                     <button
@@ -250,7 +213,7 @@ export function AddEventModal({
                         <strong className="pick-title">{step.label}</strong>
                         {isNext ? <span className="pick-chip-next">Bước kế tiếp</span> : <span className="pick-chip-locked">Đã khóa</span>}
                       </div>
-                      <span className="pick-role">Phụ trách: {allowedRoles.join(' / ')}</span>
+                      <span className="pick-role">Phụ trách: {roleNames}</span>
                     </button>
                   )
                 })}
@@ -266,49 +229,39 @@ export function AddEventModal({
           </div>
 
           <div className="form-row-2col">
-            {/* 2. Đơn vị thực hiện */}
             <div className="field">
               <label htmlFor="event-org">
-                2. Đơn vị phụ trách thực hiện <span className="req-star">*</span>
+                2. Đơn vị phụ trách thực hiện
               </label>
               <div className="input-wrap with-leading-icon">
                 <span className="leading-icon"><IconBuilding /></span>
                 <input
                   id="event-org"
                   type="text"
-                  value={organizationName}
-                  onChange={(e) => {
-                    setOrganizationName(e.target.value)
-                    setErrors((prev) => ({ ...prev, organizationName: '' }))
-                  }}
-                  placeholder="VD: Công ty Vận tải Mekong Xanh"
-                  aria-invalid={Boolean(errors.organizationName)}
+                  value={actorOrganization}
+                  readOnly
                 />
               </div>
-              {errors.organizationName && (
-                <span className="field-error">{errors.organizationName}</span>
-              )}
+              <span className="field-hint">Tự động lấy theo đơn vị của tài khoản đang đăng nhập.</span>
             </div>
 
-            {/* 3. Thời gian diễn ra */}
             <div className="field">
               <label htmlFor="event-timestamp">
-                3. Thời gian diễn ra <span className="req-star">*</span>
+                3. Thời gian ghi nhận
               </label>
               <div className="input-wrap with-leading-icon">
                 <span className="leading-icon"><IconClock /></span>
                 <input
                   id="event-timestamp"
                   type="datetime-local"
-                  value={timestamp}
-                  onChange={(e) => setTimestamp(e.target.value)}
+                  value={currentTimeDisplay}
+                  readOnly
                 />
               </div>
-              <span className="field-hint">Mặc định là thời điểm hiện tại.</span>
+              <span className="field-hint">Máy chủ tự động đóng dấu thời gian khi lưu.</span>
             </div>
           </div>
 
-          {/* 4. Địa điểm diễn ra */}
           <div className="field">
             <label htmlFor="event-location">
               4. Địa điểm cụ thể <span className="req-star">*</span>
@@ -333,7 +286,6 @@ export function AddEventModal({
               <span className="public-notice-text">Địa điểm này sẽ hiển thị trên Cổng tra cứu nguồn gốc cho người tiêu dùng.</span>
             </div>
 
-            {/* Gợi ý địa điểm nhanh */}
             {presets.length > 0 && (
               <div className="quick-presets-box">
                 <span className="presets-title">Gợi ý địa điểm nhanh:</span>
@@ -356,10 +308,9 @@ export function AddEventModal({
             )}
           </div>
 
-          {/* 5. Mô tả chi tiết / Thông số kiểm định */}
           <div className="field">
             <label htmlFor="event-description">
-              5. Mô tả chi tiết & Ghi chú nghiệp vụ (Tùy chọn)
+              5. Mô tả chi tiết &amp; Ghi chú nghiệp vụ (Tùy chọn)
             </label>
             <textarea
               id="event-description"
@@ -370,17 +321,16 @@ export function AddEventModal({
                 setDescription(e.target.value)
                 setErrors((prev) => ({ ...prev, description: '' }))
               }}
-              placeholder="VD: Hàng được vận chuyển bằng container lạnh ở dải nhiệt độ 4-6°C. Biên bản kiểm định chất lượng số 182/KCS-2026 đạt yêu cầu."
+              placeholder="VD: Hàng được vận chuyển bằng container lạnh ở dải nhiệt độ 4-6°C. Biên bản kiểm định chất lượng đạt yêu cầu."
               aria-invalid={Boolean(errors.description)}
             />
             {errors.description && <span className="field-error">{errors.description}</span>}
             <div className="field-public-notice">
               <span className="public-notice-pill">Nội dung công khai</span>
-              <span className="public-notice-text">Mô tả và thông số kiểm định sẽ hiển thị công khai trên Cổng tra cứu. Vui lòng không ghi thông tin bí mật nội bộ.</span>
+              <span className="public-notice-text">Mô tả chỉ hiển thị nội bộ chuỗi cung ứng; vui lòng không ghi thông tin cá nhân nhạy cảm.</span>
             </div>
           </div>
 
-          {/* Footer Actions */}
           <footer className="modal-footer">
             <button
               type="button"
