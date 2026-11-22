@@ -5,7 +5,7 @@ import {
   BATCH_STATUSES,
   STATUS_META,
   formatQuantity,
-  productImage,
+  resolveBatchImage,
 } from '../batches/batchConstants.js'
 import { useBatches } from '../hooks/useBatches.js'
 import {
@@ -388,7 +388,7 @@ export function PipelineView({ token, user, onOpenBatch, navigate }) {
                     >
                       <div className="kanban-card-top">
                         <img
-                          src={productImage(b.productName)}
+                          src={resolveBatchImage(b)}
                           alt=""
                           loading="lazy"
                           className="kanban-product-thumb"

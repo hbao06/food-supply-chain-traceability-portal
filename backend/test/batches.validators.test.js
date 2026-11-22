@@ -71,3 +71,13 @@ test('batchId trên đường dẫn: số nguyên dương, còn lại 400', () =
     assert.throws(() => v.parseBatchId(bad), ValidationError, String(bad));
   }
 });
+test('tạo & sửa lô: chấp nhận ảnh hợp lệ (data URL / http(s) / /products/...) và chặn giao thức nguy hiểm', () => {
+  const dataImg = 'data:image/jpeg;base64,/9j/4AAQSkZJRg==';
+  assert.equal(v.validateCreateBatch({ productName: 'Nhãn xuồng', origin: 'Mỹ Đức', quantity: 100, imageUrl: dataImg }).imageUrl, dataImg);
+  assert.equal(v.validateCreateBatch({ productName: 'Nhãn xuồng', origin: 'Mỹ Đức', quantity: 100, imageUrl: '/products/coffee.jpg' }).imageUrl, '/products/coffee.jpg');
+  assert.equal(v.validateCreateBatch({ productName: 'Nhãn xuồng', origin: 'Mỹ Đức', quantity: 100, imageUrl: 'https://example.com/nhan.jpg' }).imageUrl, 'https://example.com/nhan.jpg');
+  assert.deepEqual(v.validateUpdateBatch({ imageUrl: null }), { imageUrl: null });
+  for (const bad of ['javascript:alert(1)', 'data:image/svg+xml;base64,PHN2Zz4=', 'ftp://x/a.jpg', 123]) {
+    assert.deepEqual(fieldsOf(() => v.validateCreateBatch({ productName: 'A', origin: 'B', quantity: 1, imageUrl: bad })), ['imageUrl']);
+  }
+});

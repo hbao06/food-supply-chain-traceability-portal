@@ -6,6 +6,7 @@ import {
   STATUS_META,
   formatDateTime,
   formatRelativeTime,
+  resolveBatchImage,
 } from '../batches/batchConstants.js'
 import { PublicFooter } from '../components/BrandAndFooter.jsx'
 import {
@@ -318,6 +319,13 @@ export function PublicTraceResult({
               <div className="public-trace-layout">
                 <aside className="public-batch-info-col">
                   <section className="public-batch-info-card" aria-labelledby="public-batch-info-heading">
+                    <div className="public-product-media">
+                      <img
+                        src={resolveBatchImage(state.data)}
+                        alt={state.data.productName}
+                        onError={(e) => { e.currentTarget.src = '/products/warehouse.jpg' }}
+                      />
+                    </div>
                     <div className="public-card-header">
                       <h2 id="public-batch-info-heading">Hồ sơ lô sản phẩm</h2>
                       <code className="batch-code-tag">{state.data.batchCode}</code>

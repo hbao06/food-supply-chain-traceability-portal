@@ -1090,6 +1090,9 @@ components:
           maximum: 9999999999.99
           multipleOf: 0.01
           example: 500
+        imageUrl:
+          type: [string, "null"]
+          description: Optional product image (public URL, /products/... path, or compressed JPG/PNG/WebP data URL)
 
     UpdateBatchRequest:
       type: object
@@ -1108,6 +1111,9 @@ components:
           exclusiveMinimum: 0
           maximum: 9999999999.99
           multipleOf: 0.01
+        imageUrl:
+          type: [string, "null"]
+          description: Optional product image URL or compressed image data URL (null removes image)
 
     Batch:
       type: object
@@ -1139,6 +1145,9 @@ components:
         organizationId:
           type: integer
           format: int64
+        imageUrl:
+          type: [string, "null"]
+          description: Product image URL or compressed image data URL
           description: Organization that owns the batch
 
     BatchPage:
@@ -1250,6 +1259,8 @@ components:
           type: [string, "null"]
         currentStatus:
           $ref: "#/components/schemas/EventType"
+        imageUrl:
+          type: [string, "null"]
 
     PublicTrace:
       type: object
@@ -1269,6 +1280,8 @@ components:
           description: Name of the organization that created the batch
         currentStatus:
           $ref: "#/components/schemas/EventType"
+        imageUrl:
+          type: [string, "null"]
         events:
           type: array
           description: From oldest to newest
@@ -1296,6 +1309,9 @@ components:
         organizationId:
           type: integer
           format: int64
+        imageUrl:
+          type: [string, "null"]
+          description: Product image URL or compressed image data URL
         name:
           type: string
           example: Nong trai Dak Lak
@@ -1380,6 +1396,9 @@ components:
         organizationId:
           type: integer
           format: int64
+        imageUrl:
+          type: [string, "null"]
+          description: Product image URL or compressed image data URL
           description: Optional. Set the organization in the same request when the new role needs another organization type.
 
     AssignOrganizationRequest:
@@ -1389,6 +1408,9 @@ components:
         organizationId:
           type: integer
           format: int64
+        imageUrl:
+          type: [string, "null"]
+          description: Product image URL or compressed image data URL
 
     ChangeStatusRequest:
       type: object

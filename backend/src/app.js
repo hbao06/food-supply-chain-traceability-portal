@@ -27,6 +27,8 @@ const app = express();
 app.disable("x-powered-by");
 app.use(securityHeaders);
 app.use(cors(buildCorsOptions())); // W7-TV3: chỉ nguồn trong CORS_ORIGIN (mặc định frontend localhost:5173)
+// Route tạo/sửa lô có thể đính kèm ảnh sản phẩm nén (tối đa ~2 MB); các route còn lại giữ giới hạn 100 KB.
+app.use("/api/batches", express.json({ limit: "3mb" }));
 app.use(express.json({ limit: "100kb" }));
 
 // Giới hạn tần suất (W4-TV3, SRS P6). Cấu hình bằng .env; tắt khi NODE_ENV=test hoặc RATE_LIMIT_DISABLED=true.

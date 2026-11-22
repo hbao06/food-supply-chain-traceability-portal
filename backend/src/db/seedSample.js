@@ -29,11 +29,11 @@ const USERS = [
 ];
 
 const PRODUCTS = [
-  { key: 'coffee', org: 'farmCoffee', name: 'Cà phê Arabica Cầu Đất', category: 'Cà phê', unit: 'kg', description: 'Cà phê Arabica trồng ở độ cao 1.600 m, sơ chế ướt đạt chuẩn VietGAP' },
-  { key: 'rice', org: 'farmRice', name: 'Gạo ST25 Sóc Trăng', category: 'Lúa gạo', unit: 'kg', description: 'Gạo ST25 canh tác luân canh tôm - lúa theo quy trình hữu cơ' },
-  { key: 'cashew', org: 'farmCashew', name: 'Hạt điều rang muối Bình Phước', category: 'Hạt dinh dưỡng', unit: 'kg', description: 'Hạt điều nguyên hạt cỡ W240 rang củi truyền thống' },
-  { key: 'dragon', org: 'farmDragon', name: 'Thanh long ruột đỏ Chợ Gạo', category: 'Trái cây', unit: 'kg', description: 'Thanh long ruột đỏ đạt chuẩn VietGAP, độ ngọt Brix 15' },
-  { key: 'tea', org: 'farmTea', name: 'Chè Ô Long Mộc Châu', category: 'Trà', unit: 'kg', description: 'Chè Ô Long búp một tôm hai lá thu hái trên cao nguyên Mộc Châu' },
+  { key: 'coffee', org: 'farmCoffee', name: 'Cà phê Arabica Cầu Đất', category: 'Cà phê', unit: 'kg', imageUrl: '/products/coffee.jpg', description: 'Cà phê Arabica trồng ở độ cao 1.600 m, sơ chế ướt đạt chuẩn VietGAP' },
+  { key: 'rice', org: 'farmRice', name: 'Gạo ST25 Sóc Trăng', category: 'Lúa gạo', unit: 'kg', imageUrl: '/products/rice.jpg', description: 'Gạo ST25 canh tác luân canh tôm - lúa theo quy trình hữu cơ' },
+  { key: 'cashew', org: 'farmCashew', name: 'Hạt điều rang muối Bình Phước', category: 'Hạt dinh dưỡng', unit: 'kg', imageUrl: '/products/cashew.jpg', description: 'Hạt điều nguyên hạt cỡ W240 rang củi truyền thống' },
+  { key: 'dragon', org: 'farmDragon', name: 'Thanh long ruột đỏ Chợ Gạo', category: 'Trái cây', unit: 'kg', imageUrl: '/products/dragonfruit.jpg', description: 'Thanh long ruột đỏ đạt chuẩn VietGAP, độ ngọt Brix 15' },
+  { key: 'tea', org: 'farmTea', name: 'Chè Ô Long Mộc Châu', category: 'Trà', unit: 'kg', imageUrl: '/products/tea.jpg', description: 'Chè Ô Long búp một tôm hai lá thu hái trên cao nguyên Mộc Châu' },
 ];
 
 const BATCHES = [
@@ -106,12 +106,13 @@ const BATCHES = [
 
 async function insertSampleBatch(db, b, { orgId, userId, productId, qr, now, audit }) {
   const farmer = USERS.find((u) => u.key === b.farmer);
+  const product = PRODUCTS.find((p) => p.key === b.product);
   const createdAt = new Date(now.getTime() - b.days * DAY);
 
   const r = await db.query(
-    `INSERT INTO batches (batch_code, product_id, origin, quantity, creation_date, created_by, organization_id)
-     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING batch_id`,
-    [b.code, productId[b.product], b.origin, b.quantity, createdAt.toISOString(), userId[b.farmer], orgId[farmer.org]]
+    `INSERT INTO batches (batch_code, product_id, origin, quantity, image_url, creation_date, created_by, organization_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING batch_id`,
+    [b.code, productId[b.product], b.origin, b.quantity, product?.imageUrl || null, createdAt.toISOString(), userId[b.farmer], orgId[farmer.org]]
   );
   const batchId = Number(r.rows[0].batch_id);
   await audit(userId[b.farmer], 'BATCH', batchId, { batchCode: b.code, quantity: b.quantity });

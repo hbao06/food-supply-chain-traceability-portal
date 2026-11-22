@@ -133,6 +133,7 @@ export function sanitizePublicTrace(raw) {
     origin: raw.origin ? String(raw.origin) : '—',
     organizationName: raw.organizationName ? String(raw.organizationName) : 'Đơn vị sản xuất',
     currentStatus: BATCH_STATUSES.includes(inferredStatus) ? inferredStatus : String(inferredStatus),
+    imageUrl: typeof raw.imageUrl === 'string' && raw.imageUrl.trim() ? raw.imageUrl.trim() : null,
     events,
   }
 }

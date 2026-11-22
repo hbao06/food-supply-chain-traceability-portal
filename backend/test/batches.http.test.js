@@ -138,7 +138,7 @@ test('TC-FR-01: A Farmer ACTIVE tạo lô đúng DTO, QR, CREATED và 3 audit �
   assert.equal(result.status, 201);
   assert.match(result.body.batchCode, new RegExp(`^FR-${new Date().getFullYear()}-\\d{4}$`));
   assert.deepEqual(result.body, { ...input, batchId: 1, batchCode: result.body.batchCode,
-    creationDate: rows[0].creation_date, currentStatus: 'CREATED', createdBy: 10, organizationId: 1 });
+    creationDate: rows[0].creation_date, currentStatus: 'CREATED', createdBy: 10, organizationId: 1, imageUrl: null });
   assert.equal(qrs.length, 1); assert.equal(Number(qrs[0].batch_id), result.body.batchId);
   assert.equal(events.length, 1); assert.equal(events[0].event_type, 'CREATED');
   assert.equal(audits.length, 3);

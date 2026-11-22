@@ -16,6 +16,7 @@ function toPublicBatchSummary(batch) {
     origin: batch.origin,
     organizationName: batch.organization_name ?? null,
     currentStatus: batch.current_status,
+    imageUrl: batch.image_url ?? null,
   };
 }
 

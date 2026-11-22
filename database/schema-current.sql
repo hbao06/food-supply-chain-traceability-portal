@@ -1,11 +1,10 @@
 -- =============================================================================
 -- schema-current.sql – TỰ SINH, KHÔNG SỬA TAY (database/scripts/dump-schema.sh)
--- Toàn bộ schema sau migration 001 → 008 (008_batch_code_fr_prefix.sql), chỉ để ĐỌC / tra cứu.
+-- Toàn bộ schema sau migration 001 → 009 (009_batch_product_image.sql), chỉ để ĐỌC / tra cứu.
 -- Tạo CSDL thật bằng: cd backend && npm run db:migrate   (không chạy file này)
 -- Chỉ có cấu trúc (bảng, ràng buộc, trigger, hàm, view, chỉ mục, quyền); KHÔNG có dữ liệu của
 -- bảng tra cứu roles, event_types – dữ liệu đó nằm trong migration 002, 004.
 -- =============================================================================
-
 --
 -- PostgreSQL database dump
 --
@@ -13,6 +12,7 @@
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
@@ -553,7 +553,9 @@ CREATE TABLE public.batches (
     organization_id bigint NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     product_id bigint,
+    image_url text,
     CONSTRAINT chk_batches_batch_code_format CHECK (((batch_code)::text ~ '^FR-[0-9]{4}-[0-9]{4,}$'::text)),
+    CONSTRAINT chk_batches_image_url_format CHECK (((image_url IS NULL) OR (image_url ~ '^(https?://|/products/|data:image/(jpeg|jpg|png|webp);base64,)'::text))),
     CONSTRAINT chk_batches_origin_not_blank CHECK ((btrim((origin)::text) <> ''::text)),
     CONSTRAINT chk_batches_product_not_blank CHECK ((btrim((product_name)::text) <> ''::text)),
     CONSTRAINT chk_batches_quantity_positive CHECK ((quantity > (0)::numeric))
@@ -594,6 +596,12 @@ COMMENT ON COLUMN public.batches.organization_id IS 'Đơn vị sở hữu lô �
 --
 
 COMMENT ON COLUMN public.batches.product_id IS 'Sản phẩm trong danh mục (không bắt buộc). Phải thuộc cùng nông trại với lô.';
+
+--
+-- Name: COLUMN batches.image_url; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.batches.image_url IS 'Ảnh sản phẩm của lô (URL công khai, đường dẫn /products/... hoặc data URL ảnh nén).';
 
 --
 -- Name: batches_batch_id_seq; Type: SEQUENCE; Schema: public; Owner: -
@@ -763,7 +771,8 @@ CREATE VIEW public.public_batch_trace AS
     b.product_name,
     b.origin,
     o.name AS organization_name,
-    b.current_status
+    b.current_status,
+    b.image_url
    FROM (public.batches b
      JOIN public.organizations o ON ((o.organization_id = b.organization_id)));
 

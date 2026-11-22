@@ -28,7 +28,7 @@ function setup() {
   return { calls, service: createTraceService({ db: {}, repo, qr }) };
 }
 
-const PUBLIC_KEYS = ['batchCode', 'currentStatus', 'events', 'organizationName', 'origin', 'productName'];
+const PUBLIC_KEYS = ['batchCode', 'currentStatus', 'events', 'imageUrl', 'organizationName', 'origin', 'productName'];
 const EVENT_KEYS = ['eventType', 'location', 'organizationName', 'timestamp'];
 
 test('tra cứu theo mã lô: trả đúng các trường công khai', async () => {
@@ -127,7 +127,7 @@ test('recent: trả danh sách lô công khai mới nhất, giới hạn 1..12 v
   const resDefault = await service.recent();
   assert.equal(receivedLimits[0], 6);
   assert.equal(resDefault.items.length, 1);
-  assert.deepEqual(Object.keys(resDefault.items[0]).sort(), ['batchCode', 'currentStatus', 'organizationName', 'origin', 'productName']);
+  assert.deepEqual(Object.keys(resDefault.items[0]).sort(), ['batchCode', 'currentStatus', 'imageUrl', 'organizationName', 'origin', 'productName']);
   assert.equal(resDefault.items[0].batchCode, 'FR-2026-0005');
 
   await service.recent({ limit: '50' });

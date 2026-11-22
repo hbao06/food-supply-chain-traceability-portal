@@ -9,6 +9,7 @@ import {
   formatDateOnly,
   formatDateTime,
   productImage,
+  resolveBatchImage,
 } from '../src/batches/batchConstants.js'
 
 test('batchConstants - 6 canonical statuses exist in order', () => {
@@ -74,4 +75,18 @@ test('batchConstants - productImage maps Vietnamese product names to assets', ()
   assert.equal(productImage('Hạt điều rang muối Bình Phước'), '/products/cashew.jpg')
   assert.equal(productImage('Thanh long ruột đỏ Chợ Gạo'), '/products/dragonfruit.jpg')
   assert.equal(productImage('Chè Ô Long Mộc Châu'), '/products/tea.jpg')
+})
+test('batchConstants - resolveBatchImage prefers explicit imageUrl over keyword fallback', () => {
+  assert.equal(
+    resolveBatchImage({ productName: 'Nhãn xuồng Mỹ Đức', imageUrl: 'https://example.com/nhan.jpg' }),
+    'https://example.com/nhan.jpg'
+  )
+  assert.equal(
+    resolveBatchImage('Nhãn xuồng Mỹ Đức', 'data:image/jpeg;base64,/9j/4AAQ'),
+    'data:image/jpeg;base64,/9j/4AAQ'
+  )
+  assert.equal(
+    resolveBatchImage({ productName: 'Cà phê Arabica', imageUrl: null }),
+    '/products/coffee.jpg'
+  )
 })

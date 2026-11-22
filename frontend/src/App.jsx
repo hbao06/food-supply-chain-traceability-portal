@@ -23,6 +23,7 @@ import {
   STATUS_META,
   formatDateOnly,
   formatQuantity,
+  resolveBatchImage,
 } from './batches/batchConstants.js'
 import {
   IconDashboard,
@@ -1120,7 +1121,15 @@ function Workspace({
                                 <code className="batch-code-tag">{b.batchCode}</code>
                               </td>
                               <td className="cell-product-name">
-                                <strong>{b.productName}</strong>
+                                <div className="product-cell-media">
+                                  <img
+                                    className="product-cell-thumb"
+                                    src={resolveBatchImage(b)}
+                                    alt={b.productName}
+                                    onError={(e) => { e.currentTarget.src = '/products/warehouse.jpg' }}
+                                  />
+                                  <strong>{b.productName}</strong>
+                                </div>
                               </td>
                               <td className="cell-quantity text-right">
                                 <span className="quantity-val">{formatQuantity(b.quantity)}</span>

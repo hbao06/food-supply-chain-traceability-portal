@@ -11,6 +11,7 @@ import {
   formatDateTime,
   formatQuantity,
   canUserAddEvent,
+  resolveBatchImage,
 } from './batchConstants.js'
 import {
   IconEdit,
@@ -197,7 +198,15 @@ export function BatchDetail({
 
       {/* Compact Hero Header */}
       <header className="detail-hero">
-        <div className="detail-hero-left">
+        <div className="detail-hero-left-group">
+          <div className="detail-product-thumb">
+            <img
+              src={resolveBatchImage(batch)}
+              alt={batch.productName}
+              onError={(e) => { e.currentTarget.src = '/products/warehouse.jpg' }}
+            />
+          </div>
+          <div className="detail-hero-left">
           <div className="hero-tags">
             <button type="button" className="hero-code-badge" onClick={handleCopyCode} title="Bấm để sao chép mã">
               <code>{batch.batchCode}</code>
@@ -211,6 +220,7 @@ export function BatchDetail({
             <span className="hero-sep">·</span>
             Sản lượng: <strong>{formatQuantity(batch.quantity)}</strong>
           </p>
+          </div>
         </div>
 
         <div className="detail-hero-actions">

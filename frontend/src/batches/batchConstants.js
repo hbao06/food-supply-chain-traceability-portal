@@ -209,3 +209,14 @@ export function productImage(name = '') {
   if (/\b(che|tra)\b/.test(n)) return '/products/tea.jpg'
   return '/products/warehouse.jpg'
 }
+
+export function resolveBatchImage(batchOrName, explicitUrl) {
+  if (batchOrName && typeof batchOrName === 'object') {
+    const url = typeof batchOrName.imageUrl === 'string' ? batchOrName.imageUrl.trim() : ''
+    if (url) return url
+    return productImage(batchOrName.productName || '')
+  }
+  const url = typeof explicitUrl === 'string' ? explicitUrl.trim() : ''
+  if (url) return url
+  return productImage(batchOrName || '')
+}

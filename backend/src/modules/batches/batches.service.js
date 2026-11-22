@@ -15,6 +15,7 @@ function toBatchDto(row) {
     currentStatus: row.current_status,
     createdBy: Number(row.created_by),
     organizationId: Number(row.organization_id),
+    imageUrl: row.image_url ?? null,
   };
 }
 
@@ -39,7 +40,14 @@ function createBatchService({ db, withTransaction, repo, qr, insertAudit }) {
 
       const dto = toBatchDto(row);
       await insertAudit(tx, { actorId: auth.userId, action: 'CREATE', entityType: 'BATCH', entityId: batchId,
-        newValue: { batchCode, productName: dto.productName, origin: dto.origin, quantity: dto.quantity, organizationId: dto.organizationId } });
+        newValue: {
+          batchCode,
+          productName: dto.productName,
+          origin: dto.origin,
+          quantity: dto.quantity,
+          organizationId: dto.organizationId,
+          hasImage: Boolean(dto.imageUrl),
+        } });
       await insertAudit(tx, { actorId: auth.userId, action: 'CREATE', entityType: 'QR_CODE', entityId: Number(qrRow.qr_id),
         newValue: { batchId } });
       await insertAudit(tx, { actorId: auth.userId, action: 'CREATE', entityType: 'EVENT', entityId: Number(event.event_id),
@@ -67,16 +75,28 @@ function createBatchService({ db, withTransaction, repo, qr, insertAudit }) {
       if (row.current_status !== 'CREATED') {
         throw new ConflictError('BATCH_NOT_EDITABLE', `Lô đã chuyển sang trạng thái ${row.current_status}, không thể sửa`);
       }
-      const current = { productName: row.product_name, origin: row.origin, quantity: Number(row.quantity) };
+      const current = {
+        productName: row.product_name,
+        origin: row.origin,
+        quantity: Number(row.quantity),
+        imageUrl: row.image_url ?? null,
+      };
       const diff = {};
       for (const [field, value] of Object.entries(changes)) if (current[field] !== value) diff[field] = value;
       if (Object.keys(diff).length === 0) return toBatchDto(row); // không đổi gì thì không ghi audit
 
       const updated = await repo.updateBatch(tx, batchId, diff);
+      const auditSummarize = (obj) => {
+        const out = {};
+        for (const [k, v] of Object.entries(obj)) {
+          out[k] = k === 'imageUrl' ? (v ? (v.startsWith('data:') ? '[uploaded-image]' : v) : null) : v;
+        }
+        return out;
+      };
       const oldValue = {};
       for (const field of Object.keys(diff)) oldValue[field] = current[field];
       await insertAudit(tx, { actorId: auth.userId, action: 'UPDATE', entityType: 'BATCH', entityId: batchId,
-        oldValue, newValue: diff });
+        oldValue: auditSummarize(oldValue), newValue: auditSummarize(diff) });
       return toBatchDto(updated);
     });
   }

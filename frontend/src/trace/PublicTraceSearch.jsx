@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { api } from '../api.js'
-import { STATUS_META, productImage } from '../batches/batchConstants.js'
+import { STATUS_META, resolveBatchImage } from '../batches/batchConstants.js'
 import { BrandLogo, PublicFooter } from '../components/BrandAndFooter.jsx'
 import { TruckIllustration, WarehouseIllustration } from '../components/Illustrations.jsx'
 import { QrScannerPanel } from './QrScannerPanel.jsx'
@@ -20,7 +20,7 @@ function buildProductDisplayMeta(batch) {
     category: statusMeta.label,
     origin: batch.origin,
     standard: orgName,
-    image: productImage(batch.productName),
+    image: resolveBatchImage(batch),
     tag: statusMeta.shortLabel || statusMeta.label,
     desc: `${statusMeta.description} Nguồn gốc: ${batch.origin}${batch.organizationName ? ` · ${batch.organizationName}` : ''}.`,
     trustPoints: [

@@ -7,6 +7,7 @@ import {
   STATUS_META,
   formatDateOnly,
   formatQuantity,
+  resolveBatchImage,
 } from './batchConstants.js'
 import {
   IconSearch,
@@ -445,7 +446,15 @@ export function BatchList({
                           <code className="batch-code-tag">{batch.batchCode}</code>
                         </td>
                         <td className="cell-product-name">
-                          <strong>{batch.productName}</strong>
+                          <div className="product-cell-media">
+                            <img
+                              className="product-cell-thumb"
+                              src={resolveBatchImage(batch)}
+                              alt={batch.productName}
+                              onError={(e) => { e.currentTarget.src = '/products/warehouse.jpg' }}
+                            />
+                            <strong>{batch.productName}</strong>
+                          </div>
                         </td>
                         <td className="cell-origin">
                           <span className="origin-text" title={batch.origin}>

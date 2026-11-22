@@ -145,3 +145,15 @@ test('traceUtils - buildTraceRoute, getTraceProgress, and recent trace API helpe
   assert.equal(p6.completedSteps, 6)
   assert.equal(p6.percent, 100)
 })
+test('traceUtils - sanitizePublicTrace preserves public imageUrl when provided', () => {
+  const withImg = sanitizePublicTrace({
+    batchCode: 'FR-2026-0009',
+    productName: 'Nhãn xuồng Mỹ Đức',
+    origin: 'Mỹ Đức, An Giang',
+    organizationName: 'HTX Nhãn Mỹ Đức',
+    currentStatus: 'CREATED',
+    imageUrl: 'https://example.com/nhan.jpg',
+    events: [],
+  })
+  assert.equal(withImg.imageUrl, 'https://example.com/nhan.jpg')
+})
