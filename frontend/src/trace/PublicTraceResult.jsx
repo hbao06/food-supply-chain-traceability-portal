@@ -130,10 +130,28 @@ export function PublicTraceResult({
 
   function handleCopyShareLink() {
     if (!shareUrl) return
-    navigator.clipboard.writeText(shareUrl).then(() => {
+    const done = () => {
       setCopiedLink(true)
       setTimeout(() => setCopiedLink(false), 2000)
-    })
+    }
+    const fallback = () => {
+      try {
+        const ta = document.createElement('textarea')
+        ta.value = shareUrl
+        ta.style.position = 'fixed'
+        ta.style.opacity = '0'
+        document.body.appendChild(ta)
+        ta.select()
+        document.execCommand('copy')
+        document.body.removeChild(ta)
+        done()
+      } catch { /* ignore */ }
+    }
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(shareUrl).then(done).catch(fallback)
+    } else {
+      fallback()
+    }
   }
 
   function handleDownloadQr() {

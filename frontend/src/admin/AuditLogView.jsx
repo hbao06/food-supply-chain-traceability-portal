@@ -271,7 +271,7 @@ export function AuditLogView({ token, onOpenBatch }) {
           <div className="kpi-sub">Lưu trữ bất biến chỉ ghi thêm</div>
         </div>
         <div className="kpi-card">
-          <div className="kpi-label">Toàn vẹn chuỗi khối</div>
+          <div className="kpi-label">Toàn vẹn chuỗi băm</div>
           <div
             className={`kpi-value ${
               verifyStatus === 'verified'

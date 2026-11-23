@@ -732,6 +732,88 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
 
+  /audit-logs/verify:
+    get:
+      tags: [Admin]
+      summary: Verify SHA-256 hash chain integrity of audit logs (and optionally one batch's events)
+      operationId: verifyAuditChain
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: batchId
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Verification result of the hash chain
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                  checkedAt:
+                    type: string
+                    format: date-time
+                  auditLog:
+                    type: object
+                    properties:
+                      checked:
+                        type: integer
+                      valid:
+                        type: boolean
+                      firstBrokenId:
+                        type: ["integer", "null"]
+                      reason:
+                        type: ["string", "null"]
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /assistant/chat:
+    post:
+      tags: [Trace]
+      summary: Public Food Trace Q&A and batch code lookup assistant
+      description: Public endpoint with IP rate limiting. Only reads public provenance fields and built-in help knowledge.
+      operationId: assistantChat
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message:
+                  type: string
+                  maxLength: 500
+      responses:
+        "200":
+          description: Assistant reply
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reply:
+                    type: string
+                  source:
+                    type: string
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
   /trace/recent:
     get:
       tags: [Trace]

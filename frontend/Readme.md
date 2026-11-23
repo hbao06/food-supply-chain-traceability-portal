@@ -25,13 +25,6 @@ The account-screen produce photograph is stored locally at
 `public/account-produce.jpg` (source: Unsplash photo
 `1542838132-92c53300491e`).
 
-The current checkout has only `GET /api/health` in its backend. Until the
-Auth/Profile backend from PR #42 is available locally and its PostgreSQL
-database is running, registration and login cannot succeed. The frontend
-shows an API-unavailable message when Vite's proxy cannot reach the backend.
-
-To review the Profile UI without an Auth backend, open
-`http://localhost:5173/profile?preview=1` while running the Vite dev server.
-This development-only preview is clearly labeled, uses sample data, does not
-call the API, and cannot save changes. A normal `/profile` visit still requires
-an authenticated session.
+Run the backend and PostgreSQL database before testing or demonstrating the
+portal end to end. All public trace and authenticated workspace screens fetch
+live data from the backend API; the old `?preview=1` mock mode has been removed.

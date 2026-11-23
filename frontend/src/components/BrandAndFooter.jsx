@@ -1,6 +1,6 @@
 import { buildTraceRoute } from '../trace/traceUtils.js'
 
-export function BrandLogo({ compact = false, invert = false }) {
+export function BrandLogo({ compact = false, invert = false, subtitle = 'Cổng Truy Xuất Nguồn Gốc Nông Sản' }) {
   return (
     <span className={`ft-brand ${invert ? 'ft-brand-invert' : ''}`}>
       <span className="ft-brand-mark" aria-hidden="true">
@@ -25,7 +25,7 @@ export function BrandLogo({ compact = false, invert = false }) {
       </span>
       <span className="ft-brand-text">
         <strong>Food Trace</strong>
-        {!compact && <small>Truy xuất nguồn gốc</small>}
+        {!compact && <small>{subtitle}</small>}
       </span>
     </span>
   )
@@ -77,8 +77,8 @@ export function PublicFooter({ navigate, recentBatches = [], footerId }) {
         <div className="footer-col-brand">
           <BrandLogo invert />
           <p className="footer-org-summary">
-            Hệ thống truy xuất nguồn gốc chuỗi cung ứng thực phẩm Việt Nam. Xây dựng nền tảng minh bạch hóa,
-            kết nối các hợp tác xã nông sản sạch đến thị trường nội địa và quốc tế.
+            Hệ thống truy xuất nguồn gốc chuỗi cung ứng thực phẩm. Minh bạch hóa thông tin từng lô hàng
+            từ nông trại, vận chuyển, chế biến đến điểm phân phối bằng mã QR và chuỗi băm SHA-256.
           </p>
           <div className="footer-cert-tags">
             <span className="cert-pill">VietGAP</span>
@@ -122,20 +122,20 @@ export function PublicFooter({ navigate, recentBatches = [], footerId }) {
             <li><button type="button" onClick={() => navigate('/login')}>Cổng đăng nhập đối tác</button></li>
             <li><button type="button" onClick={() => navigate('/register')}>Đăng ký gia nhập mạng lưới</button></li>
             <li><button type="button" onClick={() => navigate('/help')}>Quy chuẩn gắn tem FR-</button></li>
-            <li><button type="button" onClick={() => navigate('/audit-logs')}>Bảo chứng kiểm toán chuỗi khối</button></li>
+            <li><button type="button" onClick={() => navigate('/audit-logs')}>Kiểm toán chuỗi băm SHA-256</button></li>
           </ul>
         </div>
 
         <div className="footer-col-contact">
-          <h4>Đầu Mối Hỗ Trợ Kỹ Thuật</h4>
-          <p><strong>Hotline:</strong> 1900 6868 (8:00 - 18:00)</p>
-          <p><strong>Email:</strong> hotro@foodtrace.vn</p>
-          <p><strong>Trụ sở:</strong> Tầng 8, Tòa nhà Công Nghệ Xanh, Quận 1, TP. Hồ Chí Minh</p>
+          <h4>Chuẩn Xác Thực &amp; Hỗ Trợ</h4>
+          <p><strong>Định danh lô:</strong> Chuẩn mã FR-YYYY-NNNN kèm tem QR ký HMAC</p>
+          <p><strong>Toàn vẹn dữ liệu:</strong> Nhật ký bất biến liên kết chuỗi băm SHA-256</p>
+          <p><strong>Tra cứu công khai:</strong> Miễn phí, mở 24/7 và không cần đăng nhập</p>
         </div>
       </div>
 
       <div className="footer-bottom-copyright">
-        <div>© 2026 Food Trace Vietnam. Bản quyền thuộc về Đề tài Chuỗi Cung Ứng Thực Phẩm Minh Bạch.</div>
+        <div>© 2026 Food Trace. Cổng Truy Xuất Nguồn Gốc Chuỗi Cung Ứng Thực Phẩm.</div>
         <div className="footer-legal-links">
           <span>Tiêu chuẩn TCVN 12850:2019</span>
           <span>•</span>

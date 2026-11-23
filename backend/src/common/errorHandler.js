@@ -34,6 +34,15 @@ function errorHandler(err, req, res, next) { // eslint-disable-line no-unused-va
   } else if (err && err.code === '23503') { // foreign_key_violation
     status = 409;
     body = { code: 'CONFLICT', message: 'Dữ liệu liên quan không hợp lệ hoặc đang được sử dụng' };
+  } else if (
+    err &&
+    (
+      ['ECONNREFUSED', 'ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND', '57P01', '57P02', '57P03', '08001', '08006'].includes(err.code)
+      || (Array.isArray(err.errors) && err.errors.some((e) => e && ['ECONNREFUSED', 'ETIMEDOUT'].includes(e.code)))
+    )
+  ) {
+    status = 503;
+    body = { code: 'DATABASE_UNAVAILABLE', message: 'Hệ thống chưa kết nối được cơ sở dữ liệu, vui lòng thử lại sau' };
   }
 
   if (status >= 500) console.error('[error]', err); // lỗi 4xx là lỗi của người gọi, không cần log

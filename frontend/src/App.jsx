@@ -1,20 +1,31 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ApiError, api, errorMessage } from './api.js'
 import './App.css'
-import { BatchList } from './batches/BatchList.jsx'
-import { BatchDetail } from './batches/BatchDetail.jsx'
-import { BatchForm } from './batches/BatchForm.jsx'
-import { BatchQrModal } from './batches/BatchQrModal.jsx'
 import { BatchStatusBadge } from './batches/BatchStatusBadge.jsx'
-import { AuditLogView } from './admin/AuditLogView.jsx'
-import { UserManagementView } from './admin/UserManagementView.jsx'
-import { OrganizationManagementView } from './admin/OrganizationManagementView.jsx'
-import { PipelineView } from './pages/PipelineView.jsx'
-import { ReportsView } from './pages/ReportsView.jsx'
-import { QrCenterView } from './pages/QrCenterView.jsx'
-import { HelpView } from './pages/HelpView.jsx'
-import { PublicTraceSearch } from './trace/PublicTraceSearch.jsx'
-import { PublicTraceResult } from './trace/PublicTraceResult.jsx'
+
+const BatchList = lazy(() => import('./batches/BatchList.jsx').then((m) => ({ default: m.BatchList })))
+const BatchDetail = lazy(() => import('./batches/BatchDetail.jsx').then((m) => ({ default: m.BatchDetail })))
+const BatchForm = lazy(() => import('./batches/BatchForm.jsx').then((m) => ({ default: m.BatchForm })))
+const BatchQrModal = lazy(() => import('./batches/BatchQrModal.jsx').then((m) => ({ default: m.BatchQrModal })))
+const AuditLogView = lazy(() => import('./admin/AuditLogView.jsx').then((m) => ({ default: m.AuditLogView })))
+const UserManagementView = lazy(() => import('./admin/UserManagementView.jsx').then((m) => ({ default: m.UserManagementView })))
+const OrganizationManagementView = lazy(() => import('./admin/OrganizationManagementView.jsx').then((m) => ({ default: m.OrganizationManagementView })))
+const PipelineView = lazy(() => import('./pages/PipelineView.jsx').then((m) => ({ default: m.PipelineView })))
+const ReportsView = lazy(() => import('./pages/ReportsView.jsx').then((m) => ({ default: m.ReportsView })))
+const QrCenterView = lazy(() => import('./pages/QrCenterView.jsx').then((m) => ({ default: m.QrCenterView })))
+const HelpView = lazy(() => import('./pages/HelpView.jsx').then((m) => ({ default: m.HelpView })))
+const PublicTraceSearch = lazy(() => import('./trace/PublicTraceSearch.jsx').then((m) => ({ default: m.PublicTraceSearch })))
+const PublicTraceResult = lazy(() => import('./trace/PublicTraceResult.jsx').then((m) => ({ default: m.PublicTraceResult })))
+const ChatWidget = lazy(() => import('./components/ChatWidget.jsx').then((m) => ({ default: m.ChatWidget })))
+
+function ViewLoadingFallback({ label = 'Đang tải trang…' }) {
+  return (
+    <div className="state-block" role="status">
+      <div className="spinner-olive" />
+      <p>{label}</p>
+    </div>
+  )
+}
 import { buildTraceRoute, parseTraceInput, parseTraceRoute } from './trace/traceUtils.js'
 import { BrandLogo, WorkspaceFooter } from './components/BrandAndFooter.jsx'
 import {
@@ -163,7 +174,7 @@ function AuthShell({ title, subtitle, navigate, children }) {
       </main>
 
       <footer className="auth-immersive-footer">
-        © 2026 Food Trace Vietnam <span>·</span> Cổng thông tin truy xuất nguồn gốc nông sản an toàn
+        © 2026 Food Trace <span>·</span> Cổng Truy Xuất Nguồn Gốc Nông Sản
       </footer>
     </div>
   )
@@ -505,6 +516,23 @@ function Workspace({
 
   const [showNotifications, setShowNotifications] = useState(false)
   const [readNotifIds, setReadNotifIds] = useState(() => new Set())
+  const notifRef = useRef(null)
+
+  useEffect(() => {
+    if (!showNotifications) return
+    const onMouseDown = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) setShowNotifications(false)
+    }
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') setShowNotifications(false)
+    }
+    document.addEventListener('mousedown', onMouseDown)
+    window.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', onMouseDown)
+      window.removeEventListener('keydown', onKeyDown)
+    }
+  }, [showNotifications])
 
   const notifications = useMemo(() => {
     const items = []
@@ -718,7 +746,7 @@ function Workspace({
           </form>
 
           <div className="topbar-right">
-            <div className="notification-wrapper">
+            <div className="notification-wrapper" ref={notifRef}>
               <button
                 type="button"
                 className={`topbar-tool-btn ${showNotifications ? 'active' : ''}`}
@@ -838,6 +866,7 @@ function Workspace({
 
         <div className="workspace-content">
           {flash && <Notice message={flash} success />}
+          <Suspense fallback={<ViewLoadingFallback label="Đang tải màn hình…" />}>
 
           {loading ? (
             <div className="state-block" role="status">
@@ -860,28 +889,48 @@ function Workspace({
               </button>
             </div>
           ) : routeInfo.name === 'batch-new' ? (
-            <BatchForm
-              mode="create"
-              token={token}
-              user={profile}
-              onSuccess={(newBatch, msg) => {
-                navigate(`/batches/${newBatch.batchId}`)
-                if (onFlash) onFlash(msg)
-              }}
-              onCancel={() => navigate('/batches')}
-            />
+            isFarmer ? (
+              <BatchForm
+                mode="create"
+                token={token}
+                user={profile}
+                onSuccess={(newBatch, msg) => {
+                  navigate(`/batches/${newBatch.batchId}`)
+                  if (onFlash) onFlash(msg)
+                }}
+                onCancel={() => navigate('/batches')}
+              />
+            ) : (
+              <div className="state-block" role="alert">
+                <h1>Không đủ quyền truy cập</h1>
+                <p>Chỉ tài khoản Nông trại (Farmer) mới có quyền khởi tạo lô nông sản mới.</p>
+                <button className="button secondary" type="button" onClick={() => navigate('/batches')}>
+                  Quay lại danh sách lô
+                </button>
+              </div>
+            )
           ) : routeInfo.name === 'batch-edit' ? (
-            <BatchForm
-              mode="update"
-              batchId={routeInfo.batchId}
-              token={token}
-              user={profile}
-              onSuccess={(updated, msg) => {
-                navigate(`/batches/${updated.batchId}`)
-                if (onFlash) onFlash(msg)
-              }}
-              onCancel={() => navigate(`/batches/${routeInfo.batchId}`)}
-            />
+            isFarmer ? (
+              <BatchForm
+                mode="update"
+                batchId={routeInfo.batchId}
+                token={token}
+                user={profile}
+                onSuccess={(updated, msg) => {
+                  navigate(`/batches/${updated.batchId}`)
+                  if (onFlash) onFlash(msg)
+                }}
+                onCancel={() => navigate(`/batches/${routeInfo.batchId}`)}
+              />
+            ) : (
+              <div className="state-block" role="alert">
+                <h1>Không đủ quyền truy cập</h1>
+                <p>Chỉ tài khoản Nông trại (Farmer) mới có quyền chỉnh sửa lô hàng ở trạng thái Khởi tạo.</p>
+                <button className="button secondary" type="button" onClick={() => navigate(`/batches/${routeInfo.batchId}`)}>
+                  Quay lại chi tiết lô
+                </button>
+              </div>
+            )
           ) : routeInfo.name === 'batch-detail' || routeInfo.name === 'batch-timeline' ? (
             <BatchDetail
               batchId={routeInfo.batchId}
@@ -912,14 +961,44 @@ function Workspace({
           ) : routeInfo.name === 'help' ? (
             <HelpView />
           ) : routeInfo.name === 'admin-users' ? (
-            <UserManagementView token={token} currentUser={profile} />
+            isAdmin ? (
+              <UserManagementView token={token} currentUser={profile} />
+            ) : (
+              <div className="state-block" role="alert">
+                <h1>Không đủ quyền truy cập</h1>
+                <p>Chức năng quản lý tài khoản chỉ dành cho Quản trị viên.</p>
+                <button className="button secondary" type="button" onClick={() => navigate('/dashboard')}>
+                  Quay lại Tổng quan
+                </button>
+              </div>
+            )
           ) : routeInfo.name === 'admin-orgs' ? (
-            <OrganizationManagementView token={token} />
+            isAdmin ? (
+              <OrganizationManagementView token={token} />
+            ) : (
+              <div className="state-block" role="alert">
+                <h1>Không đủ quyền truy cập</h1>
+                <p>Chức năng quản lý đơn vị chỉ dành cho Quản trị viên.</p>
+                <button className="button secondary" type="button" onClick={() => navigate('/dashboard')}>
+                  Quay lại Tổng quan
+                </button>
+              </div>
+            )
           ) : routeInfo.name === 'audit-logs' ? (
-            <AuditLogView
-              token={token}
-              onOpenBatch={(id) => navigate(`/batches/${id}`)}
-            />
+            isAdmin ? (
+              <AuditLogView
+                token={token}
+                onOpenBatch={(id) => navigate(`/batches/${id}`)}
+              />
+            ) : (
+              <div className="state-block" role="alert">
+                <h1>Không đủ quyền truy cập</h1>
+                <p>Nhật ký kiểm toán và xác thực chuỗi băm SHA-256 chỉ dành cho Quản trị viên.</p>
+                <button className="button secondary" type="button" onClick={() => navigate('/dashboard')}>
+                  Quay lại Tổng quan
+                </button>
+              </div>
+            )
           ) : routeInfo.name === 'profile' ? (
             <div className="profile-page-wrap">
               <div className="page-heading-row">
@@ -1211,17 +1290,20 @@ function Workspace({
               </div>
             </div>
           )}
+          </Suspense>
         </div>
 
         <WorkspaceFooter />
       </main>
 
       {quickQrBatch && (
-        <BatchQrModal
-          batch={quickQrBatch}
-          token={token}
-          onClose={() => setQuickQrBatch(null)}
-        />
+        <Suspense fallback={null}>
+          <BatchQrModal
+            batch={quickQrBatch}
+            token={token}
+            onClose={() => setQuickQrBatch(null)}
+          />
+        </Suspense>
       )}
     </div>
   )
@@ -1293,34 +1375,33 @@ function App() {
     }
   }, [routeInfo.name])
 
+  let screen
   if (routeInfo.name === 'trace-search') {
-    return (
-      <PublicTraceSearch
-        navigate={navigate}
-        isAuthenticated={Boolean(token)}
-      />
+    screen = (
+      <Suspense fallback={<ViewLoadingFallback label="Đang tải cổng tra cứu…" />}>
+        <PublicTraceSearch
+          navigate={navigate}
+          isAuthenticated={Boolean(token)}
+        />
+      </Suspense>
     )
-  }
-
-  if (routeInfo.name === 'trace-result') {
-    return (
-      <PublicTraceResult
-        key={`${routeInfo.mode}:${routeInfo.identifier}`}
-        mode={routeInfo.mode}
-        identifier={routeInfo.identifier}
-        prefetchedTrace={navState?.prefetchedTrace || null}
-        navigate={navigate}
-        isAuthenticated={Boolean(token)}
-      />
+  } else if (routeInfo.name === 'trace-result') {
+    screen = (
+      <Suspense fallback={<ViewLoadingFallback label="Đang tải kết quả truy xuất…" />}>
+        <PublicTraceResult
+          key={`${routeInfo.mode}:${routeInfo.identifier}`}
+          mode={routeInfo.mode}
+          identifier={routeInfo.identifier}
+          prefetchedTrace={navState?.prefetchedTrace || null}
+          navigate={navigate}
+          isAuthenticated={Boolean(token)}
+        />
+      </Suspense>
     )
-  }
-
-  if (isProtected && !token) {
-    return <Login navigate={navigate} onLogin={login} flash={flash} />
-  }
-
-  if (token && (routeInfo.name === 'login' || routeInfo.name === 'register')) {
-    return (
+  } else if (isProtected && !token) {
+    screen = <Login navigate={navigate} onLogin={login} flash={flash} />
+  } else if (token && (routeInfo.name === 'login' || routeInfo.name === 'register')) {
+    screen = (
       <Workspace
         route="/dashboard"
         navigate={navigate}
@@ -1332,22 +1413,32 @@ function App() {
         onFlash={setFlash}
       />
     )
+  } else if (routeInfo.name === 'register') {
+    screen = <Register navigate={navigate} />
+  } else if (routeInfo.name === 'login') {
+    screen = <Login navigate={navigate} onLogin={login} flash={flash} />
+  } else {
+    screen = (
+      <Workspace
+        route={route}
+        navigate={navigate}
+        token={token}
+        user={user}
+        onLogout={logout}
+        onUserUpdate={setUser}
+        flash={flash}
+        onFlash={setFlash}
+      />
+    )
   }
 
-  if (routeInfo.name === 'register') return <Register navigate={navigate} />
-  if (routeInfo.name === 'login') return <Login navigate={navigate} onLogin={login} flash={flash} />
-
   return (
-    <Workspace
-      route={route}
-      navigate={navigate}
-      token={token}
-      user={user}
-      onLogout={logout}
-      onUserUpdate={setUser}
-      flash={flash}
-      onFlash={setFlash}
-    />
+    <>
+      {screen}
+      <Suspense fallback={null}>
+        <ChatWidget />
+      </Suspense>
+    </>
   )
 }
 

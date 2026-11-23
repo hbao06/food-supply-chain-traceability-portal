@@ -28,9 +28,9 @@ Kịch bản demo được xây dựng nhằm phục vụ:
 
 ## 2. Thông tin tài khoản và dữ liệu demo
 
-Hệ thống hỗ trợ cả 2 chế độ:
-- **Chế độ Preview trực tiếp (Không cần cài CSDL PostgreSQL):** Bấm nút đăng nhập nhanh 1 chạm ở trang Login hoặc truy cập `http://localhost:5173/trace?preview=1`.
-- **Chế độ kết nối Backend:** Đăng nhập bằng email và mật khẩu bên dưới.
+Hệ thống chạy trực tiếp với Backend và CSDL PostgreSQL thật (đã gỡ chế độ `?preview=1` dùng dữ liệu giả):
+- **Tra cứu công khai:** Truy cập `http://localhost:5173/` hoặc `http://localhost:5173/trace` (không thêm `?preview=1`).
+- **Cổng đối tác:** Đăng nhập tại `http://localhost:5173/login` bằng email và mật khẩu tài khoản mẫu bên dưới sau khi đã chạy seed PostgreSQL.
 
 ### 2.1. Danh sách tài khoản thử nghiệm
 
@@ -44,16 +44,16 @@ Hệ thống hỗ trợ cả 2 chế độ:
 
 ---
 
-### 2.2. Danh sách lô hàng mẫu (Seed Data)
+### 2.2. Danh sách lô hàng mẫu (Seed PostgreSQL: `npm run db:seed:demo`)
 
 | Mã lô | Tên sản phẩm | Xuất xứ nông trại | Sản lượng | Trạng thái hiện tại | Ý nghĩa kịch bản |
 |---|---|---|---|---|---|
-| **BATCH-2026-0001** | Cà phê Arabica Cầu Đất Thượng Hạng | Xã Trạm Hành, TP. Đà Lạt, Lâm Đồng | 1.250,5 kg | `CREATED` | Dùng demo Farmer chỉnh sửa hoặc Distributor tiếp nhận |
-| **BATCH-2026-0002** | Gạo ST25 Hữu Cơ Sóc Trăng | Huyện Mỹ Xuyên, Tỉnh Sóc Trăng | 5.000 kg | `TRANSPORTED` | Dùng demo Processor tiếp nhận nguyên liệu |
-| **BATCH-2026-0003** | Chè Ô Long Mộc Châu Thượng Phẩm | Nông trường Mộc Châu, Sơn La | 350,25 kg | `RECEIVED` | Dùng demo Processor thực hiện khâu chế biến |
-| **BATCH-2026-0004** | Hạt Điều Rang Muối Bình Phước | Huyện Bù Đăng, Tỉnh Bình Phước | 820 kg | `PROCESSED` | Dùng demo khâu đóng gói thành phẩm |
-| **BATCH-2026-0005** | Thanh Long Ruột Đỏ Chợ Gạo (VietGAP) | Huyện Chợ Gạo, Tiền Giang | 3.200 kg | `PACKAGED` | Dùng demo Distributor xuất kho ra thị trường |
-| **BATCH-2026-0006** | Bưởi Da Xanh Bến Tre Loại 1 | Huyện Châu Thành, Tỉnh Bến Tre | 1.800 kg | `SHIPPED` | **Hoàn chỉnh 6 bước!** Dùng demo Consumer quét QR xem ngay |
+| **FR-2026-0001** | Cà phê Arabica Cầu Đất | Cầu Đất, Đà Lạt, Lâm Đồng | 500 kg | `CREATED` | Dùng demo Farmer chỉnh sửa hoặc Distributor ghi nhận vận chuyển |
+| **FR-2026-0004** | Cà phê Arabica Cầu Đất | Cầu Đất, Đà Lạt, Lâm Đồng | 120 kg | `TRANSPORTED` | Dùng demo Distributor ghi nhận tiếp nhận (`RECEIVED`) |
+| **FR-2026-0003** | Cà phê Arabica Cầu Đất | Cầu Đất, Đà Lạt, Lâm Đồng | 200 kg | `RECEIVED` | Dùng demo Processor thực hiện chế biến (`PROCESSED`) |
+| **FR-2026-0005** | Cà phê Robusta Cầu Đất | Cầu Đất, Đà Lạt, Lâm Đồng | 250 kg | `PROCESSED` | Dùng demo Processor đóng gói (`PACKAGED`) |
+| **FR-2026-0202** | Hạt điều rang muối Bình Phước | Bù Đăng, Bình Phước | 800 kg | `PACKAGED` | Dùng demo Distributor xuất kho (`SHIPPED`) |
+| **FR-2026-0002** | Cà phê Robusta Cầu Đất | Cầu Đất, Đà Lạt, Lâm Đồng | 300 kg | `SHIPPED` | **Hoàn chỉnh 6 bước!** Dùng demo Consumer tra cứu / quét QR xem ngay |
 
 ---
 
@@ -63,11 +63,11 @@ Hệ thống hỗ trợ cả 2 chế độ:
 - **Mục đích:** Chứng minh tính minh bạch, người dân dùng điện thoại quét mã QR hoặc gõ mã lô để xem xuất xứ và chuỗi cung ứng.
 - **Các bước thực hiện:**
   1. Truy cập trang chủ `/trace` (hoặc bấm nút *"Tra cứu nguồn gốc công khai"* tại trang Đăng nhập).
-  2. **Cách A - Nhập mã lô:** Gõ `BATCH-2026-0006` vào ô tìm kiếm -> Nhấn nút **"Tra cứu thông tin"**.
+  2. **Cách A - Nhập mã lô:** Gõ `FR-2026-0002` (hoặc `FR-2026-0201`) vào ô tìm kiếm -> Nhấn nút **"Tra cứu thông tin"**.
   3. **Cách B - Quét mã QR:** Bấm chuyển sang tab *"Quét mã QR"* -> Bật Camera hoặc tải ảnh chụp mã QR -> Hệ thống tự động giải mã và điều hướng tới kết quả.
   4. **Quan sát kết quả (UI-02):**
      - Thẻ huy hiệu trạng thái: `ĐÃ XUẤT KHO (SHIPPED)` màu xanh ngọc.
-     - Tên sản phẩm: `Bưởi Da Xanh Bến Tre Loại 1`, xuất xứ `Huyện Châu Thành, Tỉnh Bến Tre`.
+     - Tên sản phẩm: `Cà phê Robusta Cầu Đất`, xuất xứ `Cầu Đất, Đà Lạt, Lâm Đồng`.
      - Thanh tiến trình chuỗi cung ứng: Đạt 100% (6/6 giai đoạn hoàn thành).
      - Dòng thời gian (Timeline): Hiển thị đầy đủ 6 mốc:
        1. Khởi tạo nông trại (Nông trại Cái Mơn)
@@ -83,7 +83,7 @@ Hệ thống hỗ trợ cả 2 chế độ:
 ### Kịch bản 2: Nhà sản xuất (Farmer) tạo lô hàng và in mã QR
 - **Mục đích:** Nông dân thu hoạch nông sản sạch và đưa vào hệ thống quản lý.
 - **Các bước thực hiện:**
-  1. Truy cập `/login` -> Bấm chip đăng nhập nhanh **"Nông dân (Farmer)"** (hoặc đăng nhập bằng `farmer_a@demo.local`).
+  1. Truy cập `/login` -> Đăng nhập bằng tài khoản `farmer_a@demo.local` / `Farmer@123`.
   2. Quan sát **Dashboard Nông dân**:
      - Các thẻ KPI: Tổng số lô (6), Chờ vận chuyển (1), Hoàn tất xuất bán (1), Chứng nhận 100% VietGAP.
      - Thao tác nhanh: Nút *"Khởi tạo lô mới"*.
@@ -92,7 +92,7 @@ Hệ thống hỗ trợ cả 2 chế độ:
      - Nhập Nơi xuất xứ: `Xã Hòa Hưng, Huyện Cái Bè, Tiền Giang`.
      - Nhập Sản lượng: `2500` kg.
      - Bấm **"Xác nhận tạo lô"**.
-  4. Hệ thống tự động cấp mã lô chuẩn ISO: `BATCH-2026-XXXX`, tạo mã QR kèm chữ ký HMAC, và tạo mốc `CREATED` đầu tiên.
+  4. Hệ thống tự động cấp mã lô chuẩn `FR-2026-XXXX`, tạo mã QR kèm chữ ký HMAC, và tạo mốc `CREATED` đầu tiên.
   5. Chuyển sang màn hình **Chi tiết lô**:
      - Bấm nút **"Mã QR"** -> Mở modal xem mã QR độ phân giải cao -> Thử nút **"Tải ảnh QR (PNG)"** và **"Sao chép liên kết"**.
      - Bấm **"Hiệu chỉnh lô"** (vì lô vẫn ở trạng thái `CREATED`) -> Sửa sản lượng từ `2500` thành `2600` kg -> Bấm Lưu -> Thông báo cập nhật thành công và ghi nhận Audit log.
@@ -103,7 +103,7 @@ Hệ thống hỗ trợ cả 2 chế độ:
 - **Mục đích:** Ghi nhận sự kiện vận chuyển hàng hóa từ nông trường về kho trung chuyển.
 - **Các bước thực hiện:**
   1. Đăng xuất hoặc chuyển sang tài khoản **"Phân phối (Distributor)"** (`distributor_a@demo.local`).
-  2. Mở danh sách lô hàng -> Chọn lô **`BATCH-2026-0001`** (Cà phê Arabica Cầu Đất, hiện đang `CREATED`).
+  2. Mở danh sách lô hàng -> Chọn lô **`FR-2026-0001`** (Cà phê Arabica Cầu Đất, hiện đang `CREATED`).
   3. Bấm nút **"Ghi nhận sự kiện mới"** -> Mở Modal `UI-11`:
      - Hệ thống tự động phát hiện bước kế tiếp bắt buộc là: **`VẬN CHUYỂN (TRANSPORTED)`** (các bước khác bị khóa để chống nhảy cóc).
      - Đơn vị thực hiện: Tự điền `Vận tải Lạnh Miền Nam`.
@@ -119,7 +119,7 @@ Hệ thống hỗ trợ cả 2 chế độ:
 - **Mục đích:** Nhà máy sơ chế kiểm định đạt chuẩn ISO 22000 và dán tem đóng gói.
 - **Các bước thực hiện:**
   1. Đổi sang tài khoản **"Chế biến (Processor)"** (`processor_a@demo.local`).
-  2. Vào lô **`BATCH-2026-0002`** (hiện đang `TRANSPORTED`):
+  2. Vào lô **`FR-2026-0003`** (hiện đang `RECEIVED` — hoặc lô `FR-2026-0004` sau khi Distributor đã tiếp nhận):
      - Bấm *"Ghi nhận sự kiện mới"* -> Chọn bước tuần tự kế tiếp: **`TIẾP NHẬN (RECEIVED)`**.
      - Nhập địa điểm: `Kho tiếp nhận nguyên liệu Tân Tạo, TP.HCM`.
      - Bấm Xác nhận.
@@ -141,7 +141,7 @@ Hệ thống hỗ trợ cả 2 chế độ:
   2. Nhận thấy thanh điều hướng có thêm mục **"Nhật ký kiểm toán"** (Chỉ Admin mới có quyền).
   3. Bấm vào **"Nhật ký kiểm toán"** (Route `/audit-logs`):
      - Xem bảng danh sách toàn bộ các thao tác `CREATE`, `EVENT`, `UPDATE` có gắn kèm mã băm SHA-256.
-     - Lọc thử nghiệm theo Hành động (`CREATE` / `EVENT`) hoặc gõ tìm kiếm mã lô `BATCH-2026-0001`.
+     - Lọc thử nghiệm theo Hành động (`CREATE` / `EVENT`) hoặc gõ tìm kiếm mã lô `FR-2026-0001`.
      - Sao chép thử mã SHA-256 của một bản ghi bất kỳ.
   4. **Thao tác then chốt — Bấm nút "Xác thực chuỗi băm mật mã":**
      - Hệ thống hiển thị hiệu ứng tính toán băm SHA-256 tuần tự từ bản ghi đầu tiên đến bản ghi mới nhất.
@@ -157,9 +157,9 @@ Hệ thống hỗ trợ cả 2 chế độ:
   - Vào một lô đang `CREATED`, cố tình gọi API gửi sự kiện `PACKAGED` hoặc `SHIPPED`.
   - Kết quả: Hệ thống chặn ngay ở giao diện (các nút bước sau bị disabled có tooltip giải thích) và backend trả về `409 INVALID_SEQUENCE`.
 - **Test Case 2 (Sửa lô hàng đã luân chuyển):**
-  - Vào lô `BATCH-2026-0002` (đang `TRANSPORTED`), nút *"Hiệu chỉnh lô"* tự động ẩn. Nếu cố tình truy cập `/batches/102/edit`, giao diện thông báo `Lô đã chuyển sang trạng thái tiếp theo trong chuỗi cung ứng, không thể chỉnh sửa` và chặn thao tác.
+  - Vào lô `FR-2026-0002` (đã rời trạng thái `CREATED`), nút *"Hiệu chỉnh lô"* tự động ẩn. Nếu cố tình truy cập đường dẫn `/batches/{id}/edit`, giao diện thông báo `Lô đã chuyển sang trạng thái tiếp theo trong chuỗi cung ứng, không thể chỉnh sửa` và chặn thao tác.
 - **Test Case 3 (Mã QR giả mạo / Không tìm thấy):**
-  - Truy cập `/trace` và nhập mã không tồn tại: `BATCH-9999-9999`.
+  - Truy cập `/trace` và nhập mã không tồn tại: `FR-9999-9999`.
   - Kết quả: Hiển thị giao diện thông báo lỗi thân thiện `Không tìm thấy thông tin truy xuất hợp lệ. Vui lòng kiểm tra lại mã trên tem nhãn sản phẩm.` kèm gợi ý tra cứu các mã mẫu hợp lệ.
 
 ---

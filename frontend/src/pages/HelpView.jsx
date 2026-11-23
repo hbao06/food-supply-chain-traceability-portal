@@ -21,7 +21,7 @@ const STANDARD_STEPS = [
     step: '02',
     role: 'DISTRIBUTOR',
     name: 'Vận chuyển thu gom',
-    desc: 'Đội xe logistics lạnh tiếp nhận hàng, giám sát nhiệt độ thùng xe (2-8°C đối với trái cây tươi) và vị trí GPS.'
+    desc: 'Đơn vị phân phối tiếp nhận hàng, ghi nhận tuyến đường vận chuyển và điều kiện bảo quản trong nhật ký lô.'
   },
   {
     step: '03',
@@ -134,7 +134,7 @@ export function HelpView() {
         <div>
           <h1 className="page-main-heading">Hướng dẫn quy chuẩn &amp; Thao tác hệ thống</h1>
           <p className="page-sub-desc">
-            Quy chuẩn kỹ thuật truy xuất nguồn gốc nông sản quốc gia theo tiêu chuẩn TCVN 12850:2019 và bảo mật SHA-256.
+            Quy chuẩn kỹ thuật truy xuất nguồn gốc nông sản tham chiếu TCVN 12850:2019 và bảo mật chuỗi băm SHA-256.
           </p>
         </div>
         <button
@@ -182,7 +182,7 @@ export function HelpView() {
             <div>
               <h2 className="guide-card-title">Cấu trúc mã định danh số chuẩn: <code>FR-YYYY-NNNN</code></h2>
               <p className="guide-card-text">
-                Mỗi lô nông sản khi thu hoạch được cấp một mã duy nhất: <strong>FR-</strong> (Mã định danh Food Trace Quốc gia), 
+                Mỗi lô nông sản khi thu hoạch được cấp một mã duy nhất: <strong>FR-</strong> (Mã định danh lô Food Record), 
                 <strong>2026</strong> (Năm thu hoạch/khởi tạo) và <strong>0001..9999</strong> (Mã số lô thứ tự). 
                 Mã này được khắc trên tem QR và gắn liền với chuỗi nhật ký mật mã không thể thay đổi.
               </p>

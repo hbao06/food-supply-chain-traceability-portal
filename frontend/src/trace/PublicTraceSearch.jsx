@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import { api } from '../api.js'
 import { STATUS_META, resolveBatchImage } from '../batches/batchConstants.js'
 import { BrandLogo, PublicFooter } from '../components/BrandAndFooter.jsx'
 import { TruckIllustration, WarehouseIllustration } from '../components/Illustrations.jsx'
-import { QrScannerPanel } from './QrScannerPanel.jsx'
+const QrScannerPanel = lazy(() => import('./QrScannerPanel.jsx').then((m) => ({ default: m.QrScannerPanel })))
 import { parseTraceInput } from './traceUtils.js'
 
 function buildProductDisplayMeta(batch) {
@@ -106,11 +106,7 @@ export function PublicTraceSearch({ navigate, isAuthenticated = false }) {
       <header className="public-header-bar">
         <div className="header-container">
           <div className="header-brand" onClick={() => navigate('/trace')}>
-            <BrandLogo invert />
-            <div className="header-brand-slogan">
-              <span className="brand-badge-vn">VIỆT NAM</span>
-              <span className="brand-subtext on-dark">Cổng Truy Xuất Nguồn Gốc Quốc Gia</span>
-            </div>
+            <BrandLogo invert subtitle="Cổng Truy Xuất Nguồn Gốc Nông Sản" />
           </div>
 
           <nav className="header-nav-menu" aria-label="Menu chính">
@@ -161,16 +157,16 @@ export function PublicTraceSearch({ navigate, isAuthenticated = false }) {
           <div className="hero-lead-col">
             <div className="hero-eyebrow-pill">
               <span className="live-pulse-dot" />
-              Định danh minh bạch • Bảo chứng chuỗi cung ứng nông sản Việt&nbsp;Nam
+              Định danh minh bạch • Truy xuất chuỗi cung ứng nông sản
             </div>
 
             <h1 className="hero-headline text-balance">
-              Truy xuất nguồn gốc, bảo chứng nông sản Việt
+              Truy xuất nguồn gốc nông sản minh bạch
             </h1>
 
             <p className="hero-lead-text">
-              Mỗi nông sản được gắn mã định danh chuẩn <code>FR-YYYY-NNNN</code>. Tra cứu ngay nhật ký canh tác từ nông trại,
-              kiểm định an toàn thực phẩm, nhiệt độ vận tải lạnh GPS đến siêu&nbsp;thị.
+              Mỗi lô nông sản được gắn mã định danh <code>FR-YYYY-NNNN</code> kèm tem QR có chữ ký HMAC. Tra cứu nhanh
+              hành trình từ nông trại, vận chuyển, chế biến, đóng gói đến phân phối.
             </p>
 
             {/* Form tìm kiếm tra cứu & Quét QR */}
@@ -310,7 +306,7 @@ export function PublicTraceSearch({ navigate, isAuthenticated = false }) {
 
                 <div className="qr-card-body-content">
                   <div className="qr-card-title-group">
-                    <span className="qr-card-badge">CHỨNG THỰC SỐ QUỐC GIA</span>
+                    <span className="qr-card-badge">XÁC THỰC NGUỒN GỐC SỐ</span>
                     <h3 className="qr-card-product-name">{selectedProduct.name}</h3>
                     <div className="qr-card-code-row">
                       <code className="qr-card-code-tag">{selectedProduct.id}</code>
@@ -358,7 +354,7 @@ export function PublicTraceSearch({ navigate, isAuthenticated = false }) {
 
                 <div className="qr-card-body-content">
                   <div className="qr-card-title-group">
-                    <span className="qr-card-badge">CỔNG TRUY XUẤT QUỐC GIA</span>
+                    <span className="qr-card-badge">CỔNG TRUY XUẤT NÔNG SẢN</span>
                     <h3 className="qr-card-product-name">Xác thực nguồn gốc theo thời gian thực</h3>
                     <div className="qr-card-code-row">
                       <code className="qr-card-code-tag">FR-YYYY-NNNN</code>
@@ -574,9 +570,9 @@ export function PublicTraceSearch({ navigate, isAuthenticated = false }) {
             </div>
             <div className="pillar-content">
               <span className="pillar-order-badge">03. LOGISTICS LẠNH</span>
-              <h3 className="pillar-name">Đội xe chuyên dụng GPS</h3>
+              <h3 className="pillar-name">Vận chuyển &amp; bảo quản lạnh</h3>
               <p className="pillar-detail">
-                Giám sát nhiệt độ thùng xe lạnh theo thời gian thực và ghi nhận lộ trình hành trình qua định vị vệ tinh GPS.
+                Ghi nhận thời gian, tuyến đường và điều kiện bảo quản trong suốt quá trình trung chuyển tới kho tiếp nhận.
               </p>
             </div>
           </div>
@@ -607,7 +603,7 @@ export function PublicTraceSearch({ navigate, isAuthenticated = false }) {
       <section id="standards" className="portal-standards-strip-section">
         <div className="portal-standards-strip">
           <div className="standards-banner-lead">
-            <span className="standards-pill-tag">QUY CHUẨN ĐỊNH DANH QUỐC GIA</span>
+            <span className="standards-pill-tag">QUY CHUẨN ĐỊNH DANH LÔ HÀNG</span>
             <h3 className="standards-banner-title">Cấu trúc mã định danh <code>FR-YYYY-NNNN</code></h3>
           </div>
           <div className="standards-spec-pills">
@@ -615,7 +611,7 @@ export function PublicTraceSearch({ navigate, isAuthenticated = false }) {
               <span className="spec-code-badge">FR-</span>
               <div className="spec-pill-text">
                 <strong>Tiền tố chuẩn</strong>
-                <small>Food Record quốc gia</small>
+                <small>Mã định danh Food Record</small>
               </div>
             </div>
             <div className="spec-pill-item">
@@ -661,7 +657,9 @@ export function PublicTraceSearch({ navigate, isAuthenticated = false }) {
               </button>
             </div>
             <div className="modal-body">
-              <QrScannerPanel onDetected={handleScanSuccess} />
+              <Suspense fallback={<div className="state-block" role="status"><div className="spinner-olive" /><p>Đang tải trình quét QR…</p></div>}>
+                <QrScannerPanel onDetected={handleScanSuccess} />
+              </Suspense>
             </div>
           </div>
         </div>

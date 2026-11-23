@@ -99,7 +99,7 @@ const ROLE_DASHBOARD_CONFIG = {
     themeColor: '#1F75B8',
     badgeClass: 'role-tag-distributor',
     mission:
-      'Cầu nối đưa nông sản ra thị trường tiêu thụ. Giám sát logistics chuỗi lạnh GPS 2–8°C, quản lý lưu kho trung chuyển và phân phối đến quầy kệ hệ thống siêu thị.',
+      'Cầu nối đưa nông sản ra thị trường tiêu thụ. Ghi nhận vận chuyển bảo quản lạnh, tiếp nhận kho trung chuyển và xuất kho phân phối tới điểm bán.',
     highlightStatuses: ['TRANSPORTED', 'RECEIVED', 'SHIPPED'],
     actions: [
       {
@@ -130,13 +130,13 @@ const ROLE_DASHBOARD_CONFIG = {
     ],
   },
   ADMIN: {
-    badge: 'CƠ QUAN QUẢN TRỊ & BẢO CHỨNG QUỐC GIA',
+    badge: 'QUẢN TRỊ HỆ THỐNG & KIỂM TOÁN DỮ LIỆU',
     title: 'Bảng Điều Hành Toàn Diện Hệ Thống',
     icon: IconShield,
     themeColor: '#533B82',
     badgeClass: 'role-tag-admin',
     mission:
-      'Cơ quan bảo chứng toàn vẹn dữ liệu chuỗi cung ứng. Thẩm định hồ sơ đối tác, cấp mã doanh nghiệp, kiểm toán chuỗi băm mật mã SHA-256 chống gian lận và điều phối lưu thông toàn quốc.',
+      'Giám sát toàn vẹn dữ liệu chuỗi cung ứng. Thẩm định hồ sơ đối tác, quản lý đơn vị tham gia, kiểm toán chuỗi băm mật mã SHA-256 và theo dõi tiến độ lưu thông.',
     highlightStatuses: ['CREATED', 'TRANSPORTED', 'RECEIVED', 'PROCESSED', 'PACKAGED', 'SHIPPED'],
     actions: [
       {
@@ -147,7 +147,7 @@ const ROLE_DASHBOARD_CONFIG = {
         primary: true,
       },
       {
-        title: 'Kiểm toán chuỗi khối SHA-256',
+        title: 'Kiểm toán chuỗi băm SHA-256',
         desc: 'Xác thực tính toàn vẹn chuỗi băm mật mã, bảo đảm nhật ký không bị can thiệp.',
         actionLabel: 'Kiểm toán hệ thống →',
         route: '/audit-logs',
@@ -159,7 +159,7 @@ const ROLE_DASHBOARD_CONFIG = {
         route: '/admin/organizations',
       },
       {
-        title: 'Báo cáo tổng quan toàn quốc',
+        title: 'Báo cáo tổng quan hệ thống',
         desc: 'Phân tích dữ liệu sản lượng, tỷ lệ phân bổ và tiến trình chuỗi cung ứng.',
         actionLabel: 'Báo cáo chuyên sâu →',
         route: '/reports',

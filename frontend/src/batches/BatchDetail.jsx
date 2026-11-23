@@ -131,17 +131,37 @@ export function BatchDetail({
     )
   }, [traceUrl])
 
+  function copyToClipboard(text, onDone) {
+    if (!text) return
+    const fallback = () => {
+      try {
+        const ta = document.createElement('textarea')
+        ta.value = text
+        ta.style.position = 'fixed'
+        ta.style.opacity = '0'
+        document.body.appendChild(ta)
+        ta.select()
+        document.execCommand('copy')
+        document.body.removeChild(ta)
+        onDone()
+      } catch { /* ignore */ }
+    }
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(onDone).catch(fallback)
+    } else {
+      fallback()
+    }
+  }
+
   function handleCopyCode() {
-    if (!batch?.batchCode) return
-    navigator.clipboard.writeText(batch.batchCode).then(() => {
+    copyToClipboard(batch?.batchCode, () => {
       setCopiedCode(true)
       setTimeout(() => setCopiedCode(false), 2000)
     })
   }
 
   function handleCopyUrl() {
-    if (!traceUrl) return
-    navigator.clipboard.writeText(traceUrl).then(() => {
+    copyToClipboard(traceUrl, () => {
       setCopiedUrl(true)
       setTimeout(() => setCopiedUrl(false), 2000)
     })
