@@ -58,7 +58,7 @@ function SvgBarChart({ data, height = 240 }) {
                 textAnchor="middle"
                 fill="#2D4316"
               >
-                {item.value >= 1000 ? `${(item.value / 1000).toFixed(1)}t` : `${item.value}k`}
+                {item.value >= 1000 ? `${(item.value / 1000).toFixed(1)} tấn` : `${item.value} kg`}
               </text>
               <text
                 x={x + barWidth / 2}
@@ -91,6 +91,7 @@ function computeDonutSlices(data, total, center, radius) {
   let currentAngle = -90
   return data.map((item) => {
     const angle = (item.value / total) * 360
+    const isFullCircle = item.value > 0 && angle >= 359.99
     const startAngle = currentAngle
     const endAngle = currentAngle + angle
     currentAngle += angle
@@ -101,7 +102,7 @@ function computeDonutSlices(data, total, center, radius) {
     const endY = center + radius * Math.sin((Math.PI * endAngle) / 180)
     const largeArc = angle > 180 ? 1 : 0
 
-    const pathData = item.value === 0 ? '' : [
+    const pathData = item.value === 0 || isFullCircle ? '' : [
       `M ${startX} ${startY}`,
       `A ${radius} ${radius} 0 ${largeArc} 1 ${endX} ${endY}`
     ].join(' ')
@@ -109,6 +110,7 @@ function computeDonutSlices(data, total, center, radius) {
     return {
       ...item,
       pathData,
+      isFullCircle,
       color: STAGE_COLORS[item.statusKey] || '#73932A',
       percent: Math.round((item.value / total) * 100)
     }
@@ -117,7 +119,8 @@ function computeDonutSlices(data, total, center, radius) {
 
 // Biểu đồ tròn Donut Chart SVG phân bố các giai đoạn chuỗi
 function SvgDonutChart({ data, size = 220 }) {
-  const total = data.reduce((sum, d) => sum + d.value, 0) || 1
+  const actualTotal = data.reduce((sum, d) => sum + d.value, 0)
+  const total = actualTotal || 1
   const radius = 70
   const center = size / 2
   const strokeWidth = 28
@@ -128,7 +131,19 @@ function SvgDonutChart({ data, size = 220 }) {
     <div className="donut-chart-wrapper">
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         <circle cx={center} cy={center} r={radius} fill="none" stroke="#F1EFE9" strokeWidth={strokeWidth} />
-        {slices.map((slice) => slice.pathData && (
+        {slices.map((slice) => slice.isFullCircle ? (
+          <circle
+            key={slice.label}
+            cx={center}
+            cy={center}
+            r={radius}
+            fill="none"
+            stroke={slice.color}
+            strokeWidth={strokeWidth}
+          >
+            <title>{`${slice.label}: ${slice.value} lô (${slice.percent}%)`}</title>
+          </circle>
+        ) : slice.pathData && (
           <path
             key={slice.label}
             d={slice.pathData}
@@ -141,7 +156,7 @@ function SvgDonutChart({ data, size = 220 }) {
           </path>
         ))}
         <text x={center} y={center - 4} textAnchor="middle" fontSize="20" fontWeight="800" fill="#1E2B14">
-          {total}
+          {actualTotal}
         </text>
         <text x={center} y={center + 14} textAnchor="middle" fontSize="11" fill="#75856B">
           Tổng số lô
@@ -160,8 +175,8 @@ function SvgDonutChart({ data, size = 220 }) {
   )
 }
 
-export function ReportsView({ token, preview }) {
-  const { items, loading, error } = useBatches(token, preview)
+export function ReportsView({ token }) {
+  const { items, loading, error } = useBatches(token)
 
   // 1. STATE BỘ LỌC THỜI GIAN (TIME FILTER)
   const [timePreset, setTimePreset] = useState('ALL') // 'ALL' | '7D' | '30D' | 'QUARTER' | 'CUSTOM'

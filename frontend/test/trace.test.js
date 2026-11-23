@@ -1,9 +1,9 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { api } from '../src/api.js'
 import {
   buildTraceRoute,
   classifyTraceError,
-  getPreviewPublicTrace,
   getTraceProgress,
   parseTraceInput,
   parseTraceRoute,
@@ -13,7 +13,6 @@ import {
 test('traceUtils - parseTraceRoute resolves public trace search and result routes', () => {
   assert.deepEqual(parseTraceRoute('/trace'), { name: 'trace-search' })
   assert.deepEqual(parseTraceRoute('/trace/'), { name: 'trace-search' })
-  assert.deepEqual(parseTraceRoute('/trace?preview=1'), { name: 'trace-search' })
   assert.deepEqual(parseTraceRoute('/trace/code'), { name: 'trace-search' })
 
   assert.deepEqual(parseTraceRoute('/trace/code/FR-2026-0001'), {
@@ -22,7 +21,7 @@ test('traceUtils - parseTraceRoute resolves public trace search and result route
     identifier: 'FR-2026-0001',
   })
 
-  assert.deepEqual(parseTraceRoute('/trace/FR-2026-0001.c3167123984dfb1?preview=1'), {
+  assert.deepEqual(parseTraceRoute('/trace/FR-2026-0001.c3167123984dfb1'), {
     name: 'trace-result',
     mode: 'token',
     identifier: 'FR-2026-0001.c3167123984dfb1',
@@ -66,7 +65,7 @@ test('traceUtils - parseTraceInput trims whitespace, rejects empty, and parses U
 test('traceUtils - sanitizePublicTrace strips internal fields and sorts events oldest to newest', () => {
   const dirty = {
     batchId: 99,
-    batchCode: 'BATCH-2026-0001',
+    batchCode: 'FR-2026-0001',
     productName: 'Cà phê Arabica',
     origin: 'Đà Lạt, Lâm Đồng',
     organizationName: 'HTX Cầu Đất',
@@ -101,47 +100,19 @@ test('traceUtils - sanitizePublicTrace strips internal fields and sorts events o
   }
 
   const clean = sanitizePublicTrace(dirty)
-  assert.equal(clean.batchCode, 'BATCH-2026-0001')
+  assert.equal(clean.batchCode, 'FR-2026-0001')
   assert.equal('batchId' in clean, false)
   assert.equal('createdBy' in clean, false)
   assert.equal('organizationId' in clean, false)
   assert.equal('email' in clean, false)
 
   assert.equal(clean.events.length, 2)
-  // Chronological oldest -> newest
   assert.equal(clean.events[0].eventType, 'CREATED')
   assert.equal(clean.events[1].eventType, 'TRANSPORTED')
-  // No private actor fields
   assert.equal('actorName' in clean.events[0], false)
   assert.equal('actorId' in clean.events[0], false)
   assert.equal('email' in clean.events[1], false)
   assert.equal('eventId' in clean.events[1], false)
-})
-
-test('traceUtils - getPreviewPublicTrace resolves valid code/token and rejects tampered token', () => {
-  const byCode = getPreviewPublicTrace({ mode: 'code', identifier: 'fr-2026-0001' })
-  assert.ok(byCode)
-  assert.equal(byCode.batchCode, 'FR-2026-0001')
-  assert.equal(byCode.events.length, 1)
-  assert.equal('actorName' in byCode.events[0], false)
-
-  const byToken = getPreviewPublicTrace({
-    mode: 'token',
-    identifier: 'FR-2026-0002.8f01b921a2c34d',
-  })
-  assert.ok(byToken)
-  assert.equal(byToken.batchCode, 'FR-2026-0002')
-  assert.equal(byToken.events.length, 6)
-
-  // Tampered token (1 char modified) -> null (404)
-  const tampered = getPreviewPublicTrace({
-    mode: 'token',
-    identifier: 'FR-2026-0002.8f01b921a2c34e',
-  })
-  assert.equal(tampered, null)
-
-  // Unknown batch code -> null (404)
-  assert.equal(getPreviewPublicTrace({ mode: 'code', identifier: 'FR-2026-9999' }), null)
 })
 
 test('traceUtils - classifyTraceError distinguishes 404, 429, and network/5xx errors', () => {
@@ -161,9 +132,10 @@ test('traceUtils - classifyTraceError distinguishes 404, 429, and network/5xx er
   assert.equal(netErr.retryable, true)
 })
 
-test('traceUtils - buildTraceRoute and getTraceProgress compute routes and percentages', () => {
-  assert.equal(buildTraceRoute('code', 'BATCH-2026-0001'), '/trace/code/BATCH-2026-0001')
-  assert.equal(buildTraceRoute('token', 'A.B', { preview: true }), '/trace/A.B?preview=1')
+test('traceUtils - buildTraceRoute, getTraceProgress, and recent trace API helper', () => {
+  assert.equal(buildTraceRoute('code', 'FR-2026-0001'), '/trace/code/FR-2026-0001')
+  assert.equal(buildTraceRoute('token', 'A.B'), '/trace/A.B')
+  assert.equal(typeof api.listRecentPublicTraces, 'function')
 
   const p1 = getTraceProgress('CREATED')
   assert.equal(p1.completedSteps, 1)
@@ -172,4 +144,16 @@ test('traceUtils - buildTraceRoute and getTraceProgress compute routes and perce
   const p6 = getTraceProgress('SHIPPED')
   assert.equal(p6.completedSteps, 6)
   assert.equal(p6.percent, 100)
+})
+test('traceUtils - sanitizePublicTrace preserves public imageUrl when provided', () => {
+  const withImg = sanitizePublicTrace({
+    batchCode: 'FR-2026-0009',
+    productName: 'Nhãn xuồng Mỹ Đức',
+    origin: 'Mỹ Đức, An Giang',
+    organizationName: 'HTX Nhãn Mỹ Đức',
+    currentStatus: 'CREATED',
+    imageUrl: 'https://example.com/nhan.jpg',
+    events: [],
+  })
+  assert.equal(withImg.imageUrl, 'https://example.com/nhan.jpg')
 })

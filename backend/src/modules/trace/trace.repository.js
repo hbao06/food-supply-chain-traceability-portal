@@ -6,11 +6,23 @@ const EVENT_ORDER = "array_position(ARRAY['CREATED','TRANSPORTED','RECEIVED','PR
 
 async function findPublicBatch(db, batchCode) {
   const r = await db.query(
-    `SELECT batch_code, product_name, origin, organization_name, current_status
+    `SELECT batch_code, product_name, origin, organization_name, current_status, image_url
      FROM public_batch_trace WHERE batch_code = $1`,
     [batchCode]
   );
   return r.rows[0] || null;
+}
+
+// Danh sách các lô công khai mới nhất cho trang chủ tra cứu (chỉ đọc từ view public_batch_trace).
+async function listRecentPublicBatches(db, limit = 6) {
+  const r = await db.query(
+    `SELECT batch_code, product_name, origin, organization_name, current_status, image_url
+     FROM public_batch_trace
+     ORDER BY split_part(batch_code, '-', 2)::int DESC, split_part(batch_code, '-', 3)::int DESC
+     LIMIT $1`,
+    [limit]
+  );
+  return r.rows;
 }
 
 // Cũ -> mới. Chuỗi sự kiện tuyến tính nên vị trí trong chuỗi là khóa phụ ổn định khi hai sự kiện cùng thời điểm.
@@ -25,4 +37,4 @@ async function listPublicEvents(db, batchCode) {
   return r.rows;
 }
 
-module.exports = { findPublicBatch, listPublicEvents };
+module.exports = { findPublicBatch, listPublicEvents, listRecentPublicBatches };

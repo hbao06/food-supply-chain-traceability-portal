@@ -26,6 +26,7 @@ const read = (p) => fs.readFileSync(p, 'utf8').replace(/\r\n/g, '\n');
 const PUBLIC_ROUTES = new Set([
   'authRouter POST /register',
   'authRouter POST /login',
+  'traceRouter GET /recent',
   'traceRouter GET /code/:batchCode',
   'traceRouter GET /:qrToken',
   'assistantRouter POST /chat',
@@ -102,8 +103,8 @@ test('SEC-02: DTO người dùng / lô / sự kiện / audit chỉ có trường
   assertOnlyKeys(toUserDto({ ...LEAKY, user_id: '1', name: 'A', email: 'a@x.vn', role: 'FARMER', organization_id: '1', status: 'ACTIVE' }),
     ['userId', 'name', 'email', 'role', 'organizationId', 'status'], 'User');
   assertOnlyKeys(toBatchDto({ ...LEAKY, batch_id: '1', batch_code: 'FR-2026-0001', product_name: 'X', origin: 'Y', quantity: '1',
-    creation_date: new Date(0), current_status: 'CREATED', created_by: '2', organization_id: '1' }),
-  ['batchId', 'batchCode', 'productName', 'origin', 'quantity', 'creationDate', 'currentStatus', 'createdBy', 'organizationId'], 'Batch');
+    creation_date: new Date(0), current_status: 'CREATED', created_by: '2', organization_id: '1', image_url: '/products/coffee.jpg' }),
+  ['batchId', 'batchCode', 'productName', 'origin', 'quantity', 'creationDate', 'currentStatus', 'createdBy', 'organizationId', 'imageUrl'], 'Batch');
   const ev = toEventDto({ ...LEAKY, event_id: '1', batch_id: '1', actor_id: '2', event_type: 'CREATED', timestamp: new Date(0),
     location: 'L', description: null, actor_name: 'A', organization_name: 'O' });
   assertOnlyKeys(ev, ['eventId', 'batchId', 'actorId', 'eventType', 'timestamp', 'location', 'description', 'actorName', 'organizationName'], 'Event');

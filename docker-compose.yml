@@ -18,7 +18,6 @@ services:
       - "3000:3000"
     environment:
       PORT: 3000
-      DB_MODE: postgres
       DB_HOST: database # tên service bên dưới, khác với localhost khi chạy ngoài Docker
       DB_PORT: 5432
       DB_NAME: food_traceability

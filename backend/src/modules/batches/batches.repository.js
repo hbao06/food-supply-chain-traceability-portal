@@ -4,8 +4,8 @@
 // Phạm vi đọc dùng batchReadScope của middleware/rbac.js: ngoài phạm vi thì không có dòng nào -> service trả 404.
 const { batchReadScope } = require('../../middleware/rbac');
 
-const COLS = 'b.batch_id, b.batch_code, b.product_name, b.origin, b.quantity, b.creation_date, b.current_status, b.created_by, b.organization_id';
-const RETURNING = 'batch_id, batch_code, product_name, origin, quantity, creation_date, current_status, created_by, organization_id';
+const COLS = 'b.batch_id, b.batch_code, b.product_name, b.origin, b.quantity, b.creation_date, b.current_status, b.created_by, b.organization_id, b.image_url';
+const RETURNING = 'batch_id, batch_code, product_name, origin, quantity, creation_date, current_status, created_by, organization_id, image_url';
 const BATCH_CODE_LOCK = 2026_0501; // khóa advisory riêng cho việc cấp mã lô (khác khóa của migrator)
 
 // Hai người tạo lô cùng lúc không được nhận trùng mã: khóa theo transaction rồi mới đọc số lớn nhất.
@@ -28,12 +28,12 @@ async function nextBatchCode(db) {
   return `FR-${year}-${String(Number(maxSeq) + 1).padStart(4, '0')}`;
 }
 
-async function insertBatch(db, { batchCode, productName, origin, quantity, createdBy, organizationId }) {
+async function insertBatch(db, { batchCode, productName, origin, quantity, imageUrl = null, createdBy, organizationId }) {
   const r = await db.query(
-    `INSERT INTO batches (batch_code, product_name, origin, quantity, created_by, organization_id)
-     VALUES ($1, $2, $3, $4, $5, $6)
+    `INSERT INTO batches (batch_code, product_name, origin, quantity, image_url, created_by, organization_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
      RETURNING ${RETURNING}`,
-    [batchCode, productName, origin, quantity, createdBy, organizationId]
+    [batchCode, productName, origin, quantity, imageUrl ?? null, createdBy, organizationId]
   );
   return r.rows[0];
 }
@@ -101,7 +101,7 @@ async function listVisibleBatches(db, auth, { status, q, scope: listScope, limit
   return { rows: rows.rows, total: total.rows[0].total };
 }
 
-const COLUMN_OF = { productName: 'product_name', origin: 'origin', quantity: 'quantity' };
+const COLUMN_OF = { productName: 'product_name', origin: 'origin', quantity: 'quantity', imageUrl: 'image_url' };
 
 async function updateBatch(db, batchId, changes) {
   const sets = [];

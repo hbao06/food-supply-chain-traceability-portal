@@ -111,9 +111,9 @@ SELECT pg_temp.expect_fail('Xóa đơn vị đang có dữ liệu',
 
 -- ---------- Luồng tạo lô hợp lệ (US-B01): batch + QR + CREATED trong một transaction ----------
 INSERT INTO batches (batch_code, product_name, origin, quantity, created_by, organization_id)
-VALUES ('BATCH-2026-0001', 'Cà phê hữu cơ', 'Đắk Lắk', 500, 2, 1);
+VALUES ('FR-2026-0001', 'Cà phê hữu cơ', 'Đắk Lắk', 500, 2, 1);
 INSERT INTO qr_codes (batch_id, qr_data, signature_hmac)
-VALUES (1, 'https://example.com/trace/BATCH-2026-0001.sigAAA', 'sigAAA');
+VALUES (1, 'https://example.com/trace/FR-2026-0001.sigAAA', 'sigAAA');
 INSERT INTO supply_chain_events (batch_id, actor_id, event_type, location)
 VALUES (1, 2, 'CREATED', 'Đắk Lắk');
 SELECT pg_temp.expect_ok('Tạo lô + QR + CREATED', 'SELECT 1');
@@ -130,23 +130,23 @@ SELECT pg_temp.expect_fail('Tên sản phẩm rỗng',
   $$INSERT INTO products (organization_id,name,category) VALUES (1,'  ','Cà phê')$$);
 SELECT pg_temp.expect_ok('Lô chỉ gửi product_id: tự lấy product_name từ danh mục',
   $$INSERT INTO batches (batch_code,origin,quantity,created_by,organization_id,product_id)
-    VALUES ('BATCH-2026-0050','Đà Lạt',10,2,1,1)$$);
+    VALUES ('FR-2026-0050','Đà Lạt',10,2,1,1)$$);
 DO $$
 BEGIN
-    IF (SELECT product_name FROM batches WHERE batch_code = 'BATCH-2026-0050') <> 'Cà phê Arabica' THEN
+    IF (SELECT product_name FROM batches WHERE batch_code = 'FR-2026-0050') <> 'Cà phê Arabica' THEN
         RAISE EXCEPTION 'FAIL  product_name không được điền từ products';
     END IF;
     RAISE NOTICE 'PASS  product_name lấy đúng từ products';
 END $$;
 SELECT pg_temp.expect_fail('Lô dùng sản phẩm của nông trại khác',
   $$INSERT INTO batches (batch_code,product_name,origin,quantity,created_by,organization_id,product_id)
-    VALUES ('BATCH-2026-0051','X','Y',1,2,1,2)$$);
+    VALUES ('FR-2026-0051','X','Y',1,2,1,2)$$);
 SELECT pg_temp.expect_fail('Đổi nông trại của sản phẩm đã có lô',
   $$UPDATE products SET organization_id = 4 WHERE product_id = 1$$);
 SELECT pg_temp.expect_fail('Xóa sản phẩm đã có lô', $$DELETE FROM products WHERE product_id = 1$$);
 DO $$
 BEGIN
-    IF (SELECT string_agg(farm_id::text || ':' || product_count || '/' || batch_count, ',' ORDER BY farm_id) FROM farms) <> '1:1/2,4:1/0' THEN -- nông trại 1: BATCH-2026-0001 (tạo ở trên) + 0050
+    IF (SELECT string_agg(farm_id::text || ':' || product_count || '/' || batch_count, ',' ORDER BY farm_id) FROM farms) <> '1:1/2,4:1/0' THEN -- nông trại 1: FR-2026-0001 (tạo ở trên) + 0050
         RAISE EXCEPTION 'FAIL  view farms sai: %', (SELECT string_agg(farm_id::text || ':' || product_count || '/' || batch_count, ',') FROM farms);
     END IF;
     RAISE NOTICE 'PASS  view farms chỉ gồm đơn vị FARM, đếm đúng sản phẩm và lô';
@@ -154,23 +154,23 @@ END $$;
 
 -- ---------- batches ----------
 SELECT pg_temp.expect_fail('Mã lô trùng',
-  $$INSERT INTO batches (batch_code,product_name,origin,quantity,created_by,organization_id) VALUES ('BATCH-2026-0001','X','Y',1,2,1)$$);
+  $$INSERT INTO batches (batch_code,product_name,origin,quantity,created_by,organization_id) VALUES ('FR-2026-0001','X','Y',1,2,1)$$);
 SELECT pg_temp.expect_fail('Số lượng <= 0',
-  $$INSERT INTO batches (batch_code,product_name,origin,quantity,created_by,organization_id) VALUES ('BATCH-2026-0002','X','Y',0,2,1)$$);
+  $$INSERT INTO batches (batch_code,product_name,origin,quantity,created_by,organization_id) VALUES ('FR-2026-0002','X','Y',0,2,1)$$);
 SELECT pg_temp.expect_fail('Distributor tạo lô',
-  $$INSERT INTO batches (batch_code,product_name,origin,quantity,created_by,organization_id) VALUES ('BATCH-2026-0003','X','Y',1,4,3)$$);
+  $$INSERT INTO batches (batch_code,product_name,origin,quantity,created_by,organization_id) VALUES ('FR-2026-0003','X','Y',1,4,3)$$);
 SELECT pg_temp.expect_fail('Farmer tạo lô cho đơn vị khác',
-  $$INSERT INTO batches (batch_code,product_name,origin,quantity,created_by,organization_id) VALUES ('BATCH-2026-0004','X','Y',1,2,4)$$);
+  $$INSERT INTO batches (batch_code,product_name,origin,quantity,created_by,organization_id) VALUES ('FR-2026-0004','X','Y',1,2,4)$$);
 SELECT pg_temp.expect_fail('Sai định dạng mã lô',
   $$INSERT INTO batches (batch_code,product_name,origin,quantity,created_by,organization_id) VALUES ('abc','X','Y',1,2,1)$$);
 SELECT pg_temp.expect_ok('Sửa lô khi còn CREATED',
   $$UPDATE batches SET quantity=480 WHERE batch_id=1$$);
 SELECT pg_temp.expect_fail('Đổi batch_code',
-  $$UPDATE batches SET batch_code='BATCH-2026-9999' WHERE batch_id=1$$);
+  $$UPDATE batches SET batch_code='FR-2026-9999' WHERE batch_id=1$$);
 SELECT pg_temp.expect_fail('Nhảy trạng thái trực tiếp',
   $$UPDATE batches SET current_status='PACKAGED' WHERE batch_id=1$$);
 SELECT pg_temp.expect_fail('QR thứ hai cho cùng lô',
-  $$INSERT INTO qr_codes (batch_id,qr_data,signature_hmac) VALUES (1,'https://example.com/trace/BATCH-2026-0001.sigB','sigB')$$);
+  $$INSERT INTO qr_codes (batch_id,qr_data,signature_hmac) VALUES (1,'https://example.com/trace/FR-2026-0001.sigB','sigB')$$);
 
 -- ---------- supply_chain_events: vai trò và thứ tự ----------
 SELECT pg_temp.expect_fail('Processor ghi TRANSPORTED',
@@ -200,7 +200,7 @@ SELECT pg_temp.expect_fail('Không ghi tiếp sau SHIPPED',
 
 -- ---------- Append-only (US-S05, US-S06) ----------
 INSERT INTO audit_logs (actor_id, action, entity_type, entity_id, new_value)
-VALUES (2, 'CREATE', 'BATCH', 1, '{"batchCode":"BATCH-2026-0001"}');
+VALUES (2, 'CREATE', 'BATCH', 1, '{"batchCode":"FR-2026-0001"}');
 SELECT pg_temp.expect_fail('UPDATE sự kiện',  $$UPDATE supply_chain_events SET location='X'$$);
 SELECT pg_temp.expect_fail('DELETE sự kiện',  $$DELETE FROM supply_chain_events$$);
 SELECT pg_temp.expect_fail('TRUNCATE sự kiện',$$TRUNCATE supply_chain_events$$);
@@ -212,13 +212,13 @@ SELECT pg_temp.expect_fail('Xóa lô đã có sự kiện', $$DELETE FROM batche
 
 -- ---------- Khóa tài khoản: không ghi được sự kiện nữa (US-S04) ----------
 INSERT INTO batches (batch_code, product_name, origin, quantity, created_by, organization_id)
-VALUES ('BATCH-2026-0002', 'Sầu riêng', 'Đắk Lắk', 100, 2, 1);
+VALUES ('FR-2026-0002', 'Sầu riêng', 'Đắk Lắk', 100, 2, 1);
 INSERT INTO supply_chain_events (batch_id, actor_id, event_type, location)
-SELECT batch_id, 2, 'CREATED', 'Đắk Lắk' FROM batches WHERE batch_code = 'BATCH-2026-0002';
+SELECT batch_id, 2, 'CREATED', 'Đắk Lắk' FROM batches WHERE batch_code = 'FR-2026-0002';
 UPDATE users SET status = 'LOCKED' WHERE user_id = 4;
 SELECT pg_temp.expect_fail('Tài khoản LOCKED ghi sự kiện',
   $$INSERT INTO supply_chain_events (batch_id,actor_id,event_type,location)
-    SELECT batch_id,4,'TRANSPORTED','QL14' FROM batches WHERE batch_code='BATCH-2026-0002'$$);
+    SELECT batch_id,4,'TRANSPORTED','QL14' FROM batches WHERE batch_code='FR-2026-0002'$$);
 
 -- ---------- View công khai không lộ cột nội bộ ----------
 DO $$
@@ -247,7 +247,7 @@ SELECT pg_temp.expect_fail('Không sửa event_types', $$UPDATE event_types SET 
 SELECT pg_temp.expect_fail('Không xóa event_types', $$DELETE FROM event_types WHERE code='PACKAGED'$$);
 DO $$
 BEGIN
-    UPDATE batches SET current_status = 'LOST' WHERE batch_code = 'BATCH-2026-0050';
+    UPDATE batches SET current_status = 'LOST' WHERE batch_code = 'FR-2026-0050';
     RAISE EXCEPTION 'FAIL  trạng thái không có trong event_types vẫn lưu được';
 EXCEPTION WHEN foreign_key_violation THEN
     RAISE NOTICE 'PASS  Trạng thái lô không có trong event_types bị khóa ngoại chặn (%)', SQLERRM;
@@ -285,7 +285,7 @@ END $$;
 
 -- Mô phỏng quản trị viên tắt trigger rồi sửa / xóa lịch sử: chuỗi băm phải phát hiện (dữ liệu được ROLLBACK cuối file).
 ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_append_only;
-UPDATE audit_logs SET new_value = '{"batchCode":"BATCH-2026-9999"}' WHERE audit_id = (SELECT min(audit_id) FROM audit_logs);
+UPDATE audit_logs SET new_value = '{"batchCode":"FR-2026-9999"}' WHERE audit_id = (SELECT min(audit_id) FROM audit_logs);
 DO $$
 DECLARE v record;
 BEGIN
@@ -363,7 +363,7 @@ SELECT pg_temp.expect_index('cấp mã lô (nextBatchCode)',
     WHERE split_part(batch_code, '-', 2)::int = 2026 ORDER BY split_part(batch_code, '-', 3)::int DESC LIMIT 1$$,
   'idx_batches_code_year_seq');
 SELECT pg_temp.expect_index('tra cứu đúng một mã lô (QR)',
-  $$SELECT * FROM batches WHERE batch_code = 'BATCH-2026-0001'$$, 'uq_batches_batch_code');
+  $$SELECT * FROM batches WHERE batch_code = 'FR-2026-0001'$$, 'uq_batches_batch_code');
 SELECT pg_temp.expect_index('tìm kiếm q trong mã lô',
   $$SELECT batch_id FROM batches b WHERE b.batch_code ILIKE '%2026-00%'$$, 'idx_batches_batch_code_trgm');
 SELECT pg_temp.expect_index('tìm kiếm q trong tên sản phẩm',

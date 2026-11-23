@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ROLE_LABELS_VI } from '../batches/batchConstants.js'
 import {
   IconSeedling,
   IconTruck,
@@ -20,7 +21,7 @@ const STANDARD_STEPS = [
     step: '02',
     role: 'DISTRIBUTOR',
     name: 'Vận chuyển thu gom',
-    desc: 'Đội xe logistics lạnh tiếp nhận hàng, giám sát nhiệt độ thùng xe (2-8°C đối với trái cây tươi) và vị trí GPS.'
+    desc: 'Đơn vị phân phối tiếp nhận hàng, ghi nhận tuyến đường vận chuyển và điều kiện bảo quản trong nhật ký lô.'
   },
   {
     step: '03',
@@ -50,7 +51,7 @@ const STANDARD_STEPS = [
 
 const ROLE_GUIDES = [
   {
-    role: 'Nông trại (Farmer)',
+    role: 'Nông trại',
     icon: <IconSeedling />,
     color: '#73932A',
     actions: [
@@ -61,7 +62,7 @@ const ROLE_GUIDES = [
     ]
   },
   {
-    role: 'Vận chuyển & Phân phối (Distributor)',
+    role: 'Vận chuyển & Phân phối',
     icon: <IconTruck />,
     color: '#2B6CB0',
     actions: [
@@ -72,7 +73,7 @@ const ROLE_GUIDES = [
     ]
   },
   {
-    role: 'Cơ sở chế biến (Processor)',
+    role: 'Cơ sở chế biến',
     icon: <IconIndustry />,
     color: '#C05621',
     actions: [
@@ -83,13 +84,13 @@ const ROLE_GUIDES = [
     ]
   },
   {
-    role: 'Quản trị viên (Admin)',
+    role: 'Quản trị viên',
     icon: <IconShield />,
     color: '#4A5568',
     actions: [
       'Duyệt và kích hoạt tài khoản đối tác mới gia nhập chuỗi.',
       'Gán phân quyền đơn vị (HTX Nông trại, Xưởng chế biến, Công ty vận tải).',
-      'Tra soát kiểm toán chuỗi băm mật mã SHA-256 (Audit Logs).',
+      'Tra soát kiểm toán chuỗi băm mật mã SHA-256.',
       'Khóa tài khoản vi phạm hoặc có dấu hiệu gian lận thương mại.'
     ]
   }
@@ -133,7 +134,7 @@ export function HelpView() {
         <div>
           <h1 className="page-main-heading">Hướng dẫn quy chuẩn &amp; Thao tác hệ thống</h1>
           <p className="page-sub-desc">
-            Quy chuẩn kỹ thuật truy xuất nguồn gốc nông sản quốc gia theo tiêu chuẩn TCVN 12850:2019 và bảo mật SHA-256.
+            Quy chuẩn kỹ thuật truy xuất nguồn gốc nông sản tham chiếu TCVN 12850:2019 và bảo mật chuỗi băm SHA-256.
           </p>
         </div>
         <button
@@ -181,7 +182,7 @@ export function HelpView() {
             <div>
               <h2 className="guide-card-title">Cấu trúc mã định danh số chuẩn: <code>FR-YYYY-NNNN</code></h2>
               <p className="guide-card-text">
-                Mỗi lô nông sản khi thu hoạch được cấp một mã duy nhất: <strong>FR-</strong> (Mã định danh Food Trace Quốc gia), 
+                Mỗi lô nông sản khi thu hoạch được cấp một mã duy nhất: <strong>FR-</strong> (Mã định danh lô Food Record), 
                 <strong>2026</strong> (Năm thu hoạch/khởi tạo) và <strong>0001..9999</strong> (Mã số lô thứ tự). 
                 Mã này được khắc trên tem QR và gắn liền với chuỗi nhật ký mật mã không thể thay đổi.
               </p>
@@ -194,7 +195,7 @@ export function HelpView() {
               <div key={step.step} className="step-guide-card">
                 <div className="step-card-num-badge">{step.step}</div>
                 <h3 className="step-card-heading">{step.name}</h3>
-                <span className="step-card-role-tag">{step.role}</span>
+                <span className="step-card-role-tag">{ROLE_LABELS_VI[step.role] || step.role}</span>
                 <p className="step-card-desc">{step.desc}</p>
               </div>
             ))}

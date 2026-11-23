@@ -12,34 +12,47 @@ export class ApiError extends Error {
 }
 
 async function request(path, { token, ...options } = {}) {
-  let response
-  try {
-    response = await fetch(`${baseUrl}${path}`, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...options.headers,
-      },
-    })
-  } catch {
-    throw new ApiError(0, 'NETWORK_ERROR')
-  }
+  const method = (options.method || 'GET').toUpperCase()
+  const maxAttempts = method === 'GET' ? 2 : 1
 
-  const retryAfterHeader = response.headers?.get?.('Retry-After')
-  const retryAfter = retryAfterHeader ? Number(retryAfterHeader) || retryAfterHeader : undefined
-
-  let data
-  try {
-    data = await response.json()
-  } catch {
-    if ([502, 503, 504].includes(response.status)) {
-      throw new ApiError(response.status, 'API_UNAVAILABLE', undefined, retryAfter)
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    let response
+    try {
+      response = await fetch(`${baseUrl}${path}`, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...options.headers,
+        },
+      })
+    } catch {
+      if (attempt < maxAttempts) {
+        await new Promise((resolve) => setTimeout(resolve, 300))
+        continue
+      }
+      throw new ApiError(0, 'NETWORK_ERROR')
     }
-    throw new ApiError(response.status, 'INVALID_RESPONSE', undefined, retryAfter)
+
+    const retryAfterHeader = response.headers?.get?.('Retry-After')
+    const retryAfter = retryAfterHeader ? Number(retryAfterHeader) || retryAfterHeader : undefined
+
+    let data
+    try {
+      data = await response.json()
+    } catch {
+      if ([502, 503, 504].includes(response.status)) {
+        if (attempt < maxAttempts) {
+          await new Promise((resolve) => setTimeout(resolve, 300))
+          continue
+        }
+        throw new ApiError(response.status, 'API_UNAVAILABLE', undefined, retryAfter)
+      }
+      throw new ApiError(response.status, 'INVALID_RESPONSE', undefined, retryAfter)
+    }
+    if (!response.ok) throw new ApiError(response.status, data?.code, data?.details, retryAfter, data?.message)
+    return data
   }
-  if (!response.ok) throw new ApiError(response.status, data?.code, data?.details, retryAfter, data?.message)
-  return data
 }
 
 export const api = {
@@ -72,6 +85,7 @@ export const api = {
     }),
   getTimeline: (token, batchId) => request(`/batches/${batchId}/timeline`, { token }),
 
+  listRecentPublicTraces: (limit = 6) => request(`/trace/recent?limit=${encodeURIComponent(limit)}`),
   traceByToken: (qrToken) => request(`/trace/${encodeURIComponent(qrToken)}`),
   traceByCode: (batchCode) => request(`/trace/code/${encodeURIComponent(batchCode)}`),
 
@@ -124,7 +138,8 @@ export const api = {
 
 const messages = {
   NETWORK_ERROR: 'Không thể kết nối tới máy chủ. Vui lòng thử lại.',
-  API_UNAVAILABLE: 'API hệ thống chưa chạy. Vui lòng khởi động backend rồi thử lại.',
+  API_UNAVAILABLE: 'Máy chủ API tạm thời chưa phản hồi. Vui lòng thử lại sau giây lát.',
+  DATABASE_UNAVAILABLE: 'Hệ thống chưa kết nối được cơ sở dữ liệu. Vui lòng kiểm tra lại dịch vụ PostgreSQL.',
   INVALID_RESPONSE: 'Phản hồi từ máy chủ không hợp lệ.',
   INVALID_CREDENTIALS: 'Email hoặc mật khẩu không đúng.',
   ACCOUNT_PENDING: 'Tài khoản đang chờ quản trị viên duyệt.',

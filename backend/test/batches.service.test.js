@@ -13,7 +13,7 @@ function setup() {
     async insertBatch(_d, b) {
       const row = { batch_id: String(state.nextId++), batch_code: b.batchCode, product_name: b.productName, origin: b.origin,
         quantity: b.quantity.toFixed(2), creation_date: new Date('2026-11-02T10:00:00Z'), current_status: 'CREATED',
-        created_by: String(b.createdBy), organization_id: String(b.organizationId) };
+        created_by: String(b.createdBy), organization_id: String(b.organizationId), image_url: b.imageUrl ?? null };
       state.batches.push(row); return { ...row };
     },
     async insertQr(_d, q) { const row = { qr_id: String(state.qrs.length + 1), batch_id: String(q.batchId), qr_data: q.qrData, created_at: new Date('2026-11-02T10:00:00Z') }; state.qrs.push({ ...row, signatureHmac: q.signatureHmac }); return row; },
@@ -35,6 +35,7 @@ function setup() {
       if (ch.productName !== undefined) b.product_name = ch.productName;
       if (ch.origin !== undefined) b.origin = ch.origin;
       if (ch.quantity !== undefined) b.quantity = ch.quantity.toFixed(2);
+      if (ch.imageUrl !== undefined) b.image_url = ch.imageUrl;
       return { ...b };
     },
     async findQr(_d, id) { const q = state.qrs.find((x) => Number(x.batch_id) === id); return q ? { ...q } : null; },

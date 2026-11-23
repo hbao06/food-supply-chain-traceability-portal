@@ -16,7 +16,7 @@ const SUGGESTIONS = [
   'Cách quét mã QR để xem nguồn gốc?',
   'Quy trình 6 giai đoạn gồm những bước nào?',
   'Mã lô FR- có định dạng thế nào?',
-  'Tra cứu lô FR-2026-0201',
+  'Cách kiểm tra chuỗi băm SHA-256?',
 ];
 
 const KNOWLEDGE = [
@@ -37,7 +37,7 @@ const KNOWLEDGE = [
   { keys: ['vai tro', 'quyen', 'admin', 'farmer', 'processor', 'distributor'],
     reply: 'Hệ thống có 4 vai trò: Quản trị viên (duyệt tài khoản, quản lý đơn vị, kiểm toán), Nông trại (tạo/sửa lô), Chế biến (chế biến, đóng gói), Phân phối (vận chuyển, tiếp nhận, xuất kho). Người tiêu dùng chỉ tra cứu công khai, không cần tài khoản.' },
   { keys: ['san pham', 'nong san', 'ca phe', 'gao', 'hat dieu', 'thanh long', 'tra', 'che', 'sau rieng'],
-    reply: 'Dữ liệu demo gồm cà phê Arabica/Robusta (Đà Lạt), sầu riêng Ri6 (Bến Tre), gạo ST25 (Sóc Trăng), hạt điều rang muối (Bình Phước), thanh long ruột đỏ (Tiền Giang) và chè Ô Long (Mộc Châu). Thử tra mã FR-2026-0201 (gạo) hoặc FR-2026-0202 (hạt điều).' },
+    reply: 'Hệ thống hỗ trợ truy xuất nguồn gốc nhiều mặt hàng nông sản Việt Nam như cà phê, lúa gạo, hạt điều, trái cây tươi và chè. Bạn có thể nhập mã lô theo chuẩn FR-YYYY-NNNN (ví dụ FR-2026-0001) hoặc quét tem QR trên bao bì để xem toàn bộ hành trình.' },
   { keys: ['xin chao', 'chao', 'hello', 'hi ', 'alo'],
     reply: 'Xin chào! Mình là trợ lý Food Trace. Mình có thể giúp bạn tra cứu mã lô FR-, hướng dẫn quét QR, giải thích quy trình chuỗi cung ứng và cách dùng hệ thống.' },
   { keys: ['cam on', 'thanks'], reply: 'Rất vui được giúp bạn! Cần tra cứu thêm lô nào cứ nhắn mình nhé.' },
@@ -58,7 +58,7 @@ function formatTrace(t) {
 function knowledgeReply(message) {
   const n = ` ${norm(message)} `;
   for (const item of KNOWLEDGE) if (item.keys.some((k) => n.includes(k))) return item.reply;
-  return 'Mình chưa hiểu rõ câu hỏi. Bạn có thể hỏi về: quét QR, định dạng mã lô FR-, quy trình 6 giai đoạn, cách tạo lô, ghi nhận sự kiện, đăng ký tài khoản hoặc nhập mã lô (ví dụ FR-2026-0002) để mình tra cứu.';
+  return 'Mình chưa hiểu rõ câu hỏi. Bạn có thể hỏi về: quét QR, định dạng mã lô FR-, quy trình 6 giai đoạn, cách tạo lô, ghi nhận sự kiện, đăng ký tài khoản hoặc nhập mã lô (ví dụ FR-2026-0001) để mình tra cứu.';
 }
 
 function createAssistantService({ traceService, env = process.env, fetchImpl = globalThis.fetch }) {
@@ -101,7 +101,7 @@ function createAssistantService({ traceService, env = process.env, fetchImpl = g
     const ai = await askGemini(message, context);
     if (ai) return { reply: ai, source: 'gemini', suggestions: SUGGESTIONS.slice(0, 3), batchCode: trace ? trace.batchCode : null };
     if (trace) return { reply: formatTrace(trace), source: 'knowledge', suggestions: ['Cách quét mã QR để xem nguồn gốc?', 'Quy trình 6 giai đoạn gồm những bước nào?'], batchCode: trace.batchCode };
-    if (code) return { reply: `Mình không tìm thấy lô ${code}. Hãy kiểm tra lại mã trên tem (định dạng FR-YYYY-NNNN), ví dụ FR-2026-0002.`, source: 'knowledge', suggestions: SUGGESTIONS.slice(0, 3), batchCode: null };
+    if (code) return { reply: `Mình không tìm thấy lô ${code}. Hãy kiểm tra lại mã trên tem (định dạng FR-YYYY-NNNN), ví dụ FR-2026-0001.`, source: 'knowledge', suggestions: SUGGESTIONS.slice(0, 3), batchCode: null };
     return { reply: knowledgeReply(message), source: 'knowledge', suggestions: SUGGESTIONS, batchCode: null };
   }
 

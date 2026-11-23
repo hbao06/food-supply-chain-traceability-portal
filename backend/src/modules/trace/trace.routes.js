@@ -1,7 +1,5 @@
 'use strict';
 
-'use strict';
-
 const express = require('express');
 const { pool } = require('../../db/pool');
 const { createRateLimiter, rateLimitEnabled, passThrough } = require('../../middleware/rateLimit');
@@ -23,7 +21,9 @@ const traceLimiter = rateLimitEnabled()
   : passThrough;
 
 // Gắn vào app: app.use('/api/trace', traceRouter); (KHÔNG cần đăng nhập)
+// /recent phải đặt TRƯỚC /:qrToken để không bị nhận nhầm là qrToken.
 const traceRouter = express.Router();
+traceRouter.get('/recent', traceLimiter, controller.recent);
 traceRouter.get('/code/:batchCode', traceLimiter, controller.byCode);
 traceRouter.get('/:qrToken', traceLimiter, controller.byToken);
 

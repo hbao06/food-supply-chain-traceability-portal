@@ -44,13 +44,13 @@ const USERS = [
 ];
 
 const PRODUCTS = [
-  { key: 'arabica', org: 'farmA', name: 'Cà phê Arabica Cầu Đất', category: 'Cà phê', unit: 'kg', description: 'Arabica trồng ở độ cao 1.600 m, sơ chế ướt' },
-  { key: 'robusta', org: 'farmA', name: 'Cà phê Robusta rang xay', category: 'Cà phê', unit: 'kg', description: 'Robusta rang mộc, xay sẵn' },
-  { key: 'durian', org: 'farmB', name: 'Sầu riêng Ri6', category: 'Trái cây', unit: 'kg', description: 'Sầu riêng Ri6 chín cây' },
-  { key: 'rice', org: 'farmC', name: 'Gạo ST25 Sóc Trăng', category: 'Lúa gạo', unit: 'kg', description: 'Gạo ST25 canh tác theo quy trình hữu cơ' },
-  { key: 'cashew', org: 'farmD', name: 'Hạt điều rang muối Bình Phước', category: 'Hạt dinh dưỡng', unit: 'kg', description: 'Hạt điều rang củi, nguyên hạt W320' },
-  { key: 'dragon', org: 'farmE', name: 'Thanh long ruột đỏ VietGAP', category: 'Trái cây', unit: 'kg', description: 'Thanh long ruột đỏ đạt chuẩn VietGAP' },
-  { key: 'tea', org: 'farmF', name: 'Chè Ô Long Mộc Châu', category: 'Trà', unit: 'kg', description: 'Chè Ô Long búp một tôm hai lá' },
+  { key: 'arabica', org: 'farmA', name: 'Cà phê Arabica Cầu Đất', category: 'Cà phê', unit: 'kg', imageUrl: '/products/coffee.jpg', description: 'Arabica trồng ở độ cao 1.600 m, sơ chế ướt' },
+  { key: 'robusta', org: 'farmA', name: 'Cà phê Robusta rang xay', category: 'Cà phê', unit: 'kg', imageUrl: '/products/coffee.jpg', description: 'Robusta rang mộc, xay sẵn' },
+  { key: 'durian', org: 'farmB', name: 'Sầu riêng Ri6', category: 'Trái cây', unit: 'kg', imageUrl: '/products/durian.jpg', description: 'Sầu riêng Ri6 chín cây' },
+  { key: 'rice', org: 'farmC', name: 'Gạo ST25 Sóc Trăng', category: 'Lúa gạo', unit: 'kg', imageUrl: '/products/rice.jpg', description: 'Gạo ST25 canh tác theo quy trình hữu cơ' },
+  { key: 'cashew', org: 'farmD', name: 'Hạt điều rang muối Bình Phước', category: 'Hạt dinh dưỡng', unit: 'kg', imageUrl: '/products/cashew.jpg', description: 'Hạt điều rang củi, nguyên hạt W320' },
+  { key: 'dragon', org: 'farmE', name: 'Thanh long ruột đỏ VietGAP', category: 'Trái cây', unit: 'kg', imageUrl: '/products/dragonfruit.jpg', description: 'Thanh long ruột đỏ đạt chuẩn VietGAP' },
+  { key: 'tea', org: 'farmF', name: 'Chè Ô Long Mộc Châu', category: 'Trà', unit: 'kg', imageUrl: '/products/tea.jpg', description: 'Chè Ô Long búp một tôm hai lá' },
 ];
 
 // days: số ngày trước hôm nay của lúc tạo lô; mỗi bước sau cách nhau 1 ngày.
@@ -132,12 +132,13 @@ const DAY = 24 * 60 * 60 * 1000;
 // Tạo một lô mẫu: batches -> qr_codes -> sự kiện (CREATED + các bước) -> audit, đi qua đủ trigger của CSDL.
 async function insertBatch(db, b, { orgId, userId, productId, qr, now, audit }) {
   const farmer = USERS.find((u) => u.key === b.farmer);
+  const product = PRODUCTS.find((p) => p.key === b.product);
   const createdAt = new Date(now.getTime() - b.days * DAY);
   // product_name để NULL: trigger trg_batches_a_product tự lấy tên từ products.
   const r = await db.query(
-    `INSERT INTO batches (batch_code, product_id, origin, quantity, creation_date, created_by, organization_id)
-     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING batch_id`,
-    [b.code, productId[b.product], b.origin, b.quantity, createdAt.toISOString(), userId[b.farmer], orgId[farmer.org]]
+    `INSERT INTO batches (batch_code, product_id, origin, quantity, image_url, creation_date, created_by, organization_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING batch_id`,
+    [b.code, productId[b.product], b.origin, b.quantity, product?.imageUrl || null, createdAt.toISOString(), userId[b.farmer], orgId[farmer.org]]
   );
   const batchId = Number(r.rows[0].batch_id);
   await audit(userId[b.farmer], 'BATCH', batchId, { batchCode: b.code, quantity: b.quantity });

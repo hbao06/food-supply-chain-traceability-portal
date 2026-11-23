@@ -4,10 +4,12 @@ import {
   BATCH_STATUSES,
   STATUS_META,
   SUPPLY_CHAIN_STEPS,
+  ROLE_LABELS_VI,
   formatQuantity,
   formatDateOnly,
   formatDateTime,
-  PREVIEW_BATCHES,
+  productImage,
+  resolveBatchImage,
 } from '../src/batches/batchConstants.js'
 
 test('batchConstants - 6 canonical statuses exist in order', () => {
@@ -41,10 +43,13 @@ test('batchConstants - STATUS_META has metadata for each status', () => {
   assert.equal(STATUS_META.SHIPPED.canEdit, false)
 })
 
-test('batchConstants - SUPPLY_CHAIN_STEPS contains 6 stages with roles', () => {
+test('batchConstants - SUPPLY_CHAIN_STEPS contains 6 stages with Vietnamese role labels', () => {
   assert.equal(SUPPLY_CHAIN_STEPS.length, 6)
   const types = SUPPLY_CHAIN_STEPS.map((s) => s.type)
   assert.deepEqual(types, BATCH_STATUSES)
+  for (const step of SUPPLY_CHAIN_STEPS) {
+    assert.ok(ROLE_LABELS_VI[step.role], `Thiếu nhãn tiếng Việt cho ${step.role}`)
+  }
 })
 
 test('batchConstants - formatQuantity formats number with localized unit', () => {
@@ -64,14 +69,24 @@ test('batchConstants - formatDateOnly and formatDateTime handle valid and invali
   assert.ok(formatDateTime(iso).includes('2026'))
 })
 
-test('batchConstants - PREVIEW_BATCHES has realistic sample batches', () => {
-  assert.ok(PREVIEW_BATCHES.length >= 5)
-  for (const b of PREVIEW_BATCHES) {
-    assert.ok(b.batchId, 'Thiếu batchId')
-    assert.match(b.batchCode, /^FR-2026-\d{4}$/, 'Mã lô không đúng định dạng')
-    assert.ok(b.productName, 'Thiếu productName')
-    assert.ok(b.origin, 'Thiếu origin')
-    assert.ok(b.quantity > 0, 'Quantity phải > 0')
-    assert.ok(BATCH_STATUSES.includes(b.currentStatus), 'Status không hợp lệ')
-  }
+test('batchConstants - productImage maps Vietnamese product names to assets', () => {
+  assert.equal(productImage('Cà phê Arabica Cầu Đất'), '/products/coffee.jpg')
+  assert.equal(productImage('Gạo ST25 Sóc Trăng'), '/products/rice.jpg')
+  assert.equal(productImage('Hạt điều rang muối Bình Phước'), '/products/cashew.jpg')
+  assert.equal(productImage('Thanh long ruột đỏ Chợ Gạo'), '/products/dragonfruit.jpg')
+  assert.equal(productImage('Chè Ô Long Mộc Châu'), '/products/tea.jpg')
+})
+test('batchConstants - resolveBatchImage prefers explicit imageUrl over keyword fallback', () => {
+  assert.equal(
+    resolveBatchImage({ productName: 'Nhãn xuồng Mỹ Đức', imageUrl: 'https://example.com/nhan.jpg' }),
+    'https://example.com/nhan.jpg'
+  )
+  assert.equal(
+    resolveBatchImage('Nhãn xuồng Mỹ Đức', 'data:image/jpeg;base64,/9j/4AAQ'),
+    'data:image/jpeg;base64,/9j/4AAQ'
+  )
+  assert.equal(
+    resolveBatchImage({ productName: 'Cà phê Arabica', imageUrl: null }),
+    '/products/coffee.jpg'
+  )
 })

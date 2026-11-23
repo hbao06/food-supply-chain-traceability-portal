@@ -191,8 +191,9 @@ test('W8 nâng cấp: CSDL đã seed bản W5 thì chạy lại chỉ thêm lô 
   assert.deepEqual(b.map((c) => c.params[0]), ['FR-2026-0004', 'FR-2026-0005']);
   const userIdOf = (key) => Number(ex.users[seed.USERS.findIndex((u) => u.key === key)].user_id);
   assert.equal(b[0].params[1], 1, 'sản phẩm arabica cũ (id 1)');
-  assert.equal(b[0].params[5], userIdOf('farmer_a'));
-  assert.equal(b[0].params[6], Number(ex.orgIdOf('farmA')));
+  assert.equal(b[0].params[4], '/products/coffee.jpg');
+  assert.equal(b[0].params[6], userIdOf('farmer_a'));
+  assert.equal(b[0].params[7], Number(ex.orgIdOf('farmA')));
   const ev = inserts(db, 'supply_chain_events');
   assert.equal(ev.length, 2 + 4); // 0004: CREATED + 1 bước; 0005: CREATED + 3 bước
   assert.equal(ev[1].params[1], userIdOf('distributor_b'), 'TRANSPORTED của 0004 do distributor_b đã có');

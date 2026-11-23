@@ -5,6 +5,8 @@ const { ValidationError } = require('../../common/errors');
 const STATUSES = ['CREATED', 'TRANSPORTED', 'RECEIVED', 'PROCESSED', 'PACKAGED', 'SHIPPED'];
 const MAX_QUANTITY = 9999999999.99; // NUMERIC(12,2) trong schema.sql
 const MAX_PAGE_LIMIT = 100;
+const MAX_IMAGE_URL_LEN = 2 * 1024 * 1024; // tối đa ~2 MB cho chuỗi ảnh nén base64 hoặc URL
+const ALLOWED_IMAGE_RE = /^(https?:\/\/[^\s"'<>]+|\/products\/[A-Za-z0-9._-]+|data:image\/(jpeg|jpg|png|webp);base64,[A-Za-z0-9+/=]+)$/;
 
 const isPlainObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 
@@ -34,6 +36,28 @@ function checkQuantity(value, errors) {
   }
 }
 
+function checkImageUrl(value, errors) {
+  if (value === null || value === '') return null;
+  if (typeof value !== 'string') {
+    errors.push({ field: 'imageUrl', message: 'Ảnh sản phẩm phải là đường dẫn ảnh hợp lệ' });
+    return null;
+  }
+  const trimmed = value.trim();
+  if (trimmed === '') return null;
+  if (trimmed.length > MAX_IMAGE_URL_LEN) {
+    errors.push({ field: 'imageUrl', message: 'Ảnh sản phẩm vượt quá dung lượng cho phép (tối đa 2 MB)' });
+    return null;
+  }
+  if (!ALLOWED_IMAGE_RE.test(trimmed)) {
+    errors.push({
+      field: 'imageUrl',
+      message: 'Ảnh sản phẩm phải là ảnh JPG/PNG/WebP tải lên hoặc đường dẫn http(s):// hợp lệ',
+    });
+    return null;
+  }
+  return trimmed;
+}
+
 const round2 = (n) => Math.round(n * 100) / 100;
 
 function validateCreateBatch(body) {
@@ -42,12 +66,15 @@ function validateCreateBatch(body) {
   checkText(body.productName, 'productName', 'Tên sản phẩm', 150, errors);
   checkText(body.origin, 'origin', 'Nguồn gốc', 255, errors);
   checkQuantity(body.quantity, errors);
+  const imageUrl = body.imageUrl !== undefined ? checkImageUrl(body.imageUrl, errors) : undefined;
   if (errors.length) throw new ValidationError(errors);
-  return { productName: body.productName.trim(), origin: body.origin.trim(), quantity: round2(body.quantity) };
+  const out = { productName: body.productName.trim(), origin: body.origin.trim(), quantity: round2(body.quantity) };
+  if (imageUrl !== undefined) out.imageUrl = imageUrl;
+  return out;
 }
 
-// PATCH: chỉ sửa productName, origin, quantity. Mã lô, trạng thái, người tạo, đơn vị không được sửa.
-const EDITABLE_FIELDS = ['productName', 'origin', 'quantity'];
+// PATCH: chỉ sửa productName, origin, quantity, imageUrl. Mã lô, trạng thái, người tạo, đơn vị không được sửa.
+const EDITABLE_FIELDS = ['productName', 'origin', 'quantity', 'imageUrl'];
 
 function validateUpdateBatch(body) {
   requireObject(body);
@@ -56,12 +83,13 @@ function validateUpdateBatch(body) {
     if (!EDITABLE_FIELDS.includes(key)) errors.push({ field: key, message: 'Không được phép sửa trường này' });
   }
   if (!EDITABLE_FIELDS.some((k) => body[k] !== undefined)) {
-    errors.push({ field: 'body', message: 'Cần ít nhất một trường để cập nhật: productName, origin hoặc quantity' });
+    errors.push({ field: 'body', message: 'Cần ít nhất một trường để cập nhật: productName, origin, quantity hoặc imageUrl' });
   }
   const changes = {};
   if (body.productName !== undefined) { checkText(body.productName, 'productName', 'Tên sản phẩm', 150, errors); changes.productName = body.productName; }
   if (body.origin !== undefined) { checkText(body.origin, 'origin', 'Nguồn gốc', 255, errors); changes.origin = body.origin; }
   if (body.quantity !== undefined) { checkQuantity(body.quantity, errors); changes.quantity = body.quantity; }
+  if (body.imageUrl !== undefined) { changes.imageUrl = checkImageUrl(body.imageUrl, errors); }
   if (errors.length) throw new ValidationError(errors);
   if (changes.productName !== undefined) changes.productName = changes.productName.trim();
   if (changes.origin !== undefined) changes.origin = changes.origin.trim();

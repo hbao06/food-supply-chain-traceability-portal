@@ -6,6 +6,7 @@ import {
   STATUS_META,
   formatDateTime,
   formatRelativeTime,
+  resolveBatchImage,
 } from '../batches/batchConstants.js'
 import { PublicFooter } from '../components/BrandAndFooter.jsx'
 import {
@@ -26,7 +27,6 @@ import { PublicHeader } from './PublicHeader.jsx'
 import {
   buildTraceRoute,
   classifyTraceError,
-  getPreviewPublicTrace,
   getTraceProgress,
   parseTraceInput,
   sanitizePublicTrace,
@@ -44,7 +44,6 @@ export function PublicTraceResult({
   prefetchedTrace = null,
   navigate,
   isAuthenticated = false,
-  preview = false,
 }) {
   const [retryTick, setRetryTick] = useState(0)
   const [quickCode, setQuickCode] = useState('')
@@ -65,22 +64,6 @@ export function PublicTraceResult({
     let active = true
 
     async function load() {
-      if (preview) {
-        await Promise.resolve()
-        if (!active) return
-        const previewData = getPreviewPublicTrace({ mode, identifier })
-        if (!previewData) {
-          setState({
-            status: 'error',
-            data: null,
-            error: classifyTraceError({ status: 404, code: 'NOT_FOUND' }),
-          })
-          return
-        }
-        setState({ status: 'success', data: previewData, error: null })
-        return
-      }
-
       try {
         const raw =
           mode === 'token'
@@ -107,7 +90,7 @@ export function PublicTraceResult({
     return () => {
       active = false
     }
-  }, [identifier, mode, prefetchedTrace, preview, retryTick])
+  }, [identifier, mode, prefetchedTrace, retryTick])
 
   const shareUrl =
     state.data && typeof window !== 'undefined'
@@ -142,15 +125,33 @@ export function PublicTraceResult({
       return
     }
     setQuickError('')
-    navigate(buildTraceRoute(parsed.mode, parsed.identifier, { preview }))
+    navigate(buildTraceRoute(parsed.mode, parsed.identifier))
   }
 
   function handleCopyShareLink() {
     if (!shareUrl) return
-    navigator.clipboard.writeText(shareUrl).then(() => {
+    const done = () => {
       setCopiedLink(true)
       setTimeout(() => setCopiedLink(false), 2000)
-    })
+    }
+    const fallback = () => {
+      try {
+        const ta = document.createElement('textarea')
+        ta.value = shareUrl
+        ta.style.position = 'fixed'
+        ta.style.opacity = '0'
+        document.body.appendChild(ta)
+        ta.select()
+        document.execCommand('copy')
+        document.body.removeChild(ta)
+        done()
+      } catch { /* ignore */ }
+    }
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(shareUrl).then(done).catch(fallback)
+    } else {
+      fallback()
+    }
   }
 
   function handleDownloadQr() {
@@ -161,7 +162,7 @@ export function PublicTraceResult({
     link.click()
   }
 
-  const searchHomePath = preview ? '/trace?preview=1' : '/trace'
+  const searchHomePath = '/trace'
   const progress = state.data ? getTraceProgress(state.data.currentStatus) : null
 
   return (
@@ -170,7 +171,6 @@ export function PublicTraceResult({
         navigate={navigate}
         isAuthenticated={isAuthenticated}
         showSearchLink
-        preview={preview}
       />
 
       <main className="public-main public-result-main">
@@ -337,6 +337,13 @@ export function PublicTraceResult({
               <div className="public-trace-layout">
                 <aside className="public-batch-info-col">
                   <section className="public-batch-info-card" aria-labelledby="public-batch-info-heading">
+                    <div className="public-product-media">
+                      <img
+                        src={resolveBatchImage(state.data)}
+                        alt={state.data.productName}
+                        onError={(e) => { e.currentTarget.src = '/products/warehouse.jpg' }}
+                      />
+                    </div>
                     <div className="public-card-header">
                       <h2 id="public-batch-info-heading">Hồ sơ lô sản phẩm</h2>
                       <code className="batch-code-tag">{state.data.batchCode}</code>
@@ -499,7 +506,7 @@ export function PublicTraceResult({
         </div>
       </main>
 
-      <PublicFooter navigate={navigate} preview={preview} />
+      <PublicFooter navigate={navigate} footerId="standards" />
     </div>
   )
 }

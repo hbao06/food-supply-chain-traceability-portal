@@ -46,6 +46,23 @@ test('lỗi không lường trước -> 500 chung chung, có log, không lộ me
   assert.equal(logged, 1);
 });
 
+test('lỗi mất kết nối PostgreSQL (ECONNREFUSED / AggregateError / 57P03) -> 503 DATABASE_UNAVAILABLE', () => {
+  const connErr = new Error('connect ECONNREFUSED 127.0.0.1:5432'); connErr.code = 'ECONNREFUSED';
+  const r1 = run(connErr);
+  assert.equal(r1.res.statusCode, 503);
+  assert.equal(r1.res.body.code, 'DATABASE_UNAVAILABLE');
+
+  const aggErr = new AggregateError([connErr], 'all failed');
+  const r2 = run(aggErr);
+  assert.equal(r2.res.statusCode, 503);
+  assert.equal(r2.res.body.code, 'DATABASE_UNAVAILABLE');
+
+  const pgDown = new Error('the database system is starting up'); pgDown.code = '57P03';
+  const r3 = run(pgDown);
+  assert.equal(r3.res.statusCode, 503);
+  assert.equal(r3.res.body.code, 'DATABASE_UNAVAILABLE');
+});
+
 test('notFound chuyển NotFoundError sang errorHandler', () => {
   let passed; notFound({}, {}, (e) => { passed = e; });
   assert.equal(passed.status, 404);

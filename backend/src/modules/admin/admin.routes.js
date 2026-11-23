@@ -11,7 +11,7 @@ const { createAdminController } = require('./admin.controller');
 const controller = createAdminController(createAdminService({ db: pool, withTransaction, repo, insertAudit }));
 
 // Gắn vào app MỘT lần, SAU profileRouter của /api/users:  app.use('/api', adminRouter);
-// Chỉ có route /users, /organizations, /audit-logs; đường dẫn khác đi tiếp. Tất cả chỉ ADMIN (403 với vai trò khác).
+// Chỉ có route /users và /organizations; /audit-logs dùng auditRouter. Tất cả chỉ ADMIN (403 với vai trò khác).
 const adminRouter = express.Router();
 adminRouter.get('/users', requireAuth, requirePermission('user:read'), controller.listUsers);
 adminRouter.patch('/users/:userId/role', requireAuth, requirePermission('user:change-role'), controller.changeRole);
@@ -20,6 +20,5 @@ adminRouter.patch('/users/:userId/status', requireAuth, requirePermission('user:
 adminRouter.get('/organizations', requireAuth, requirePermission('organization:read'), controller.listOrganizations);
 adminRouter.post('/organizations', requireAuth, requirePermission('organization:write'), controller.createOrganization);
 adminRouter.patch('/organizations/:organizationId', requireAuth, requirePermission('organization:write'), controller.updateOrganization);
-adminRouter.get('/audit-logs', requireAuth, requirePermission('audit:read'), controller.listAuditLogs);
 
 module.exports = { adminRouter };

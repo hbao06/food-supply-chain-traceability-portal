@@ -5,10 +5,9 @@ export function PublicHeader({
   navigate,
   isAuthenticated = false,
   showSearchLink = false,
-  preview = false,
   onSelectScanTab,
 }) {
-  const homePath = preview ? '/trace?preview=1' : '/trace'
+  const homePath = '/trace'
 
   function goToSection(hash) {
     if (window.location.pathname !== '/' && window.location.pathname !== '/trace') {
@@ -33,11 +32,7 @@ export function PublicHeader({
           tabIndex={0}
           onKeyDown={(e) => e.key === 'Enter' && navigate(homePath)}
         >
-          <BrandLogo invert />
-          <div className="header-brand-slogan">
-            <span className="brand-badge-vn">VIỆT NAM</span>
-            <span className="brand-subtext on-dark">Cổng Truy Xuất Nguồn Gốc Quốc Gia</span>
-          </div>
+          <BrandLogo invert subtitle="Cổng Truy Xuất Nguồn Gốc Nông Sản" />
         </div>
 
         <nav className="header-nav-menu" aria-label="Menu chính">
